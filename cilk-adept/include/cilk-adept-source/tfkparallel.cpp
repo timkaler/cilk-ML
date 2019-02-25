@@ -1,7 +1,8 @@
 // Copyright 2019 MIT License - Tim Kaler
 
-#include <adept/sp_tree.h>
-#include <adept/tfkparallel.h>
+#include <cilk-adept-headers/sp_tree.h>
+#include <cilk-adept-headers/tfkparallel.h>
+
 /*
 External variables.
 
@@ -52,6 +53,7 @@ tfkdiff tfk_reducer;
       multiplier_stack_arr =
           (adept::Real*) malloc(sizeof(adept::Real)*multiplier_stack_arr_capacity);
     }
+
     void wl_stacks::init () {
       statement_stack_arr_len = 0;
       operation_stack_arr_len = 0;

@@ -1265,8 +1265,8 @@ namespace adept {
 #include <cstring>
 
 
-#include <sp_tree.cpp>
-#include <tfkparallel.cpp>
+#include <cilk-adept-source/sp_tree.cpp>
+#include <cilk-adept-source/tfkparallel.cpp>
 
 #include <adept/StackStorageOrig.h>
 

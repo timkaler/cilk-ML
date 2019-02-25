@@ -4,7 +4,7 @@
 #include <cilk/reducer_list.h>
 #include <algorithm>
 
-#include <adept/sp_tree.h>
+#include <cilk-adept-headers/sp_tree.h>
 
 #ifndef TFK_ADEPT_PARALLEL
 #define TFK_ADEPT_PARALLEL
@@ -70,7 +70,7 @@ class wl_stacks {
 // space for worker-local stacks
 extern wl_stacks* worker_local_stacks;
 
-#include <adept/triple_vector_wl.h>
+#include <cilk-adept-headers/triple_vector_wl.h>
 
 class tfkdiff {
   public:

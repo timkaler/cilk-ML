@@ -1,7 +1,7 @@
 // Copyright (c) 2019, Tim Kaler - MIT License
 #include <cilk/cilk.h>
 #include <cilk/reducer.h>
-#include "adept/sp_tree.h"
+#include <cilk-adept-headers/sp_tree.h>
 #include <vector>
 
 

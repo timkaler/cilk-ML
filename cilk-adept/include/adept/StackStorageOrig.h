@@ -26,7 +26,7 @@
 #include <adept/exception.h>
 #include <adept/Statement.h>
 
-#include <adept/tfkparallel.h>
+#include <cilk-adept-headers/tfkparallel.h>
 
 
 namespace adept {

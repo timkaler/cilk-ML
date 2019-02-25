@@ -2,8 +2,8 @@
 #include <cilk/cilk.h>
 #include <cilk/reducer.h>
 #include <vector>
-#include <adept/triple_vector_wl.h>
-#include <adept/flat_hash_map.hpp>
+#include <cilk-adept-headers/triple_vector_wl.h>
+#include <cilk-adept-headers/flat_hash_map.hpp>
 
 #ifndef SP_TREE_H
 #define SP_TREE_H
