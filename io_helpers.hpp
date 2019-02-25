@@ -1,11 +1,18 @@
+// Copyright 2019 Tim Kaler MIT License
+
+#ifndef CILKML_IO_HELPERS_H
+#define CILKML_IO_HELPERS_H
+
+#include <utility>
+#include <string>
+#include <vector>
+
 using namespace std;
 
-std::vector<std::string> split(const std::string& str, const std::string& delim)
-{
+std::vector<std::string> split(const std::string& str, const std::string& delim) {
     std::vector<std::string> tokens;
     size_t prev = 0, pos = 0;
-    do
-    {
+    do {
         pos = str.find(delim, prev);
         if (pos == string::npos) pos = str.length();
         string token = str.substr(prev, pos-prev);
@@ -17,31 +24,24 @@ std::vector<std::string> split(const std::string& str, const std::string& delim)
 }
 
 void read_connect4(std::string filename, std::vector<Matrix>& data, std::vector<Real>& labels) {
-
   std::ifstream f(filename);
   std::string line;
-  while (std::getline(f,line)) {
+  while (std::getline(f, line)) {
     std::string l(line);
-    std::vector<std::string> items = split(l,",");
-    Matrix data_matrix = Matrix(43,1);
+    std::vector<std::string> items = split(l, ",");
+    Matrix data_matrix = Matrix(43, 1);
 
     std::vector<int> data_vector;
     for (int i = 0; i < items.size()-1; i++) {
-      //int row = i%6;
-      //int col = (i-row)/6;
-
       if (items[i].find("b") != std::string::npos) {
         data_matrix[i][0] = 1.0;
-        //data_vector.push_back(1);
       } else if (items[i].find("x") != std::string::npos) {
-        //data_vector.push_back(-1);
         data_matrix[i][0] = -1.0;
       } else if (items[i].find("o") != std::string::npos) {
-        //data_vector.push_back(0);
         data_matrix[i][0] = 0.0;
       }
     }
-    data_matrix[42][0] = 1.0; // always is 1.
+    data_matrix[42][0] = 1.0;  // always is 1.
 
     data.push_back(data_matrix);
 
@@ -60,16 +60,16 @@ void read_connect4(std::string filename, std::vector<Matrix>& data, std::vector<
 
 
 
-void read_pair_list(std::string filename, std::vector<std::pair<int,int> >& edges) {
+void read_pair_list(std::string filename, std::vector<std::pair<int, int> >& edges) {
   std::ifstream f(filename);
   std::string line;
   while (std::getline(f, line)) {
     std::istringstream l(line);
-    int a,b;
+    int a, b;
 
-    l >> a >> b; // >> b;
+    l >> a >> b;
 
-    edges.push_back(std::make_pair(a,b));
+    edges.push_back(std::make_pair(a, b));
   }
 }
 
@@ -80,16 +80,13 @@ void edge_list_to_graph(std::string filename, Graph& G) {
   std::string line;
   while (std::getline(f, line)) {
     std::istringstream l(line);
-    int a,b;
+    int a, b;
     std::cout << "line is:" << line << std::endl;
 
-    l >> a >> b; // >> b;
+    l >> a >> b;
 
-    //while (!((l >> a >> S >> b) && (S == ' ' || S == '\t' || S == ','))) continue;
-
-    //std::cout << "a:" << a << " b:" << b << " S:" << S << std::endl;
     std::cout << "a:" << a << " b:" << b << std::endl;
-    edges.push_back(std::make_pair(a,b));
+    edges.push_back(std::make_pair(a, b));
 
     if (a > max_vertex_id) max_vertex_id = a;
     if (b > max_vertex_id) max_vertex_id = b;
@@ -98,12 +95,12 @@ void edge_list_to_graph(std::string filename, Graph& G) {
   G = Graph(max_vertex_id+1);
   // add self edges
   for (int i = 0; i < G.num_vertices; i++) {
-    G.add_edge(i,i);
+    G.add_edge(i, i);
   }
   for (int i = 0; i < edges.size(); i++) {
     G.add_edge(edges[i].first, edges[i].second);
   }
 }
 
-
+#endif  // CILKML_IO_HELPERS_H
 

@@ -1,15 +1,16 @@
 // Copyright 2019 Tim Kaler MIT License
 
 #include <adept_arrays.h>
+#include <vector>
 
 #ifndef CILKML_OPTIMIZATION_H
 #define CILKML_OPTIMIZATION_H
 
 using namespace adept;
 
-//extern double PARAM_ADAM_B1;
-//extern double PARAM_ADAM_B2;
-//extern double PARAM_ADAM_EPSILON;
+extern double PARAM_ADAM_B1;
+extern double PARAM_ADAM_B2;
+extern double PARAM_ADAM_EPSILON;
 
 double* allocate_weights_zero(std::vector<aMatrix>& weights);
 double* allocate_weights(std::vector<aMatrix>& weights);
@@ -28,4 +29,4 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
                                 double* gradients, double* momentums, double* velocities,
                                 double mul, int t);
 
-#endif
+#endif  // CILKML_OPTIMIZATION_H

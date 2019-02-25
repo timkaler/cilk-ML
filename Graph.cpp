@@ -1,9 +1,8 @@
-//tt Copyright 2018 Tim Kaler MIT License
+// Copyright 2018 Tim Kaler MIT License
 
 #include "./Graph.hpp"
 
 #include <random>
-
 
   void Graph::setup_embeddings(std::vector<int> _embedding_dim_list) {
     weights.clear();
@@ -29,18 +28,6 @@
         }
       }
     }
-
-
-    //vertex_embeddings.resize(this->num_vertices);
-    //for (int v = 0; v < this->num_vertices; v++ ) {
-    //  vertex_embeddings[v].resize(embedding_dim_list.size());
-    //  // now setup the vertex embeddings.
-    //  for (int i = 0; i < embedding_dim_list.size(); i++) {
-    //    vertex_embeddings[v][i] = aMatrix(embedding_dim_list[i+1],1);
-    //  }
-    //}
-
-
   }
 
   Graph::Graph(int num_vertices) {
@@ -62,12 +49,12 @@
   void Graph::generate_random_initial_embeddings() {
 
     std::default_random_engine gen;
-    std::normal_distribution<double> distribution(1.0,2.0);
+    std::normal_distribution<double> distribution(1.0, 2.0);
 
     int d1 = embedding_dim_list[0];
     printf("random embeddings for %d x 1 \n", d1);
     for (int i = 0; i < this->num_vertices; i++) {
-      Matrix initial_embedding(d1,1);
+      Matrix initial_embedding(d1, 1);
       for (int j = 0; j < d1; j++) {
         initial_embedding[j] = distribution(gen);
       }
@@ -77,40 +64,10 @@
 
 
   aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix> >& embeddings) {
-    //if (embedding_cache.find(std::make_pair(vid,layer)) != embedding_cache.end()) {
-    //  return vertex_embeddings[vid][layer];
-    //  //return tmp;
-    //  //aMatrix tmp;
-    //  //tmp = embedding_cache[std::make_pair(vid,layer)];
-    //  //return tmp;
-    //  //return embedding_cache[std::make_pair(vid, layer)];
-    //}
-
     if (layer == 0) {
-      //Matrix initial_embedding(max_label,1);
       Matrix initial_embedding = vertex_first_embeddings[vid];
-      //for (int i = 0; i < initial_embedding.dimensions()[0]; i++) {
-      //  //initial_embedding[i][0] = 0.0;//vid*(1.0/1005);
-      //  initial_embedding[i][0] = vid*(1.0/1005);
-      //}
 
-      //for (int i = 0; i < adj[vid].size(); i++) {
-      //  int u = adj[vid][i];
-      //  int udept = vertex_values[u];
-      //  initial_embedding[udept] += 1.0/adj[vid].size();
-      //}
-
-      //initial_embedding[(vertex_values[vid]+1)%max_label][0] = 1.0;//*vertex_values[vid];//*vid/this->num_vertices;
-      //initial_embedding[(vertex_values[vid]+2)%max_label][0] = 1.0;//*vertex_values[vid];//*vid/this->num_vertices;
-
-      ////initial_embedding[(vertex_values[vid]+2)%max_label][0] = 1.0;//*vertex_values[vid];//*vid/this->num_vertices;
-      ////initial_embedding[(vertex_values[vid]+5)%max_label][0] = 1.0;//*vertex_values[vid];//*vid/this->num_vertices;
-      ////initial_embedding[(vertex_values[vid]+2)%max_label][0] = 1.0;//*vertex_values[vid];//*vid/this->num_vertices;
-
-      ////vertex_embeddings[vid][layer] = tfksig(edge_weight(vid,vid)*weights[0]**initial_embedding);
-      ////embedding_cache[std::make_pair(vid, layer)] = true;
-
-      return /*tfksig*//*(edge_weight(vid,vid)**/(weights[0]**initial_embedding);
+      return (weights[0]**initial_embedding);
     } else {
       aMatrix ret(embedding_dim_list[layer+1],1);
 

@@ -5,6 +5,7 @@
 #include "./activations.hpp"
 
 using namespace adept;
+
 aReal crossEntropy(aMatrix yHat, aMatrix y) {
   aReal loss_sum = 0.0;
   aReal n = y.dimensions()[0]*1.0*y.dimensions()[1];
@@ -17,15 +18,15 @@ aReal crossEntropy(aMatrix yHat, aMatrix y) {
 }
 
 aReal tfksig(aReal arg) {
-  return fmax(0.0,arg);
+  return fmax(0.0, arg);
 }
 
 aVector tfksig(aVector arg) {
-  return fmax(0.0,arg);
+  return fmax(0.0, arg);
 }
 
 aMatrix tfksig(aMatrix arg) {
-  return fmax(0.0,arg);
+  return fmax(0.0, arg);
 }
 
 // softmax with a softening parameter p, active in case you want to learn softening param itself.
@@ -41,7 +42,7 @@ aMatrix mmul(aMatrix weights, aMatrix input) {
 }
 
 // Sigmoid function ranging from 0 to 1.
-aReal tfksigmoid (aReal arg) {
+aReal tfksigmoid(aReal arg) {
   // Branch is for numerical stability.
   if (arg > 0.0) {
     return 1.0/(1+exp(-1.0*arg));
@@ -50,9 +51,8 @@ aReal tfksigmoid (aReal arg) {
   }
 }
 
-aMatrix tfksigmoid (aMatrix arg) {
+aMatrix tfksigmoid(aMatrix arg) {
   return tfksig(arg);
 }
-
 
 

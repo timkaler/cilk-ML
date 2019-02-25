@@ -1,3 +1,4 @@
+// Copyright 2019 Tim Kaler MIT License
 
 #include <adept.h>
 #include <adept_arrays.h>
@@ -15,9 +16,9 @@ aMatrix tfksig(aMatrix arg);
 
 aMatrix tfksoftmax(aMatrix arg, aReal p);
 
-aReal tfksigmoid (aReal arg);
-aMatrix tfksigmoid (aMatrix arg);
+aReal tfksigmoid(aReal arg);
+aMatrix tfksigmoid(aMatrix arg);
 
 aMatrix mmul(aMatrix weights, aMatrix input);
 
-#endif
+#endif  // CILKML_ACTIVATIONS_H
