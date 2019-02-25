@@ -6,7 +6,12 @@
 #ifndef CILKML_OPTIMIZATION_H
 #define CILKML_OPTIMIZATION_H
 
-using namespace adept;
+using adept::Real;
+using adept::aReal;
+using adept::Matrix;
+using adept::aMatrix;
+using adept::Vector;
+using adept::aVector;
 
 extern double PARAM_ADAM_B1;
 extern double PARAM_ADAM_B2;
@@ -27,6 +32,6 @@ void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* 
 
 void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, double* old,
                                 double* gradients, double* momentums, double* velocities,
-                                double mul, int t);
+                                double mul, double lr, int t);
 
 #endif  // CILKML_OPTIMIZATION_H

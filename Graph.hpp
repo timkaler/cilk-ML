@@ -1,12 +1,21 @@
-// Copyright 2019 Tim Kaler MIT License
-#include <adept_arrays.h>
+// Copyright 2018 Tim Kaler MIT License
+
 #include <random>
+#include <adept.h>
+#include <adept_arrays.h>
+
 #include <map>
 #include <utility>
 #include <vector>
+
 #include "./activations.hpp"
 
-using namespace adept;
+using adept::Real;
+using adept::aReal;
+using adept::Matrix;
+using adept::aMatrix;
+using adept::Vector;
+using adept::aVector;
 
 #ifndef GRAPH_H_
 #define GRAPH_H_
@@ -36,6 +45,5 @@ class Graph {
     void setup_embeddings(std::vector<int> embedding_dim_list);
     void generate_random_initial_embeddings();
 };
-
 
 #endif  // GRAPH_H_

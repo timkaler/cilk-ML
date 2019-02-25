@@ -6,7 +6,12 @@
 #ifndef CILKML_ACTIVATIONS_H
 #define CILKML_ACTIVATIONS_H
 
-using namespace adept;
+using adept::Real;
+using adept::aReal;
+using adept::Matrix;
+using adept::aMatrix;
+using adept::Vector;
+using adept::aVector;
 
 aReal crossEntropy(aMatrix yHat, aMatrix y);
 

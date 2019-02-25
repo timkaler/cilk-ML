@@ -4,14 +4,21 @@
 #include <adept_arrays.h>
 #include "./activations.hpp"
 
-using namespace adept;
+using adept::Real;
+using adept::aReal;
+using adept::Matrix;
+using adept::aMatrix;
+using adept::Vector;
+using adept::aVector;
 
+// Requires a softmax input --- i.e. all coordinates of yHat, y should be in (0,1)
+// For numerical stability, we compute log(x) as log(x + epsilon) where epsilon = 1e-8.
 aReal crossEntropy(aMatrix yHat, aMatrix y) {
   aReal loss_sum = 0.0;
   aReal n = y.dimensions()[0]*1.0*y.dimensions()[1];
   for (int i = 0; i < y.dimensions()[0]; i++) {
     for (int j = 0; j < y.dimensions()[1]; j++) {
-      loss_sum += -1.0*y[i][j]*log(yHat[i][j]) - (1.0-y[i][j])*log(1-yHat[i][j]);
+      loss_sum += -1.0*y[i][j]*log(yHat[i][j]+1e-8) - (1.0-y[i][j])*log(1-yHat[i][j] + 1e-8);
     }
   }
   return loss_sum/n;

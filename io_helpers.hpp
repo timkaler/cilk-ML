@@ -7,7 +7,10 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+using std::string;
+using std::vector;
+using std::pair;
+using std::ios;
 
 std::vector<std::string> split(const std::string& str, const std::string& delim) {
     std::vector<std::string> tokens;

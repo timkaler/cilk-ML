@@ -21,8 +21,14 @@
 
 // #define TFK_ADEPT_SERIAL
 
-using namespace adept;
-using namespace std;
+using adept::Real;
+using adept::aReal;
+using adept::Matrix;
+using adept::aMatrix;
+using adept::Vector;
+using adept::aVector;
+
+using std::vector;
 
 std::default_random_engine generator(44);
 
@@ -72,7 +78,7 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
         results[k-1][results[k-1].dimensions()[0]-1][0] = 1.0;
         results[k] = tfksig(weights[k]**results[k-1]);
       }
-      aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 0.5);
+      aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 1.0);
 
       int argmax = 0;
       double argmaxvalue = mat_prediction[0][0].value();
@@ -133,7 +139,7 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
 
 
 void learn_connect4() {
-  using namespace adept;
+  using adept::Stack;
 
   Stack stack;                           // Object to store differential statements
 
@@ -147,17 +153,14 @@ void learn_connect4() {
 
   std::vector<aMatrix> weight_list;
 
-  weight_list.push_back(aMatrix(43*2, 43));  // 43 x 1
-  weight_list.push_back(aMatrix(43*2, 43*2));  // 43 x 1
-  weight_list.push_back(aMatrix(43*2, 43*2));  // 43 x 1
-  weight_list.push_back(aMatrix(43*2, 43*2));  // 43 x 1
-  weight_list.push_back(aMatrix(43*2, 43*2));  // 43 x 1
-  weight_list.push_back(aMatrix(3, 43*2));  // 3 x 1
+  weight_list.push_back(aMatrix(43, 43));  // 43 x 1
+  weight_list.push_back(aMatrix(43, 43));  // 43 x 1
+  weight_list.push_back(aMatrix(3, 43));  // 3 x 1
 
 
   // Initialize the weights.
   std::default_random_engine generator(1000);
-  std::uniform_real_distribution<double> distribution(0.5, 8.0);
+  std::uniform_real_distribution<double> distribution(0.0, 1.0);
   for (int i = 0; i < weight_list.size(); i++) {
     for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
@@ -179,7 +182,7 @@ void learn_connect4() {
 
   double learning_rate = 0.001;
 
-  int NUM_ITERS = 1001;
+  int NUM_ITERS = 1000000;
 
   for (int iter = 0; iter < NUM_ITERS; iter++) {
     set_values(weight_list, weights_raw);
@@ -201,7 +204,7 @@ void learn_connect4() {
     double test_set_loss = 0.0;
     aReal loss;
 
-    if (iter%100 == 0) {
+    if (iter%200 == 0) {
       stack.pause_recording();
       loss = compute_connect(weight_list, data, labels, &accuracy, &test_set_loss, false);
       stack.continue_recording();
@@ -211,11 +214,17 @@ void learn_connect4() {
       loss.set_gradient(1.0);
       stack.reverse();
       read_gradients(weight_list, gradients);
+
+      if (std::isnan(loss.value())) {
+        std::cout << std::endl << std::endl << "Got nan, doing reset " << std::endl << std::endl;
+        store_values_into_old(weight_list, weights_raw_old, weights_raw);  // move old into raw.
+        continue;
+      }
     }
 
     std::cout.precision(9);
     std::cout.setf(ios::fixed, ios::floatfield);
-    if (iter % 100 == 0) {
+    if (iter % 200 == 0) {
       std::cout << std::endl;
       std::cout << "loss:" << loss.value() << ",\t lr: " << learning_rate <<
           "\t accuracy: " << accuracy << "% \t Test set loss: " << test_set_loss <<
@@ -231,7 +240,6 @@ void learn_connect4() {
     if (norm < 1.0) norm = 1.0;
 
     store_values_into_old(weight_list, weights_raw, weights_raw_old);
-
 
 
     #ifdef LINE_SEARCH
@@ -261,7 +269,7 @@ void learn_connect4() {
     #endif
 
     apply_gradient_update_ADAM(weight_list, weights_raw, weights_raw_old, gradients, momentums,
-                               velocities, learning_rate, iter);
+                               velocities, 1.0, learning_rate, iter);
   }
 }
 

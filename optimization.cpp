@@ -77,7 +77,7 @@ void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* 
 
 void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, double* old,
                                 double* gradients, double* momentums, double* velocities,
-                                double mul, int t) {
+                                double mul, double lr, int t) {
   std::vector<int> sums;
   sums.push_back(0);
   for (int i = 0; i < weights.size()-1; i++) {
@@ -88,7 +88,7 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
     sums[i] += sums[i-1];
   }
 
-  double lr_t = mul * (sqrt(1.0-pow(PARAM_ADAM_B2, t)) / (1.0-pow(PARAM_ADAM_B1, t)));
+  double lr_t = lr * (sqrt(1.0-pow(PARAM_ADAM_B2, t)) / (1.0-pow(PARAM_ADAM_B1, t)));
 
 
   cilk_for (int i = 0; i < weights.size(); i++) {
@@ -96,7 +96,7 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
     cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
       cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
-        double g = gradients[_pcount + k];
+        double g = gradients[_pcount + k]*mul;
         double m = momentums[_pcount + k];
         double v = velocities[_pcount + k];
 
