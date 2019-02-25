@@ -1,0 +1,102 @@
+
+
+BUILD_DIR := build
+
+CC := $(CXX) #g++
+LD := $(CXX) #g++
+
+CFLAGS += -std=c++14 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include -I./cilk-adept/include/ -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE -DTFK_ONE_THREAD -DADEPT_RECORDING_PAUSABLE
+
+OPENCV_INCLUDE=$(OPENCV_ROOT)/include
+OPENCV_LIB=$(OPENCV_ROOT)/lib
+
+CFLAGS += -I$(OPENCV_INCLUDE)
+LDFLAGS = $(EXTRA_LDFLAGS) -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread -lcilkrts -lprofiler
+
+
+CFLAGS += -flto
+LDFLAGS += -flto -fuse-ld=gold
+
+
+
+ifdef PROFILE
+  CFLAGS += -DPROFILE
+  LDFLAGS += -lprofiler
+endif
+
+ifdef NOCACHE
+  CFLAGS += -DNOCACHE
+endif
+
+ifdef 3D
+  CFLAGS += -DALIGN3D
+endif
+
+ifdef SKIPOUTPUT
+  CFLAGS += -DSKIPOUTPUT
+endif
+
+ifdef LOGIMAGES
+  CFLAGS += -DLOGIMAGES
+endif
+
+ifndef INCLUDEHDF5
+  CFLAGS += -DSKIPHDF5
+endif
+
+ifdef MEMCHECK
+  CFLAGS += -DMEMCHECK
+endif
+
+ifndef INCLUDEJSON
+  CFLAGS += -DSKIPJSON
+endif
+
+ifeq ($(CILKSAN),1)
+CFLAGS += -fsanitize=cilk
+endif
+
+
+ifdef ASSEMBLY
+	CFLAGS += -S
+endif
+
+ifdef DEBUG
+	CFLAGS += -O0 -g
+else
+	CFLAGS += -DNDEBUG
+	CFLAGS += -O3 -g -mavx2 -m64 -march=native -fcilkplus
+	#-Ofast
+endif
+
+#LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_ml -ladept
+#LDFLAGS += -ladept
+LDFLAGS += -lblas
+ifdef ASSEMBLY
+	BINS = common.S align.S run.S
+else
+	BINS = run
+endif
+
+.PHONY:	all clean
+
+all: $(BINS)
+
+$(BUILD_DIR)/main.o: main.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/Graph.o: Graph.cpp Graph.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/optimization.o: optimization.cpp optimization.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/activations.o: activations.cpp activations.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+run: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o
+	$(LD) -o $@ $^ $(LDFLAGS)
+
+
+clean:
+	rm -f $(BINS) $(BUILD_DIR)/*.o
