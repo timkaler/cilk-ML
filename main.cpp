@@ -53,7 +53,6 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
 
   bool* correct = new bool[data.size()];
 
-
   #ifndef TFK_ADEPT_SERIAL
   tfk_init();
   tfk_reducer.sp_tree.open_P_node();
@@ -180,9 +179,9 @@ void learn_connect4() {
   read_values(weight_list, weights_raw);
   read_values(weight_list, weights_raw_old);
 
-  double learning_rate = 0.001;
+  double learning_rate = 0.1;
 
-  int NUM_ITERS = 1000000;
+  int NUM_ITERS = 2000;
 
   for (int iter = 0; iter < NUM_ITERS; iter++) {
     set_values(weight_list, weights_raw);
@@ -192,7 +191,7 @@ void learn_connect4() {
     std::vector<Matrix> batch_data;
     std::vector<Real> batch_labels;
     std::uniform_int_distribution<int> dis(0, (data.size()-1)/2);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       int _random = dis(generator);
       int random = 2*_random;
       batch_data.push_back(data[random]);
@@ -269,14 +268,206 @@ void learn_connect4() {
     #endif
 
     apply_gradient_update_ADAM(weight_list, weights_raw, weights_raw_old, gradients, momentums,
-                               velocities, 1.0, learning_rate, iter);
+                               velocities, 1.0, learning_rate, iter+1);
+  }
+}
+
+aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_label,
+                  double* accuracy, double* test_set_loss) {
+  tfk_reducer.sp_tree.open_S_node();
+  tfk_init();
+
+  std::vector<std::vector<aMatrix> > embeddings;
+  embeddings.resize(G.embedding_dim_list.size()-1);
+  aReal loss = 0;
+  for (int i = 0; i < G.embedding_dim_list.size()-1; i++) {
+    embeddings[i].resize(G.num_vertices);
+  }
+
+  for (int l = 0; l < G.embedding_dim_list.size()-1; l++) {
+    tfk_reducer.sp_tree.open_S_node();
+    tfk_init();
+    tfk_reducer.sp_tree.open_P_node();
+
+    bool last = (l == (G.embedding_dim_list.size()-2));
+
+    cilk_for (int i = 0; i < G.num_vertices; i += 10) {
+    //cilk_for (int i = 0; i < G.num_vertices; i++) {
+      int end = i+10;
+      if (end > G.num_vertices) end = G.num_vertices;
+      if (i == end) continue;
+      tfk_reducer.sp_tree.open_S_node();
+      tfk_init();
+      for (int j = i; j < end; j++) {
+        if (last) {
+          embeddings[l][j] = tfksoftmax(G.get_embedding(j,l, embeddings), 0.5);
+        } else {
+          embeddings[l][j] = G.get_embedding(j,l, embeddings);
+        }
+      }
+      //embeddings[l][i] = G.get_embedding(i,l, embeddings);
+      //tfk_init();
+      tfk_reducer.sp_tree.close_S_node();
+    }
+    tfk_reducer.sp_tree.close_P_node();
+    tfk_reducer.sp_tree.close_S_node();
+    tfk_init();
+  }
+  int total_predictions = 0;
+  int total_correct = 0;
+
+  for (int i = 0; i < G.num_vertices; i++) {
+    aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
+    //aMatrix yhat = tfksoftmax(yhat_, 0.5);
+
+    Matrix y(max_label,1);
+    double max_label_val = 0.0;
+    int max_label = 0;
+    for (int j = 0; j < y.dimensions()[0]; j++) {
+      y[j][0] = 0.0;
+      if (yhat[j][0].value() > max_label_val) {
+        max_label_val = yhat[j][0].value();
+        max_label = j;
+      }
+    }
+    y[department_labels[i]][0] = 1.0;
+    if (/*i%2==1*/!G.vertex_training[i]) {
+      if (max_label == department_labels[i]) total_correct++;
+      total_predictions++;
+      //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
+      aReal tmp = crossEntropy(yhat, y);
+      *test_set_loss += tmp.value();
+    } else if (G.vertex_training_active[i]) {
+      loss += crossEntropy(yhat,y);
+    }
+  }
+
+  tfk_reducer.sp_tree.close_S_node();
+
+  //tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+
+  *accuracy = ((100.0*total_correct)/(1.0*total_predictions));
+  return loss;
+}
+
+
+
+
+
+
+
+
+
+void learn_gcn() {
+  using adept::Stack;
+  tfk_init();
+
+  Stack stack;
+
+  Graph G(0);
+  edge_list_to_graph("datasets/email-Eu-core.txt", G);
+
+  std::map<int, int> department_labels;
+  std::vector<std::pair<int,int> > pairs;
+  read_pair_list("datasets/email-Eu-core-department-labels.txt", pairs);
+  int max_label = 0;
+  for (int i = 0; i < pairs.size(); i++) {
+    department_labels[pairs[i].first] = pairs[i].second;
+    if (pairs[i].second > max_label) max_label = pairs[i].second;
+  }
+  max_label = max_label + 1;
+  G.max_label = max_label;
+
+  std::vector<int> counts(max_label+1);
+  for (int i = 0; i < pairs.size(); i++) {
+    counts[pairs[i].second]++;
+  }
+
+
+  std::vector<int> _embedding_dim_list;
+  _embedding_dim_list.push_back(64);
+  _embedding_dim_list.push_back(128);
+  _embedding_dim_list.push_back(128);
+  _embedding_dim_list.push_back(128);
+  _embedding_dim_list.push_back(max_label);
+
+
+  G.setup_embeddings(_embedding_dim_list);
+  G.generate_random_initial_embeddings();
+
+  std::vector<std::vector<aMatrix>*> weight_hyper_list;
+  weight_hyper_list.push_back(&G.weights);
+  weight_hyper_list.push_back(&G.skip_weights);
+
+  std::default_random_engine generator(1000);
+  std::uniform_real_distribution<double> distribution(0.0,1.0);
+
+  G.vertex_values.resize(G.num_vertices);
+  G.vertex_training.resize(G.num_vertices);
+  G.vertex_training_active.resize(G.num_vertices);
+
+  // Randomly divide into training and test set.
+  for (int i = 0; i < G.num_vertices; i++) {
+    G.vertex_values[i] = department_labels[i];
+    if (distribution(generator) < 0.5) {
+      G.vertex_training[i] = true;
+      G.vertex_training_active[i] = true;
+    } else {
+      G.vertex_training[i] = false;
+      G.vertex_training_active[i] = false;
+    }
+  }
+
+  double* weights_raw = allocate_weights(weight_hyper_list);
+  double* weights_raw_old = allocate_weights(weight_hyper_list);
+  double* gradients = allocate_weights(weight_hyper_list);
+  double* momentums = allocate_weights_zero(weight_hyper_list);
+  double* velocities = allocate_weights_zero(weight_hyper_list);
+
+  read_values(weight_hyper_list, weights_raw);
+  read_values(weight_hyper_list, weights_raw_old);
+
+  double learning_rate = 0.001;
+
+  for (int iter = 0; iter < 10000; iter++) {
+    set_values(weight_hyper_list, weights_raw);
+    stack.new_recording();
+    tfk_init();
+
+    double accuracy = 0.0;
+    double test_loss = 0.0;
+
+    aReal loss = compute_gcn(G, department_labels, max_label, &accuracy, &test_loss);
+
+    loss.set_gradient(1.0);
+    stack.reverse();
+    read_gradients(weight_hyper_list, gradients);
+
+    std::cout.precision(14);
+    std::cout.setf(ios::fixed, ios::floatfield);
+    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
+        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+        "\r" << std::flush;
+
+    store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
+
+
+    //double norm = compute_gradient_norm(weight_hyper_list, gradients);
+    //printf("gradient norm is %f\n", norm);
+    //if (norm < 1.0) norm = 1.0;
+    apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
+                               momentums, velocities, 1.0, learning_rate, iter+1);
+    //apply_gradient_update(weight_hyper_list, weights_raw, weights_raw_old, gradients,
+    //                      learning_rate/norm);
+
   }
 }
 
 
-int main(int argc, const char** argv) {
-  learn_connect4();
 
+int main(int argc, const char** argv) {
+  //learn_connect4();
+  learn_gcn();
   return 0;
 }
 

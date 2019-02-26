@@ -1,21 +1,19 @@
 // Copyright (c) 2019, Tim Kaler - MIT License
+
 #include <cilk/cilk.h>
 #include <cilk/reducer.h>
-#include <vector>
 #include <cilk-adept-headers/triple_vector_wl.h>
 #include <cilk-adept-headers/flat_hash_map.hpp>
+
+#include <vector>
+
 
 #ifndef SP_TREE_H
 #define SP_TREE_H
 
-
-
-
 class tfk_gradient_table {
   public:
     tfk_gradient_table* gradient_table;
-    //adept::Real* gradient_table_local;
-    //bool* gradient_table_local_active;
 
     ska::flat_hash_map<adept::uIndex, adept::Real> gradient_table_local;
 
@@ -40,7 +38,6 @@ class tfk_gradient_table {
 
 
 
-//template <typename T>
 class SP_Node {
   public:
   // 0 Root, 1 Serial, 2 Parallel, 3 Data which should have no children
@@ -53,39 +50,26 @@ class SP_Node {
   SP_Node* parent;
   std::vector<SP_Node*> children;
 
-  SP_Node(triple_vector_wl data_);
+  explicit SP_Node(triple_vector_wl data_);
   SP_Node(int type_, SP_Node* parent_);
 };
 
-//template <typename T>
 class SP_Tree {
+  struct Monoid: cilk::monoid_base<SP_Node*> {
+    static void reduce(SP_Node ** left, SP_Node ** right) {
+      if ((*right)->type != 0) printf("right type is not 0 error!\n");
 
-   struct Monoid: cilk::monoid_base<SP_Node*>
-   {
-     static void reduce (SP_Node ** left, SP_Node ** right) {
-       //if ((*left)->type == 0) printf("left type is 0 error!\n");
-       if ((*right)->type != 0) printf("right type is not 0 error!\n");
+      for (int i = 0; i < (*right)->children.size(); i++) {
+        (*left)->children.push_back((*right)->children[i]);
+      }
+    }
 
-       for (int i = 0; i < (*right)->children.size(); i++) {
-         (*left)->children.push_back((*right)->children[i]);
-       }
-     }
+    static void identity(SP_Node **p) {
+      *p = new SP_Node(0, NULL);
+    }
+  };
 
-     static void identity (SP_Node **p) {
-       *p = new SP_Node(0, NULL);
-       //p->type = 0;
-       //p->parent = NULL;
-       //p->children = std::vector<SP_Node*>();
-     }
-
-
-   };
-
-
-
-public:
-  //SP_Node* current_node = NULL;
-
+ public:
   cilk::reducer<Monoid> imp_;
 
   // init can happen at the root of the program, and upon a steal.
@@ -102,11 +86,10 @@ public:
   std::vector<triple_vector_wl*> flatten_to_array();
   void walk_tree_debug(SP_Node* n);
   void walk_tree_flatten(SP_Node* n, std::vector<triple_vector_wl*>& ret);
-  void walk_tree_prepare(SP_Node* n, triple_vector_wl* last_worker_trace, bool* last_worker_trace_init);
   void walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table, uint64_t n_gradients);
 
-  tfk_gradient_table* merge_gradient_table_list(std::vector<tfk_gradient_table*>& table_list, int start, int end);
-
+  tfk_gradient_table* merge_gradient_table_list(std::vector<tfk_gradient_table*>& table_list,
+                                                int start, int end);
 };
 
-#endif
+#endif  // SP_TREE_H

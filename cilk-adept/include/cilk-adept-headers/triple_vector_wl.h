@@ -1,3 +1,5 @@
+// Copyright 2019 Tim Kaler MIT License
+
 #ifndef TRIPLE_VECTOR_WL_H
 #define TRIPLE_VECTOR_WL_H
 
@@ -21,7 +23,7 @@ class triple_vector_wl {
     uint64_t steal_count;
 
     triple_vector_wl();
-    triple_vector_wl(bool do_init);
+    explicit triple_vector_wl(bool do_init);
 };
 
-#endif
+#endif  // TRIPLE_VECTOR_WL_H

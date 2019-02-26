@@ -1,10 +1,15 @@
+// Copyright 2019 Tim Kaler MIT License
+
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 #include <cilk/reducer.h>
 #include <cilk/reducer_list.h>
-#include <algorithm>
-
 #include <cilk-adept-headers/sp_tree.h>
+#include <cilk-adept-headers/triple_vector_wl.h>
+
+#include <algorithm>
+#include <vector>
+
 
 #ifndef TFK_ADEPT_PARALLEL
 #define TFK_ADEPT_PARALLEL
@@ -49,8 +54,8 @@ class wl_stacks {
 
     uint8_t buffer[4096];
 
-    wl_stacks ();
-    void init ();
+    wl_stacks();
+    void init();
     void ensure_gradient_registered_space(uint64_t size);
     void ensure_gradient_unregistered_space(uint64_t size);
     void ensure_statement_space(uint64_t size);
@@ -70,12 +75,9 @@ class wl_stacks {
 // space for worker-local stacks
 extern wl_stacks* worker_local_stacks;
 
-#include <cilk-adept-headers/triple_vector_wl.h>
 
 class tfkdiff {
   public:
-    //cilk::reducer_list_append<triple_vector_wl> stack_list;
-
     SP_Tree sp_tree;
 
     void get_tls_references();
@@ -87,5 +89,5 @@ class tfkdiff {
 
 extern tfkdiff tfk_reducer;
 
-#endif
+#endif  // TFK_ADEPT_PARALLEL
 

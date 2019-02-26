@@ -20,10 +20,32 @@ double* allocate_weights_zero(std::vector<aMatrix>& weights) {
   return (double*) calloc(_pcount, sizeof(double));
 }
 
+double* allocate_weights_zero(std::vector<std::vector<aMatrix>*>& hyper_weights) {
+  int _pcount = 0;
+  for (int h = 0; h < hyper_weights.size(); h++) {
+    std::vector<aMatrix>& weights = *(hyper_weights[h]);
+    for (int i = 0; i < weights.size(); i++) {
+      _pcount += weights[i].dimensions()[0]*weights[i].dimensions()[1];
+    }
+  }
+  return (double*) calloc(_pcount, sizeof(double));
+}
+
 double* allocate_weights(std::vector<aMatrix>& weights) {
   int _pcount = 0;
   for (int i = 0; i < weights.size(); i++) {
     _pcount += weights[i].dimensions()[0]*weights[i].dimensions()[1];
+  }
+  return (double*) malloc(_pcount*sizeof(double));
+}
+
+double* allocate_weights(std::vector<std::vector<aMatrix>*>& hyper_weights) {
+  int _pcount = 0;
+  for (int h = 0; h < hyper_weights.size(); h++) {
+    std::vector<aMatrix>& weights = *(hyper_weights[h]);
+    for (int i = 0; i < weights.size(); i++) {
+      _pcount += weights[i].dimensions()[0]*weights[i].dimensions()[1];
+    }
   }
   return (double*) malloc(_pcount*sizeof(double));
 }
@@ -51,6 +73,19 @@ void read_values(std::vector<aMatrix>& weights, double* total_params) {
   }
 }
 
+void read_values(std::vector<std::vector<aMatrix>*>& hyper_weights, double* total_params) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    read_values(*hyper_weights[i], total_params + rolling_sum);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
+    }
+  }
+}
+
+
+
 void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* old,
                            double* gradients, double mul) {
   std::vector<int> sums;
@@ -70,6 +105,19 @@ void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* 
       cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         curr[_pcount + k] = old[_pcount + k] - gradients[_pcount + k]*mul;
       }
+    }
+  }
+}
+
+void apply_gradient_update(std::vector<std::vector<aMatrix>*>& hyper_weights, double* curr,
+                           double* old, double* gradients, double mul) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    apply_gradient_update(*hyper_weights[i], curr + rolling_sum, old + rolling_sum,
+                          gradients + rolling_sum, mul);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
     }
   }
 }
@@ -113,6 +161,20 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
   }
 }
 
+void apply_gradient_update_ADAM(std::vector<std::vector<aMatrix>*>& hyper_weights, double* curr,
+                           double* old, double* gradients, double* momentums, double* velocities,
+                           double mul, double lr, int t) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    apply_gradient_update_ADAM(*hyper_weights[i], curr + rolling_sum, old + rolling_sum,
+                               gradients + rolling_sum, momentums + rolling_sum,
+                               velocities + rolling_sum, mul, lr, t);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
+    }
+  }
+}
 
 
 void store_values_into_old(std::vector<aMatrix>& weights, double* current, double* old) {
@@ -133,6 +195,18 @@ void store_values_into_old(std::vector<aMatrix>& weights, double* current, doubl
       cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         old[_pcount+k] = current[_pcount+k];
       }
+    }
+  }
+}
+
+void store_values_into_old(std::vector<std::vector<aMatrix>*>& hyper_weights, double* current,
+                           double* old) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    store_values_into_old(*hyper_weights[i], current + rolling_sum, old + rolling_sum);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
     }
   }
 }
@@ -161,6 +235,20 @@ double compute_gradient_norm(std::vector<aMatrix>& weights, double* total_params
   return sqrt(norm);
 }
 
+double compute_gradient_norm(std::vector<std::vector<aMatrix>*>& hyper_weights,
+                             double* total_params) {
+  int rolling_sum = 0;
+  double norm = 0.0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    norm += compute_gradient_norm(*hyper_weights[i], total_params + rolling_sum);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
+    }
+  }
+  return norm;
+}
+
 
 void read_gradients(std::vector<aMatrix>& weights, double* total_params) {
   std::vector<int> sums;
@@ -184,6 +272,18 @@ void read_gradients(std::vector<aMatrix>& weights, double* total_params) {
   }
 }
 
+void read_gradients(std::vector<std::vector<aMatrix>*>& hyper_weights,
+                    double* total_params) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    read_gradients(*hyper_weights[i], total_params + rolling_sum);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
+    }
+  }
+}
+
 
 void set_values(std::vector<aMatrix>& weights, double* total_params) {
   std::vector<int> sums;
@@ -203,6 +303,18 @@ void set_values(std::vector<aMatrix>& weights, double* total_params) {
       cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         weights[i][j][k].set_value(total_params[_pcount+k]);
       }
+    }
+  }
+}
+
+void set_values(std::vector<std::vector<aMatrix>*>& hyper_weights,
+                double* total_params) {
+  int rolling_sum = 0;
+  for (int i = 0; i < hyper_weights.size(); i++) {
+    set_values(*hyper_weights[i], total_params + rolling_sum);
+    for (int j = 0; j < hyper_weights[i]->size(); j++) {
+      rolling_sum += (*hyper_weights[i])[j].dimensions()[0] *
+                     (*hyper_weights[i])[j].dimensions()[1];
     }
   }
 }
