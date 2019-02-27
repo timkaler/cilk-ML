@@ -599,7 +599,8 @@ namespace adept {
 
 
     tfk_reducer.get_tls_references();
-    std::vector<triple_vector_wl> stacks = tfk_reducer.collect();
+    /*std::vector<triple_vector_wl> stacks =*/
+    tfk_reducer.collect();
 
 
     tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);

@@ -27,17 +27,22 @@ void SP_Tree::clear() {
   this->init();
 }
 
-
-
-
 void SP_Tree::add_D_node(triple_vector_wl data) {
   SP_Node* data_node = new SP_Node(data);
   SP_Node* current_node = imp_.view();
   current_node->children.push_back(data_node);
 }
 
+void SP_Tree::open_P_node(void* sync_id) {
+  SP_Node*& current_node = imp_.view();
+
+  SP_Node* new_node = new SP_Node(2, current_node, sync_id);
+  current_node->children.push_back(new_node);
+  current_node = new_node;
+}
 
 void SP_Tree::open_P_node() {
+  printf("DEBUG: Open P node should not be called right now without sync id\n");
   SP_Node*& current_node = imp_.view();
 
   if (current_node == NULL) printf("Error current node is null in open P node\n");
@@ -56,6 +61,32 @@ void SP_Tree::close_P_node() {
   SP_Node* parent = current_node->parent;
   current_node = parent;
 }
+
+void SP_Tree::sync_P_nodes(void* sync_id) {
+  SP_Node*& current_node = imp_.view();
+  if (current_node == NULL) printf("Error current node is null in close P node\n");
+
+  // we need to walk up the tree to get the outer-most-nested P node to close.
+  std::vector<SP_Node*> ancestors;
+
+  SP_Node* parent = current_node;
+
+  int num_closes_needed = 0;
+  int num_closes = 0;
+  while (parent != NULL) {
+    num_closes++;
+    if (parent->type == 2 && parent->sync_id == sync_id) {
+      parent->sync_id = NULL;
+      num_closes_needed = num_closes;
+    }
+    parent = parent->parent;
+  }
+
+  for (int i = 0; i < num_closes_needed; i++) {
+    close_P_node();
+  }
+}
+
 
 void SP_Tree::open_S_node() {
   SP_Node*& current_node = imp_.view();
@@ -235,25 +266,57 @@ void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_tabl
 
 
 
+void SP_Tree::walk_tree_debug(SP_Node* n, int nest_depth) {
 
-void SP_Tree::walk_tree_debug(SP_Node* n) {
+  for (int i = 0; i < nest_depth; i++) {
+    printf("  ");
+  }
+
+  nest_depth += 1;
+
   if (n->type == 1) {
-    printf("(S:");
+    printf("(S:\n");
   } else if (n->type == 2) {
-    printf("(P:");
+    printf("(P:\n");
   }
 
   // If its a data node it must be a terminal node.
   if (n->type == 3) {
-    printf("D");
+    printf("D\n");
     return;
   }
 
-
   for (int i = 0; i < n->children.size(); i++) {
-    walk_tree_debug(n->children[i]);
+    walk_tree_debug(n->children[i], nest_depth);
   }
-  printf(")");
+
+  for (int i = 0; i < nest_depth-1; i++) {
+    printf("  ");
+  }
+  printf(")\n");
+}
+
+
+void SP_Tree::walk_tree_debug(SP_Node* n) {
+  return walk_tree_debug(n, 0);
+
+  //if (n->type == 1) {
+  //  printf("(S:");
+  //} else if (n->type == 2) {
+  //  printf("(P:");
+  //}
+
+  //// If its a data node it must be a terminal node.
+  //if (n->type == 3) {
+  //  printf("D");
+  //  return;
+  //}
+
+
+  //for (int i = 0; i < n->children.size(); i++) {
+  //  walk_tree_debug(n->children[i]);
+  //}
+  //printf(")");
 }
 
 

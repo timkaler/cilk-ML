@@ -202,7 +202,8 @@ tfkdiff tfk_reducer;
   }
 
   void tfkdiff::clear() {
-    std::vector<triple_vector_wl> stacks = collect();
+    //std::vector<triple_vector_wl> stacks =
+    //collect();
 
     sp_tree.clear();  // clear the sp_tree.
 
@@ -217,8 +218,10 @@ tfkdiff tfk_reducer;
     get_tls_references();
   }
 
-  std::vector<triple_vector_wl> tfkdiff::collect() {
+  void tfkdiff::collect() {
     std::vector<triple_vector_wl*> ret = sp_tree.flatten_to_array();
+
+    if (ret.size()  == 0) return;
 
     std::vector<std::vector<std::pair<uint64_t, triple_vector_wl*> > >
         _wl_ret(__cilkrts_get_nworkers());
@@ -258,8 +261,7 @@ tfkdiff tfk_reducer;
             worker_local_stacks[wid].gradient_unregistered_arr_len;
       }
     }
-
-    return std::vector<triple_vector_wl>();
+    return;
   }
 
 

@@ -4,6 +4,7 @@
 #include <cilk/cilk_api.h>
 #include <cilk/reducer.h>
 #include <cilk/reducer_list.h>
+//#include <adept.h>
 #include <cilk-adept-headers/sp_tree.h>
 #include <cilk-adept-headers/triple_vector_wl.h>
 
@@ -83,7 +84,7 @@ class tfkdiff {
     void get_tls_references();
 
     void clear();
-    std::vector<triple_vector_wl> collect();
+    void collect();
     tfkdiff();
 };
 

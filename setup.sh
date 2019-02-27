@@ -2,7 +2,7 @@
 
 #NOTE(TFK): You'll need this if you use GCC.
 
-export TAPIR_PREFIX=/efs/tools/tapir-6/build
+export TAPIR_PREFIX=/efs/tools/tapir-csi/src/build
 
 export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
 
@@ -12,7 +12,7 @@ export OPENCV_ROOT=/efs/tools/OpenCV3
 
 export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH:/usr/local/lib
 export OMP_NUM_THREADS=1
-export EXTRA_CFLAGS="-fcilkplus -Wall" #-Werror"
+#export EXTRA_CFLAGS="-fcilkplus -Wall" #-Werror"
 
 export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 

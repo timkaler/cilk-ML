@@ -50,17 +50,25 @@ class SP_Node {
   SP_Node* parent;
   std::vector<SP_Node*> children;
 
+  void* sync_id;
+
   explicit SP_Node(triple_vector_wl data_);
   SP_Node(int type_, SP_Node* parent_);
+  SP_Node(int type_, SP_Node* parent_, void* sync_id);
 };
 
 class SP_Tree {
   struct Monoid: cilk::monoid_base<SP_Node*> {
-    static void reduce(SP_Node ** left, SP_Node ** right) {
-      if ((*right)->type != 0) printf("right type is not 0 error!\n");
+    static void reduce(SP_Node ** left, SP_Node ** right_) {
+      SP_Node* right = *right_;
+      while (right->type != 0 && right->parent != NULL) {
+        right = right->parent;
+      }
 
-      for (int i = 0; i < (*right)->children.size(); i++) {
-        (*left)->children.push_back((*right)->children[i]);
+      if (right->type != 0) printf("right type is not 0 error! %d\n", (right)->type);
+
+      for (int i = 0; i < (right)->children.size(); i++) {
+        (*left)->children.push_back((right)->children[i]);
       }
     }
 
@@ -78,13 +86,17 @@ class SP_Tree {
   void clear();
   SP_Node* get_root();
   void add_D_node(triple_vector_wl data);
-  void open_P_node();
-  void close_P_node();
   void open_S_node();
+  void open_P_node();
+  void open_P_node(void* sync_id);
+
   void close_S_node();
+  void close_P_node();
+  void sync_P_nodes(void* sync_id);
 
   std::vector<triple_vector_wl*> flatten_to_array();
   void walk_tree_debug(SP_Node* n);
+  void walk_tree_debug(SP_Node* n, int nest_depth);
   void walk_tree_flatten(SP_Node* n, std::vector<triple_vector_wl*>& ret);
   void walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table, uint64_t n_gradients);
 
