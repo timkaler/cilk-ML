@@ -600,8 +600,9 @@ namespace adept {
 
     tfk_reducer.get_tls_references();
     /*std::vector<triple_vector_wl> stacks =*/
-    tfk_reducer.collect();
 
+    tfk_reducer.sp_tree.set_recording(false);
+    tfk_reducer.collect();
 
     tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
     //my_gradient_table->gradient_table_local = gradient_;
@@ -609,6 +610,7 @@ namespace adept {
     //tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
     tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
 
+    tfk_reducer.sp_tree.set_recording(true);
 
     //#ifdef TFK_DEBUG_PRINTS
     //printf("the length of the stacks is %d\n", stacks.size());

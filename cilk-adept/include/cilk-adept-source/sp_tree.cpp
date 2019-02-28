@@ -15,6 +15,7 @@ void SP_Tree::init() {
   current_node->type = 1;
   current_node->parent = NULL;
   current_node->children = std::vector<SP_Node*>();
+  recording = true;
 }
 
 SP_Node* SP_Tree::get_root() {
@@ -28,12 +29,14 @@ void SP_Tree::clear() {
 }
 
 void SP_Tree::add_D_node(triple_vector_wl data) {
+  if (!recording) return;
   SP_Node* data_node = new SP_Node(data);
   SP_Node* current_node = imp_.view();
   current_node->children.push_back(data_node);
 }
 
 void SP_Tree::open_P_node(void* sync_id) {
+  if (!recording) return;
   SP_Node*& current_node = imp_.view();
 
   SP_Node* new_node = new SP_Node(2, current_node, sync_id);
@@ -42,6 +45,7 @@ void SP_Tree::open_P_node(void* sync_id) {
 }
 
 void SP_Tree::open_P_node() {
+  if (!recording) return;
   printf("DEBUG: Open P node should not be called right now without sync id\n");
   SP_Node*& current_node = imp_.view();
 
@@ -54,6 +58,7 @@ void SP_Tree::open_P_node() {
 }
 
 void SP_Tree::close_P_node() {
+  if (!recording) return;
   SP_Node*& current_node = imp_.view();
   if (current_node == NULL) printf("Error current node is null in close P node\n");
 
@@ -63,6 +68,7 @@ void SP_Tree::close_P_node() {
 }
 
 void SP_Tree::sync_P_nodes(void* sync_id) {
+  if (!recording) return;
   SP_Node*& current_node = imp_.view();
   if (current_node == NULL) printf("Error current node is null in close P node\n");
 
@@ -89,6 +95,7 @@ void SP_Tree::sync_P_nodes(void* sync_id) {
 
 
 void SP_Tree::open_S_node() {
+  if (!recording) return;
   SP_Node*& current_node = imp_.view();
   if (current_node == NULL) printf("Error current node is null in open S node\n");
   SP_Node* new_node = new SP_Node(1, current_node);
@@ -97,6 +104,7 @@ void SP_Tree::open_S_node() {
 }
 
 void SP_Tree::close_S_node() {
+  if (!recording) return;
   SP_Node*& current_node = imp_.view();
   if (current_node == NULL) printf("Error current node is null in close S node\n");
 
@@ -159,20 +167,30 @@ tfk_gradient_table* SP_Tree::merge_gradient_table_list(
   return my_gradient_table;
 }
 
+// need to disable recording when walking over the tree.
+void SP_Tree::set_recording(bool recording_) {
+  this->recording = recording_;
+}
+
 void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table,
                                 uint64_t n_gradients) {
+
   // If its a data node it must be a terminal node.
   if (n->type == 3) {
     // We are going to process one of the stacks.
     triple_vector_wl stack = n->data;
     if (stack.statement_stack_end == stack.statement_stack_start) return;
 
+
+    //int wid = __cilkrts_get_worker_number();
+
+
+
     for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
         const adept::Statement& statement =
             worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
         if (statement.index == -1) continue;
         int op_count = 0;
-
 
         adept::Real a = my_gradient_table->extract_value(statement.index);
 
@@ -207,6 +225,7 @@ void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_tabl
                  worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
              adept::uIndex operation_stack_index =
                  worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+
              my_gradient_table->accumulate(operation_stack_index, multiplier_test*a);
 
              #ifdef TFK_DEBUG_PRINTS

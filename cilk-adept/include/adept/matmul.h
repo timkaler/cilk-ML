@@ -99,6 +99,7 @@ namespace adept {
 	Index n = right.dimension(0);
 	const ExpressionSize<2>& left_offset = left.offset();
 	const ExpressionSize<1>& right_offset = right.offset();
+        //printf("inside a matmul\n");
 	for (Index i = 0; i < ans.dimension(0); ++i) {
 	  if (LIsActive) {
 	    active_stack()->push_derivative_dependence(left_index+i*left_offset[0], 
@@ -190,6 +191,22 @@ namespace adept {
 	  const ExpressionSize<2>& left_offset = left.offset();
 	  const ExpressionSize<2>& right_offset = right.offset();
 
+          //if (right.dimensions()[1] == 1 && ans.dimensions()[1] == 1) {
+          //  printf("inside a matmul left dims %d,%d; right dims %d,%d; ans dims %d,%d\n",
+          //         left.dimensions()[0], left.dimensions()[1], right.dimensions()[0],
+          //         right.dimensions()[1], ans.dimensions()[0], ans.dimensions()[1]);
+	  //  if (LIsActive) {
+          //    printf("left active\n");
+          //  }
+          //  if (RIsActive) {
+          //    printf("right is active\n");
+          //  }
+          //  printf("--\n");
+          //  // we are going to handle this as a special case.
+          //  // add a vector = matrix ** vector node.
+          //  //sp_tree.tfk_reducer.add_vmvD_node(left, right, ans);
+          //  //return ans;
+          //}
 	  for (Index i = 0; i < ans.dimension(0); ++i) {
 	    for (Index j = 0; j < ans.dimension(1); ++j) {
 	      if (LIsActive) {

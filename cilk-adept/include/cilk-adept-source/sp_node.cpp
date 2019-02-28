@@ -5,6 +5,23 @@
     type = 3;
   }
 
+
+  // nx1 = nxm ** mx1
+  // assumes nxm is static weight matrix.
+  //SP_Node::SP_Node(aMatrix& left, aMatrix& right, aMatrix& ans) {
+
+  //   /*
+  //     for each of n statements.
+
+  //      	for statement i
+  //      		
+
+
+  //   */
+
+  //}
+
+
   SP_Node::SP_Node(int type_, SP_Node* parent_) {
     if (type_ == 2) printf("DEBUG: This should not be called for P nodes.\n");
     type = type_;

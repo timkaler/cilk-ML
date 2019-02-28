@@ -17,12 +17,15 @@ class tfk_gradient_table {
 
     ska::flat_hash_map<adept::uIndex, adept::Real> gradient_table_local;
 
+
+    //adept::Real* gradient_table_local_dense;
+    //int64_t local_dense_start;
+    //int64_t local_dense_end;
+
     adept::uIndex* active_entries;
     int64_t n_active_entries;
 
-
     adept::Real* raw_gradient_table;
-
 
     tfk_gradient_table(uint64_t n_gradients, tfk_gradient_table* gradient_table_);
     tfk_gradient_table(uint64_t n_gradients, adept::Real* gradient_table_);
@@ -80,10 +83,13 @@ class SP_Tree {
  public:
   cilk::reducer<Monoid> imp_;
 
+  bool recording;
+
   // init can happen at the root of the program, and upon a steal.
   // Upon a steal: a continuation was stolen. Upon a sync the parent node ought to be a P node.
   void init();
   void clear();
+  void set_recording(bool recording_);
   SP_Node* get_root();
   void add_D_node(triple_vector_wl data);
   void open_S_node();

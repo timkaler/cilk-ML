@@ -5,6 +5,12 @@
 
     active_entries = NULL;
     n_active_entries = 0;
+
+    //gradient_table_local = ska::flat_hash_map<adept::uIndex, adept::Real>(size_hint);
+
+    //gradient_table_local_dense = NULL;
+    //local_dense_start = 0;
+    //local_dense_end = 0;
   }
 
 
@@ -14,9 +20,11 @@
 
     active_entries = NULL;
     n_active_entries = 0;
+
+    //gradient_table_local_dense = NULL;
+    //local_dense_start = 0;
+    //local_dense_end = 0;
   }
-
-
 
   tfk_gradient_table::~tfk_gradient_table() {
     if (active_entries != NULL) {
@@ -30,9 +38,11 @@
       return;
     }
 
+
     //if (gradient_table_local.find(index) == gradient_table_local.end()) {
     //  active_entries[n_active_entries++] = index;
     //}
+
     gradient_table_local[index] += val;
 
     //if (!gradient_table_local_active[index]) {
@@ -59,9 +69,11 @@
       //adept::Real a = gradient_table_local[index];
       //gradient_table_local[index] = 0.0;
       adept::Real a = gradient_table_local[index];
+      gradient_table_local[index] = 0.0;
       gradient_table_local.erase(index);
-      //gradient_table_local[index] = 0.0;
-      return a;
+
+      // NOTE(TFK): Technically we need to extract value from parent.
+      return a;// + gradient_table->extract_value(index);
     }
 
     int64_t tfk_gradient_table::get_n_active_entries() {
