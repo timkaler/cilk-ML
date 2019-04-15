@@ -73,7 +73,7 @@
       gradient_table_local.erase(index);
 
       // NOTE(TFK): Technically we need to extract value from parent.
-      return a;// + gradient_table->extract_value(index);
+      return a + gradient_table->extract_value(index);
     }
 
     int64_t tfk_gradient_table::get_n_active_entries() {

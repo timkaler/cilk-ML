@@ -146,7 +146,8 @@ tfk_gradient_table* SP_Tree::merge_gradient_table_list(
     adept::uIndex* active_entries_right = right->get_active_entries();
     int n_active_entries_right = right->get_n_active_entries();
     for (int i = 0; i < n_active_entries_right; i++) {
-      left->accumulate(active_entries_right[i], right->extract_value(active_entries_right[i]));
+      //left->accumulate(active_entries_right[i], right->extract_value(active_entries_right[i]));
+      left->accumulate(active_entries_right[i], right->gradient_table_local[active_entries_right[i]]);
     }
     return left;
   }
@@ -159,8 +160,10 @@ tfk_gradient_table* SP_Tree::merge_gradient_table_list(
     int64_t n_active_entries = gradient_table_list[j]->get_n_active_entries();
 
     for (int i = 0; i < n_active_entries; i++) {
+      //my_gradient_table->accumulate(active_entries[i],
+      //                              gradient_table_list[j]->extract_value(active_entries[i]));
       my_gradient_table->accumulate(active_entries[i],
-                                    gradient_table_list[j]->extract_value(active_entries[i]));
+                                    gradient_table_list[j]->gradient_table_local[active_entries[i]]);
     }
   }
 
@@ -172,14 +175,14 @@ void SP_Tree::set_recording(bool recording_) {
   this->recording = recording_;
 }
 
-void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table,
+tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table,
                                 uint64_t n_gradients) {
 
   // If its a data node it must be a terminal node.
   if (n->type == 3) {
     // We are going to process one of the stacks.
     triple_vector_wl stack = n->data;
-    if (stack.statement_stack_end == stack.statement_stack_start) return;
+    if (stack.statement_stack_end == stack.statement_stack_start) return my_gradient_table;
 
 
     //int wid = __cilkrts_get_worker_number();
@@ -239,15 +242,15 @@ void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_tabl
          }
        }
      }
-    return;
+    return my_gradient_table;
   }
 
   if (n->type == 1 || n->type == 0) {
     for (int i = n->children.size()-1; i >= 0; i--) {
       if (n->type == 0) {
-      walk_tree_process(n->children[i], my_gradient_table, n_gradients);
+      my_gradient_table = walk_tree_process(n->children[i], my_gradient_table, n_gradients);
       } else {
-      walk_tree_process(n->children[i], my_gradient_table, n_gradients);
+      my_gradient_table = walk_tree_process(n->children[i], my_gradient_table, n_gradients);
       }
     }
 
@@ -257,9 +260,10 @@ void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_tabl
       gradient_table_list.push_back(new tfk_gradient_table(n_gradients, my_gradient_table));
     }
 
+
     #pragma cilk grainsize 1
     cilk_for (int i = 0; i < n->children.size(); i++) {
-      walk_tree_process(n->children[i], gradient_table_list[i], n_gradients);
+      gradient_table_list[i] = walk_tree_process(n->children[i], gradient_table_list[i], n_gradients);
     }
 
     tfk_gradient_table* merged_table = merge_gradient_table_list(gradient_table_list, 0,
@@ -268,18 +272,61 @@ void SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_tabl
     adept::uIndex* active_entries = merged_table->get_active_entries();
     int64_t n_active_entries = merged_table->get_n_active_entries();
 
-    for (int i = 0; i < n_active_entries; i++) {
-      my_gradient_table->accumulate(active_entries[i],
-                                    merged_table->extract_value(active_entries[i]));
+
+    //adept::uIndex* my_active_entries = my_gradient_table->get_active_entries();
+    //int64_t my_n_active_entries = my_gradient_table->get_n_active_entries();
+
+    //if (my_n_active_entries == 0 && my_gradient_table->raw_gradient_table != NULL && false) {
+    //  //printf("my entries zero, others is %d\n", n_active_entries);
+    //  //merged_table->gradient_table = my_gradient_table->gradient_table;
+    //  //my_gradient_table->active_entries = NULL;
+    //  //my_gradient_table->gradient_table_local = merged_table->gradient_table_local;
+
+    //  for (int i = n->children.size()-1; i >= 0; i--) {
+    //      if (gradient_table_list[i] != merged_table) {
+    //        delete gradient_table_list[i];
+    //      }
+    //  }
+
+    //  //merged_table->gradient_table = my_gradient_table;
+    //  merged_table->n_active_entries = 0;
+    //  //merged_table->raw_gradient_table = my_gradient_table->raw_gradient_table;
+    //  //free(active_entries);
+    //  return merged_table;
+    //  //delete my_gradient_table;
+    //  //my_gradient_table = merged_table;
+    //  //my_gradient_table->active_entries = NULL;
+    //  //return my_gradient_table;
+    //} /*else {
+    //  my_gradient_table->n_active_entries = 0;
+    //}*/
+
+    if (my_gradient_table->gradient_table_local.size() == 0 && my_gradient_table->raw_gradient_table == NULL) {
+      //my_gradient_table->gradient_table_local = merged_table->gradient_table_local;
+      merged_table->n_active_entries = 0;
+      free(merged_table->active_entries);
+      merged_table->gradient_table = my_gradient_table;
+        for (int i = n->children.size()-1; i >= 0; i--) {
+          if (gradient_table_list[i] != merged_table) {
+            delete gradient_table_list[i];
+          }
+        }
+      return merged_table;
+    } else {
+      for (int i = 0; i < n_active_entries; i++) {
+        my_gradient_table->accumulate(active_entries[i],
+                                      merged_table->gradient_table_local[active_entries[i]]);
+      }
     }
 
     for (int i = n->children.size()-1; i >= 0; i--) {
       delete gradient_table_list[i];
     }
-
+    return my_gradient_table; 
   } else {
     printf("Odd error with node types in SP_Tree during reverse-pass processing.\n");
   }
+  return my_gradient_table;
 }
 
 

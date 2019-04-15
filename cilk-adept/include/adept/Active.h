@@ -124,7 +124,6 @@ namespace adept {
     }
 
     template <typename AType>
-    __attribute__((const))
     Active(const Active<AType>& rhs) 
       : val_(0.0), gradient_index_(ADEPT_ACTIVE_STACK->register_gradient())
     {

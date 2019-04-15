@@ -9,10 +9,13 @@ export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
 export CXX=clang++
 export OPENCV_ROOT=/efs/tools/OpenCV3
 
-
 export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH:/usr/local/lib
 export OMP_NUM_THREADS=1
 #export EXTRA_CFLAGS="-fcilkplus -Wall" #-Werror"
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/home/tfk/archive-linux/lib/:/usr/lib/x86_64-linux-gnu/
+
+#export CPATH=$CPATH:/efs/home/tfk/archive-linux/lib
 
 export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 

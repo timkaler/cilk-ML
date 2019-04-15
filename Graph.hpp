@@ -43,6 +43,7 @@ class Graph {
     aMatrix get_embedding(int vid, int layer, std::vector<std::vector<aMatrix> >& embeddings);
     aMatrix get_embedding(int vid, std::vector<std::vector<aMatrix> >& embeddings);
     void setup_embeddings(std::vector<int> embedding_dim_list);
+    void set_initial_embeddings(std::vector<Matrix>& initial_embeddings);
     void generate_random_initial_embeddings();
 };
 

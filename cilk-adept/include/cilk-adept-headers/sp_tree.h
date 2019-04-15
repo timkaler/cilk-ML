@@ -104,7 +104,7 @@ class SP_Tree {
   void walk_tree_debug(SP_Node* n);
   void walk_tree_debug(SP_Node* n, int nest_depth);
   void walk_tree_flatten(SP_Node* n, std::vector<triple_vector_wl*>& ret);
-  void walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table, uint64_t n_gradients);
+  tfk_gradient_table* walk_tree_process(SP_Node* n, tfk_gradient_table* my_gradient_table, uint64_t n_gradients);
 
   tfk_gradient_table* merge_gradient_table_list(std::vector<tfk_gradient_table*>& table_list,
                                                 int start, int end);

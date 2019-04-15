@@ -825,7 +825,9 @@ namespace adept {
     std::vector<Real> gradient_;
 #else
     // Data are stored as dynamically allocated arrays
+    public:
     Real* __restrict gradient_;
+    protected:
 #endif
     // For Jacobians we process multiple rows/columns at once so need
     // what is essentially a 2D array
@@ -842,9 +844,11 @@ namespace adept {
     uIndex i_gradient_;             // Current number of gradients
     uIndex n_allocated_gradients_;  // Number of allocated gradients
     uIndex max_gradient_;           // Max number of gradients to store
+    public:
     uIndex n_gradients_registered_; // Number of gradients registered
     bool gradients_initialized_;    // Have the gradients been
 				    // initialized?
+    protected:
     bool is_thread_unsafe_;
     bool is_recording_;
     bool have_openmp_;              // true if this header file

@@ -64,6 +64,9 @@ void Graph::generate_random_initial_embeddings() {
   }
 }
 
+void Graph::set_initial_embeddings(std::vector<Matrix>& initial_embeddings) {
+  vertex_first_embeddings = initial_embeddings;
+}
 
 aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix> >& embeddings) {
   if (layer == 0) {
@@ -82,15 +85,15 @@ aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix
 
     // NOTE(TFK): This is a bit of a nonsense way to implement a bias term,
     //              remnant of a hacky experiment.
-    aMatrix bias_(embedding_dim_list[layer], 1);
-    for (int i = 0; i < bias_.dimensions()[0]; i++) {
-      for (int j = 0; j < bias_.dimensions()[1]; j++) {
-        bias_[i][j] = 0.0;
-      }
-    }
-    bias_[0][0] = 1.0;
+    //aMatrix bias_(embedding_dim_list[layer], 1);
+    //for (int i = 0; i < bias_.dimensions()[0]; i++) {
+    //  for (int j = 0; j < bias_.dimensions()[1]; j++) {
+    //    bias_[i][j] = 0.0;
+    //  }
+    //}
+    //bias_[0][0] = 1.0;
 
-    ret = mmul(skip_weights[layer], bias_);
+    ret = mmul(skip_weights[layer], embeddings[layer-1][vid]);
 
     for (int i = 0; i < adj[vid].size(); i++) {
       if (adj[vid][i] == vid) continue;
