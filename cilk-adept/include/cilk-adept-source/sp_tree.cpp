@@ -4,6 +4,9 @@
 #include <cilk-adept-headers/sp_tree.h>
 
 #include <cilk-adept-source/gradient_table.cpp>
+
+#include <cilk-adept-source/tfk_shadowmem.cpp>
+
 #include <cilk-adept-source/sp_node.cpp>
 
 #include <vector>

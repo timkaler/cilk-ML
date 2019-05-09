@@ -27,12 +27,12 @@
 
 
 
-int sched_yield(void) {
-for (int i=0; i< 4000; i++) _mm_pause(); //usleep(1);
-
-return 0;
-
-}
+//int sched_yield(void) {
+//for (int i=0; i< 4000; i++) _mm_pause(); //usleep(1);
+//
+//return 0;
+//
+//}
 
 
 
@@ -1395,7 +1395,7 @@ void learn_connect4() {
     std::uniform_int_distribution<int> dis(0, (data.size()-1)/2);
     std::vector<Matrix> batch_data;
     std::vector<Real> batch_labels;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
       int _random = dis(generator);
       int random = 2*_random;
       batch_data.push_back(data[random]);
@@ -2242,7 +2242,7 @@ void test_matvec() {
   }
 
 
-  for (int iter = 0; iter < 400000; iter++) {
+  for (int iter = 0; iter < 50000; iter++) {
     stack.new_recording();
     aMatrix result = matrix_weights**vector;
     aMatrix diff = vector - result;
@@ -2253,7 +2253,7 @@ void test_matvec() {
     stack.pause_recording();
     for (int i = 0; i < 100; i++) {
       for (int j = 0; j < 100; j++) {
-        matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.0000001;
+        matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.0001;
       }
     }
     stack.continue_recording();
@@ -2268,45 +2268,44 @@ void test_matvec_slow() {
   for (int i = 0; i < 100; i++) {
     for (int j = 0; j < 100; j++) {
       //matrix_weights(i,j) = 1.0*(i*100 + j) + 1.0;
-      matrix_weights(i,j) = 1.0*((i + j)%2) + 1e-20;
+      matrix_weights(i,j) = 1.0*((i + j)%2) + 1.0;
     }
   }
 
   aMatrix vector(100,1);
   for (int i = 0; i < 100; i++) {
-    vector(i,1) = (1.0*i+1.0)/100;
+    vector(i,0) = (1.0*i+1.0)/100;
   }
 
 
 
-  for (int iter = 0; iter < 200000; iter++) {
+  for (int iter = 0; iter < 50000; iter++) {
     stack.new_recording();
-
     aMatrix result = aMatrix(100,1);
     for (int i = 0; i < 100; i++) {
-        result(i,1) = 0.0;
+        result(i,0) = 0.0;
       for (int j = 0; j < 100; j++) {
-        result(i,1) += matrix_weights(i,j) * vector(j,1);
+        result(i,0) += matrix_weights(i,j) * vector(j,0);
       }
     }
 
     //aMatrix result = matrix_weights**vector;
     aReal loss = 0.0;
     for (int i = 0; i < 100; i++) {
-      loss += (vector(i,1) - result(i,1))*(vector(i,1) - result(i,1));
+      loss += (vector(i,0) - result(i,0))*(vector(i,0) - result(i,0));
     }
     //aMatrix diff = vector - result;
     //aReal loss = sum(diff*diff);
     printf("loss is %f\n", loss.value());
-    //loss.set_gradient(1.0);
-    //stack.reverse();
-    //stack.pause_recording();
-    //for (int i = 0; i < 100; i++) {
-    //  for (int j = 0; j < 100; j++) {
-    //    matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.001;
-    //  }
-    //}
-    //stack.continue_recording();
+    loss.set_gradient(1.0);
+    stack.reverse();
+    stack.pause_recording();
+    for (int i = 0; i < 100; i++) {
+      for (int j = 0; j < 100; j++) {
+        matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.0001;
+      }
+    }
+    stack.continue_recording();
 
   }
 
@@ -2314,10 +2313,11 @@ void test_matvec_slow() {
 
 
 int main(int argc, const char** argv) {
-  //learn_connect4();
+  learn_connect4();
   //learn_gcn_pubmed();
   //test_matvec();
-  test_matvec();
+  //test_matvec_slow();
+  //test_matvec();
 
   //learn_mnist_lenet5();
   //test_bug();

@@ -17,7 +17,7 @@ CSIFLAGS_OPT := -fcsi=aftertapirloops
 
 
 
-CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-arithmetic=false
+CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
 
 
 # for IR testing
@@ -84,7 +84,7 @@ ifdef DEBUG
 else
 	CFLAGS += -DNDEBUG
 	#CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
-	CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
+	CFLAGS += -O3 -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
 	#-Ofast
 endif
 
