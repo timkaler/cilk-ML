@@ -12,8 +12,7 @@ void __csi_init() {}
         const instrumentation_counts_t counts) {}
 
 
-void __csi_task(const csi_id_t task_id, const csi_id_t detach_id,
-                const operand_id_t* operand_ids, int32_t num_operands) {
+void __csi_task(const csi_id_t task_id, const csi_id_t detach_id) {
   //std::cout << "Started task\n";
   tfk_reducer.sp_tree.open_S_node();
   tfk_init();
