@@ -16,8 +16,9 @@ CSIFLAGS_OPT := -fcsi=aftertapirloops
 #CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-config-mode -mllvm "whitelist" -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-arithmetic=false
 
 
+CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
 
-CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
+#CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
 
 
 # for IR testing
@@ -29,7 +30,7 @@ OPENCV_INCLUDE=$(OPENCV_ROOT)/include
 OPENCV_LIB=$(OPENCV_ROOT)/lib
 
 CFLAGS += -I$(OPENCV_INCLUDE)
-LDFLAGS = -ldl $(EXTRA_LDFLAGS) -lcilkrts -lprofiler -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread 
+LDFLAGS = -ldl $(EXTRA_LDFLAGS) -O3 -lcilkrts -lprofiler -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread 
 
 
 #CFLAGS += -flto
@@ -80,9 +81,9 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O1 -g
+	CFLAGS += -O3 -g
 else
-	CFLAGS += -DNDEBUG
+	CFLAGS += -DDEBUG
 	#CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
 	CFLAGS += -O3 -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
 	#-Ofast

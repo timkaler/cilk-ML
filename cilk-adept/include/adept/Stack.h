@@ -21,6 +21,7 @@
 #ifndef AdeptStack_H
 #define AdeptStack_H 1
 
+static int64_t GINDEX_HWM = 0;
 #include <cmath>
 #include <iostream>
 #include <typeinfo>
@@ -560,11 +561,17 @@ namespace adept {
       // that were used in a recording.  Thus when deleting the
       // recording we need to set max_gradient_ to i_gradient_ or a
       // little more.
-      //max_gradient_ = i_gradient_+1;
-      max_gradient_ = max_gradient_+1;
-      //n_gradients_registered_ = max_gradient_+1;
-      //n_gradients_registered_ = max_gradient_+1;
-      n_gradients_registered_ = max_gradient_;
+      if (GINDEX_HWM == 0 || true) {
+        max_gradient_ = max_gradient_+1;
+        //max_gradient_ = max_gradient_+1;
+        //n_gradients_registered_ = max_gradient_+1;
+        //n_gradients_registered_ = max_gradient_+1;
+        n_gradients_registered_ = max_gradient_;//max_gradient_;
+        GINDEX_HWM = n_gradients_registered_+1;
+      } else {
+        max_gradient_ = GINDEX_HWM;
+        n_gradients_registered_ = max_gradient_+1;//max_gradient_;
+      }
       // Insert a null statement
       //    std::cerr << "Inserting a null statement; when is this needed?\n";
       push_lhs(-1);

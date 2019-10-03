@@ -83,6 +83,7 @@ Matrix parse_mnist_image(std::ifstream &ifs,
   for (int i = 0; i < width*height; i++) {
       dst[i][0] = 0.0;
   }
+  //dst[width*height][0] = 1.0; // bias
 
   //dst.resize(width * height, scale_min);
 

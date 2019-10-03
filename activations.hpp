@@ -14,6 +14,7 @@ using adept::Vector;
 using adept::aVector;
 
 aReal crossEntropy(aMatrix yHat, aMatrix y);
+aReal logitCrossEntropy(aMatrix yHat, aMatrix y);
 
 aReal tfksig(aReal arg);
 aVector tfksig(aVector arg);

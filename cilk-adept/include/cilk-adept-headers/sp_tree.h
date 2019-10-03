@@ -24,6 +24,11 @@ class tfk_gradient_table {
 
     adept::uIndex* active_entries;
     int64_t n_active_entries;
+    int64_t n_gradients;
+    int64_t n_operations_done;
+
+
+    adept::Real* dense_rep;
 
     adept::Real* raw_gradient_table;
 
@@ -36,6 +41,7 @@ class tfk_gradient_table {
     adept::Real extract_value(adept::uIndex index);
     int64_t get_n_active_entries();
     adept::uIndex* get_active_entries();
+    void merge_into_me(tfk_gradient_table* other);
 };
 
 
@@ -51,12 +57,13 @@ class SP_Node {
 
   // Only initialized if it's an S or P node.
   SP_Node* parent;
-  std::vector<SP_Node*> children;
+  std::vector<SP_Node*>* children;
 
   void* sync_id;
 
   explicit SP_Node(triple_vector_wl data_);
   SP_Node(int type_, SP_Node* parent_);
+  ~SP_Node();
   SP_Node(int type_, SP_Node* parent_, void* sync_id);
 };
 
@@ -64,14 +71,16 @@ class SP_Tree {
   struct Monoid: cilk::monoid_base<SP_Node*> {
     static void reduce(SP_Node ** left, SP_Node ** right_) {
       SP_Node* right = *right_;
+      if (right == NULL) printf("The right type is NULL\n");
       while (right->type != 0 && right->parent != NULL) {
+        //delete right;
         right = right->parent;
       }
 
       if (right->type != 0) printf("right type is not 0 error! %d\n", (right)->type);
 
-      for (int i = 0; i < (right)->children.size(); i++) {
-        (*left)->children.push_back((right)->children[i]);
+      for (int i = 0; i < (right)->children->size(); i++) {
+        (*left)->children->push_back((*(right->children))[i]);
       }
     }
 

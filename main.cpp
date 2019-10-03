@@ -1,9 +1,12 @@
 // Copyright 2019 Tim Kaler MIT License
 
-#include <adept_source.h>
-#include <adept_arrays.h>
+
 #include <cilk/cilk.h>
 #include <cilk/reducer_opadd.h>
+//#include <cilk/cilk_stub.h>
+
+#include <adept_source.h>
+#include <adept_arrays.h>
 #include <random>
 
 #include <iostream>
@@ -56,6 +59,7 @@ std::default_random_engine generator(44);
 
 void tfk_init() {
   thread_local_worker_id = __cilkrts_get_worker_number();
+  //printf("thread local worker id is %d\n", thread_local_worker_id);
   tfk_reducer.get_tls_references();
 }
 
@@ -93,6 +97,7 @@ aMatrix lenet_pool2_maxpool(aMatrix& output3) {
     // pooling layer 2
     //   aMatrix pool2_weights(5)
     aMatrix _output4(16*5*5+1, 1);
+    _output4(16*5*5, 0) = 1.0;
     for (int x = 0; x < 10; x += 2) {
       for (int y = 0; y < 10; y += 2) {
 
@@ -561,8 +566,8 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     }
 
 
-    for (int x = 0; x < 28; x++) {
-      for (int y = 0; y < 28; y++) {
+    cilk_for (int x = 0; x < 28; x++) {
+      cilk_for (int y = 0; y < 28; y++) {
         for (int k = 0; k < 6; k++) {
           output(k,x*28+y) += conv1_weights(k,25); // bias.
         }
@@ -608,8 +613,8 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     //   aMatrix pool1_weights(5)
     aMatrix _output2(6,14*14);
 
-    for (int x = 0; x < 28; x += 2) {
-      for (int y = 0; y < 28; y += 2) {
+    cilk_for (int x = 0; x < 28; x += 2) {
+      cilk_for (int y = 0; y < 28; y += 2) {
         for (int k = 0; k < 6; k++) {
           _output2(k,(x/2)*14+(y/2)) = pool1_weights(k,4); // bias.
         }
@@ -1184,7 +1189,7 @@ aReal compute_mnist_lenet5(std::vector<aMatrix>& weights, std::vector<Matrix>& d
   delete[] correct;
   *accuracy = (100.0*ncorrect)/total;
 
-  return loss;
+  return loss/data.size();
 }
 
 
@@ -1199,20 +1204,34 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
   aReal* losses = new aReal[data.size()];
 
   cilk_for (int j = 0; j < data.size(); j++) {
+  //cilk_for (int _j = 0; _j < data.size(); _j += 10) {
+    //int j_start = _j; 
+    //int j_end = j_start + 10;
+    //if (j_end > data.size()) j_end = data.size();
+    //for (int j = j_start; j < j_end; j++) { 
 
     losses[j] = 0.0;
 
-    std::vector<aMatrix> results = std::vector<aMatrix>(weights.size());
+    std::vector<aMatrix> results = std::vector<aMatrix>(weights.size()-1);
 
-
+    //data[j][data[j].dimensions()[0]-1][0] = 1.0;
+    aMatrix& biases = weights[weights.size()-1]; 
     results[0] = tfksig(weights[0]**data[j]);
 
-    //std::cout << data[j] << std::endl;
-    //exit(0); 
+    results[0] += biases[0][0];
 
-    for (int k = 1; k < weights.size(); k++) {
-      results[k-1][results[k-1].dimensions()[0]-1][0] = 1.0;
+    //std::cout << data[j] << std::endl;
+    //exit(0);
+
+
+    for (int k = 1; k < weights.size()-1; k++) {
+      //results[k-1][results[k-1].dimensions()[0]-1][0] = 1.0;
+      if (k != weights.size()-2) {
       results[k] = tfksig(weights[k]**results[k-1]);
+      } else {
+      results[k] = weights[k]**results[k-1];
+      }
+      results[k] += biases[k][0];
     }
     aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 1.0);
     //printf("dimensions %d, %d\n", mat_prediction.dimensions()[0], mat_prediction.dimensions()[1]);
@@ -1239,12 +1258,13 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     //std::cout << groundtruth << std::endl;
     //std::cout << mat_prediction << std::endl;
     //std::cout << std::endl;
-    losses[j] += crossEntropy(mat_prediction, groundtruth);
+    losses[j] += logitCrossEntropy(mat_prediction, groundtruth);
 
     correct[j] = false;
     if (argmax == labels[j]) {
       correct[j] = true;
     }
+    //}
   }
 
   int ncorrect = 0;
@@ -1267,7 +1287,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
   delete[] correct;
   *accuracy = (100.0*ncorrect)/total;
 
-  return loss;
+  return loss/data.size();
 }
 
 aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
@@ -1384,7 +1404,7 @@ void learn_connect4() {
   read_values(weight_list, weights_raw);
   read_values(weight_list, weights_raw_old);
 
-  double learning_rate = 0.001;
+  double learning_rate = 0.01;
 
   int NUM_ITERS = 20000;
 
@@ -1500,7 +1520,7 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
       if (i == end) continue;
       for (int j = i; j < end; j++) {
         if (last) {
-          embeddings[l][j] = tfksoftmax(G.get_embedding(j,l, embeddings), 0.5);
+          embeddings[l][j] = tfksoftmax(G.get_embedding(j,l, embeddings), 1.0);
         } else {
           embeddings[l][j] = G.get_embedding(j,l, embeddings);
         }
@@ -1815,7 +1835,7 @@ void learn_gcn_pubmed() {
 
   double learning_rate = 0.1;//0.01;
 
-  for (int iter = 0; iter < 30; iter++) {
+  for (int iter = 0; iter < 100; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -1884,6 +1904,8 @@ void learn_mnist_lenet5() {
     if (train_labels[i] < min_label) min_label = train_labels[i];
   }
 
+
+
   printf("dim1 is %d, dim2 is %d, max label %d, min label %d\n", dim1, dim2, max_label, min_label);
 
 
@@ -1933,7 +1955,7 @@ void learn_mnist_lenet5() {
 
 
 
-  for (int iter = 1; iter < 600*1; iter++) {
+  for (int iter = 1; iter < 60*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -2004,12 +2026,19 @@ void learn_mnist() {
   tiny_dnn::parse_mnist_labels(data_dir_path + "/train-labels.idx1-ubyte",
                                &train_labels);
   tiny_dnn::parse_mnist_images(data_dir_path + "/train-images.idx3-ubyte",
-                               &train_images, 0.0, 1.0, 2, 2);
+                               &train_images, 0.0, 1.0, 0, 0);
   tiny_dnn::parse_mnist_labels(data_dir_path + "/t10k-labels.idx1-ubyte",
                                &test_labels);
   tiny_dnn::parse_mnist_images(data_dir_path + "/t10k-images.idx3-ubyte",
-                               &test_images, 0.0, 1.0, 2, 2);
+                               &test_images, 0.0, 1.0, 0, 0);
 
+
+  //for (int i = 0; i < train_images.size(); i++) {
+  //  train_images[i] /= 28.0*28.0;
+  //}
+  //for (int i = 0; i < test_images.size(); i++) {
+  //  test_images[i] /= 28.0*28.0;
+  //}
 
   int dim1 = train_images[0].dimensions()[0];
   int dim2 = train_images[0].dimensions()[1];
@@ -2028,21 +2057,33 @@ void learn_mnist() {
 
   std::vector<aMatrix> weight_list;
   std::vector<std::vector<aMatrix>*> weight_hyper_list;
-  weight_list.push_back(aMatrix(256+1, 1024));
-  weight_list.push_back(aMatrix(64+1, 256+1));
-  weight_list.push_back(aMatrix(16+1, 64+1));
-  weight_list.push_back(aMatrix(10, 16+1));
+  weight_list.push_back(aMatrix(800, 28*28));
+  weight_list.push_back(aMatrix(10, 800));
+  weight_list.push_back(aMatrix(2,1));
+  //weight_list.push_back(aMatrix(256+1, 1024));
+  //weight_list.push_back(aMatrix(64+1, 256+1));
+  //weight_list.push_back(aMatrix(16+1, 64+1));
+  //weight_list.push_back(aMatrix(10, 16+1));
   weight_hyper_list.push_back(&weight_list);
 
 
 
   // Initialize the weights.
   std::default_random_engine generator(1000);
-  std::uniform_real_distribution<double> distribution(1.0, 2.0);
   for (int i = 0; i < weight_list.size(); i++) {
+    float range = sqrt(6.0 / (weight_list[i].dimensions()[0] + weight_list[i].dimensions()[1]));
+    std::uniform_real_distribution<double> distribution(-range, range);
+    if (i == weight_list.size()-1) {
+      for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
+        for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
+          weight_list[i][j][k] = 0.0;// / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
+        }
+      }
+      continue;
+    }
     for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
-        weight_list[i][j][k] = distribution(generator)/(weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
+        weight_list[i][j][k] = distribution(generator);// / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
       }
     }
   }
@@ -2059,16 +2100,17 @@ void learn_mnist() {
   read_values(weight_hyper_list, weights_raw);
   read_values(weight_hyper_list, weights_raw_old);
 
-  double learning_rate = 0.0001;
 
-  for (int iter = 0; iter < 10000; iter++) {
+  double learning_rate = 0.01;
+
+  for (int iter = 0; iter < 60*10; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
     std::uniform_int_distribution<int> dis(0, train_images.size()-1);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       int _random = dis(generator);
       int random = _random;
       batch_data.push_back(train_images[random]);
@@ -2091,7 +2133,9 @@ void learn_mnist() {
       stack.continue_recording();
       continue;
     } else {
+      //stack.pause_recording();
       loss = compute_mnist(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
+      //stack.continue_recording();
     }
     loss.set_gradient(1.0);
     stack.reverse();
@@ -2313,13 +2357,16 @@ void test_matvec_slow() {
 
 
 int main(int argc, const char** argv) {
-  learn_connect4();
-  //learn_gcn_pubmed();
+  //learn_connect4();
+  learn_gcn_pubmed();
   //test_matvec();
   //test_matvec_slow();
   //test_matvec();
-
+  //learn_mnist();
   //learn_mnist_lenet5();
+
+
+
   //test_bug();
   //test_opt();
   //test_tb3(atoi(argv[1]));

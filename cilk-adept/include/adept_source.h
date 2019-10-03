@@ -473,7 +473,7 @@ namespace adept {
     }
 #ifndef ADEPT_STACK_STORAGE_STL
     if (gradient_) {
-      //delete[] gradient_;
+      delete[] gradient_;
     }
 #endif
   }
@@ -559,6 +559,9 @@ namespace adept {
   }
 
 
+
+
+
   // Perform to adjoint computation (reverse mode). It is assumed that
   // some gradients have been assigned already, otherwise the function
   // returns with an error.
@@ -603,13 +606,13 @@ namespace adept {
 
     tfk_reducer.sp_tree.set_recording(false);
     tfk_reducer.collect();
-
+    //printf("num gradients initialized is %d\n", n_gradients_registered_);
     tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
     //my_gradient_table->gradient_table_local = gradient_;
 
     //tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
-    tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
-
+    tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
+    delete ret;
     tfk_reducer.sp_tree.set_recording(true);
 
     //#ifdef TFK_DEBUG_PRINTS
@@ -1146,6 +1149,7 @@ namespace adept {
 	gradient_[i] = 0.0;
       }
     }
+    //max_gradient_ = n_gradients_registered_;
     gradients_initialized_ = true;
   }
 #else

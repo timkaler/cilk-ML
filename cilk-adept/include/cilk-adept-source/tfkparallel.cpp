@@ -68,6 +68,10 @@ tfkdiff tfk_reducer;
      gradient_registered_arr_capacity = 1024;
      gradient_unregistered_arr_capacity = 1024;
 
+
+     wl_steal_count = 0;
+     wl_gradient_index = 0;
+
      gradient_registered_arr =
          (adept::uIndex*) malloc(sizeof(adept::uIndex)*gradient_registered_arr_capacity);
      gradient_unregistered_arr =
