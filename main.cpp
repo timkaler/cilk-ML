@@ -2362,7 +2362,7 @@ std::vector<std::vector<aMatrix>> compute_rnn(
   std::vector<std::vector<aMatrix>> batch_output = 
                           std::vector<std::vector<aMatrix>>(batch_input.size());
 
-  for (int i = 0; i < batch_input.size(); ++i) {
+  cilk_for (int i = 0; i < batch_input.size(); ++i) {
     std::vector<Matrix> input = batch_input[i];
     std::vector<aMatrix> hidden = std::vector<aMatrix>(input.size());
     std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
@@ -2442,9 +2442,12 @@ void learn_rnn() {
     std::vector<std::vector<aMatrix>> output_softmax = compute_rnn(
                 *weight_hyper_list[0], batch_input, NUM_ASCII, HIDDEN_FEATURES);
 
-    // TODO: Compute the loss
+    // Compute the loss
     for (int i = 0; i < BATCH_SIZE; ++i) {
-      
+      for (int j = 0; j < LEN-1; ++j) {
+        loss += 1.0 * logitCrossEntropy(output_softmax[i][j], batch_input[i][j+1]) 
+                    / (1.0 * BATCH_SIZE * (LEN - 1));
+      }
     }
 
     // Compute and apply gradient update using ADAM optimizer
@@ -2480,7 +2483,43 @@ void learn_rnn() {
                                LEARNING_RATE, iter+1);
   }
 
-  std::cout << input[0][0];
+  // Now do some inference (generate text) =====================================
+
+  // Start with the letter 'T'
+  string out_text = "T";
+  aMatrix state = Matrix(HIDDEN_FEATURES, 1);
+  for (int i = 0; i < HIDDEN_FEATURES; ++i) {
+    state[i][0] = 0.0;
+  }
+  aMatrix in = Matrix(NUM_ASCII, 1);
+  for (int i = 0; i < NUM_ASCII; ++i) {
+    in[i][0] = 0.0;
+  }
+  in[int('T')][0] = 1.0;
+  aMatrix output = Matrix(NUM_ASCII, 1);
+
+  // Generate 1000 characters
+  for (int i = 0; i < 1000; ++i) {
+    state = tfksig(weight_list[1] ** state + weight_list[0] ** in);
+    output = tfksoftmax(weight_list[2] ** state, 1.0);
+
+    // Compute the argmax
+    int argmax = 0;
+    double argmaxvalue = output[0][0].value();
+    for (int j = 0; j < NUM_ASCII; ++j) {
+      if (argmaxvalue < output[j][0].value()) {
+        argmaxvalue = output[j][0].value();
+        argmax = j;
+      }
+    }
+    out_text += char(argmax);
+    
+    for (int i = 0; i < NUM_ASCII; ++i) {
+      in[i][0] = 0.0;
+    }
+    in[argmax][0] = 1.0;
+  }
+  std::cout << "\nGenerated output text:\n" << out_text << "\n";
 }
 
 
