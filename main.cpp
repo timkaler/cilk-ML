@@ -1903,9 +1903,8 @@ void learn_mnist() {
 
         std::cout.precision(14);
         std::cout.setf(ios::fixed, ios::floatfield);
-        std::cout << std::endl << std::endl << "loss:" << loss.value() << ",\t\t lr: " <<
-            learning_rate <<
-            "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+        std::cout << std::endl << std::endl << "loss:" << loss.value() <<
+            "\taccuracy z: " << accuracy << "% \tTest set loss: " << test_loss <<
             "\r" << std::endl << std::endl;
       stack.continue_recording();
       continue;
@@ -1920,8 +1919,7 @@ void learn_mnist() {
 
     std::cout.precision(14);
     std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+    std::cout << "loss:" << loss.value() << "\t accuracy z: " << accuracy << "% \tTest set loss: " << test_loss <<
         "\r" << std::flush;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
@@ -1930,6 +1928,7 @@ void learn_mnist() {
     double norm = compute_gradient_norm(weight_hyper_list, gradients);
     //printf("gradient norm is %f\n", norm);
     //if (norm < 1.0) norm = 1.0;
+
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
                                momentums, velocities, 1.0, learning_rate, iter+1);
   }
@@ -2221,20 +2220,26 @@ void my_learn_mnist() {
   tiny_dnn::parse_mnist_images("datasets/train-images.idx3-ubyte", &train_images, 0.0, 1.0, 0, 0);
 
   std::default_random_engine generator(17);
-  std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+  // std::uniform_real_distribution<double> distribution(-1.0, 1.0);
   std::uniform_int_distribution<int> batch_distribution(0, train_images.size() - 1);
-  int BATCH_SIZE = 100;
+  int BATCH_SIZE = 1000;
   double LEARNING_RATE = 0.01;
 
   // Initialize weights (2-layer MLP or 1 hidden layer)
-  std::vector<int> num_features_list {28*28, 1000, 10};
+  std::vector<int> num_features_list {28*28, 800, 10};
   std::vector<aMatrix> weight_list;
   std::vector<aMatrix> biases_list;
+  std::vector<std::vector<aMatrix>*> weight_hyper_list;
   for (int i = 0; i < num_features_list.size() - 1; ++i) {
     weight_list.push_back(aMatrix(num_features_list[i+1], num_features_list[i]));
     biases_list.push_back(aMatrix(num_features_list[i+1], 1));
   }
+  weight_hyper_list.push_back(&weight_list);
+  weight_hyper_list.push_back(&biases_list);
+
   for (int i = 0; i < weight_list.size(); ++i) {
+    float range = sqrt(6.0 / (weight_list[i].dimensions()[0] + weight_list[i].dimensions()[1]));
+    std::uniform_real_distribution<double> distribution(-range, range);
     for (int j = 0; j < weight_list[i].dimensions()[0]; ++j) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; ++k) {
         weight_list[i][j][k] = distribution(generator);
@@ -2243,13 +2248,10 @@ void my_learn_mnist() {
   }
   for (int i = 0; i < biases_list.size(); ++i) {
     for (int j = 0; j < biases_list[i].dimensions()[0]; ++j) {
-      biases_list[i][j][0] = distribution(generator);
+      biases_list[i][j][0] = 0.0;
     }
   }
 
-  std::vector<std::vector<aMatrix>*> weight_hyper_list;
-  weight_hyper_list.push_back(&weight_list);
-  weight_hyper_list.push_back(&biases_list);
   double* weights_raw = allocate_weights(weight_hyper_list);
   double* weights_raw_old = allocate_weights(weight_hyper_list);
   double* gradients = allocate_weights(weight_hyper_list);
@@ -2272,11 +2274,13 @@ void my_learn_mnist() {
       batch_labels.push_back(train_labels[rand_val]);
     }
 
+    aReal loss = 0.0;
     std::vector<aMatrix> output_softmax = 
-                  multi_layer_perceptron(weight_list, biases_list, batch_input);
+                  multi_layer_perceptron(*weight_hyper_list[0],  // weights
+                                         *weight_hyper_list[1],  // biases
+                                         batch_input);
 
     // Compute the loss
-    aReal loss = 0.0;
     for (int i = 0; i < BATCH_SIZE; ++i) {
       // Create a one-hot groundtruth label
       Matrix groundtruth(10, 1);
@@ -2284,19 +2288,34 @@ void my_learn_mnist() {
         groundtruth[j][0] = 0.0;
       }
       groundtruth[batch_labels[i]][0] = 1.0;
-      loss += logitCrossEntropy(output_softmax[i], groundtruth) / BATCH_SIZE;
+      loss += 1.0 * logitCrossEntropy(output_softmax[i], groundtruth) / (1.0 * BATCH_SIZE);
     }
 
     // Compute and apply gradient update using ADAM optimizer
     loss.set_gradient(1.0);
     stack.reverse();
-    stack.pause_recording();
     read_gradients(weight_hyper_list, gradients);
 
+    // Compute the accuracy
+    double accuracy = 0.0;
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      int argmax = 0;
+      double argmaxvalue = output_softmax[i][0][0].value();
+      for (int j = 0; j < 10; ++j) {
+        if (argmaxvalue <= output_softmax[i][j][0].value()) {
+          argmaxvalue = output_softmax[i][j][0].value();
+          argmax = j;
+        }
+      }
+      if (argmax == batch_labels[i]) {
+        accuracy += 1.0 / BATCH_SIZE;
+      }
+    }
+
     std::cout.precision(10);
-    std::cout << "iter: " << iter << ", loss: " << loss.value() << "\n";
-    stack.continue_recording();
-    
+    std::cout << "iter: " << iter << ", loss: " << loss.value() 
+              << ", accuracy: " << accuracy << "\n";
+
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
     
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old,
