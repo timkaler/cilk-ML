@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
+#include <streambuf>
 #include <string>
 #include <map>
 #include <vector>
@@ -36,6 +37,7 @@ using adept::aVector;
 using adept::Stack;
 
 using std::vector;
+using std::string;
 
 std::default_random_engine generator(44);
 
@@ -2188,7 +2190,7 @@ std::vector<aMatrix> multi_layer_perceptron(std::vector<aMatrix>& weights,
   // Create an output matrix to store the output
   std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
 
-  for (int i = 0; i < input.size(); ++i) {
+  cilk_for (int i = 0; i < input.size(); ++i) {
     // Create a results matrix for each layer
     std::vector<aMatrix> results = std::vector<aMatrix>(num_layers);
     
@@ -2325,6 +2327,163 @@ void my_learn_mnist() {
 }
 
 
+std::vector<std::vector<Matrix>> parse_paul_graham(int N, int LEN, int NUM_CHARS) {
+  // Load Paul Graham dataset to a string
+  std::ifstream t("./datasets/paul_graham.txt");
+  string text((std::istreambuf_iterator<char>(t)),
+              std::istreambuf_iterator<char>());
+
+  // Split the dataset into 500 separate data entries of 100 characters each
+  // Transform each character to a 1-hot ASCII encoding of the characters
+  std::vector<std::vector<Matrix>> input;
+  for (int i = 0; i < N; ++i) {
+    string raw_datapoint = text.substr(i * LEN, LEN);
+    std::vector<Matrix> datapoint;
+    for (int j = 0; j < LEN; ++j) {
+      int value = int(raw_datapoint[j]);
+      Matrix char_encoding = Matrix(NUM_CHARS, 1);
+      for (int k = 0; k < NUM_CHARS; ++k) {
+        char_encoding[k] = 0.0;
+        if (k == value)
+          char_encoding[k] = 1.0;
+      }
+      datapoint.push_back(char_encoding);
+    }
+    input.push_back(datapoint);
+  }
+  return input;
+}
+
+
+std::vector<std::vector<aMatrix>> compute_rnn(
+                                  std::vector<aMatrix>& weights,
+                                  std::vector<std::vector<Matrix>>& batch_input,
+                                  int NUM_ASCII, int HIDDEN_FEATURES) {
+  std::vector<std::vector<aMatrix>> batch_output = 
+                          std::vector<std::vector<aMatrix>>(batch_input.size());
+
+  for (int i = 0; i < batch_input.size(); ++i) {
+    std::vector<Matrix> input = batch_input[i];
+    std::vector<aMatrix> hidden = std::vector<aMatrix>(input.size());
+    std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
+
+    // Compute the hidden layer
+    hidden[0] = tfksig(weights[0] ** input[0]);
+    for (int j = 1; j < input.size(); ++j) {
+      hidden[j] = tfksig((weights[0] ** input[j]) + (weights[1] ** hidden[j-1]));
+    }
+
+    // Compute the output layer (softmax)
+    for (int j = 0; j < input.size(); ++j) {
+      output[j] = tfksoftmax(weights[2] ** hidden[j], 1.0);
+    }
+    batch_output[i] = output;
+  }
+  return batch_output;
+}
+
+
+void learn_rnn() {
+  Stack stack;
+  int N = 500;
+  int LEN = 100;
+  int NUM_ASCII = 128;
+  int HIDDEN_FEATURES = 500;
+  int BATCH_SIZE = 10;
+  int NUM_ITER = 1000;
+  double LEARNING_RATE = 0.01;
+
+  std::default_random_engine generator(17);
+  std::uniform_int_distribution<int> batch_dis(0, N-1);
+
+  // Load the Paul Graham dataset to 500 100-char datapoints, using a one-hot
+  // encoding of each character
+  std::vector<std::vector<Matrix>> input = parse_paul_graham(N, LEN, NUM_ASCII);
+
+  // Randomly initialize the weights
+  std::vector<std::vector<aMatrix>*> weight_hyper_list;
+  std::vector<aMatrix> weight_list;
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
+  weight_list.push_back(aMatrix(NUM_ASCII, HIDDEN_FEATURES));
+  weight_hyper_list.push_back(&weight_list);
+
+  for (int i = 0; i < weight_list.size(); ++i) {
+    float range = sqrt(6.0 / (weight_list[i].dimensions()[0] + weight_list[i].dimensions()[1]));
+    std::uniform_real_distribution<double> distribution(-range, range);
+    for (int j = 0; j < weight_list[i].dimensions()[0]; ++j) {
+      for (int k = 0; k < weight_list[i].dimensions()[1]; ++k) {
+        weight_list[i][j][k] = distribution(generator); 
+      }
+    }
+  }
+
+  double* weights_raw = allocate_weights(weight_hyper_list);
+  double* weights_raw_old = allocate_weights(weight_hyper_list);
+  double* gradients = allocate_weights(weight_hyper_list);
+  double* momentums = allocate_weights(weight_hyper_list);
+  double* velocities = allocate_weights(weight_hyper_list);
+  read_values(weight_hyper_list, weights_raw);
+  read_values(weight_hyper_list, weights_raw_old);
+
+  // Train the RNN over many iterations
+  for (int iter = 0; iter < NUM_ITER; ++iter) {
+    set_values(weight_hyper_list, weights_raw);
+    stack.new_recording();
+
+    // Randomly sample input to create the batch data
+    std::vector<std::vector<Matrix>> batch_input;
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      batch_input.push_back(input[batch_dis(generator)]);
+    }
+
+    // Run the RNN on the batch data
+    aReal loss = 0.0;
+    std::vector<std::vector<aMatrix>> output_softmax = compute_rnn(
+                *weight_hyper_list[0], batch_input, NUM_ASCII, HIDDEN_FEATURES);
+
+    // TODO: Compute the loss
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      
+    }
+
+    // Compute and apply gradient update using ADAM optimizer
+    loss.set_gradient(1.0);
+    stack.reverse();
+    read_gradients(weight_hyper_list, gradients);
+    
+    // Compute the accuracy
+    double accuracy = 0.0;
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      for (int j = 0; j < LEN-1; ++j) {
+        int argmax = 0;
+        double argmaxvalue = output_softmax[i][j][0][0].value();
+        for (int k = 0; k < NUM_ASCII; ++k) {
+          if (argmaxvalue < output_softmax[i][j][k][0].value()) {
+            argmaxvalue = output_softmax[i][j][k][0].value();
+            argmax = k;
+          }
+        }
+        if (batch_input[i][j+1][argmax][0] == 1) {
+          accuracy += 1.0 / BATCH_SIZE / (LEN);
+        }
+      }
+    }
+
+    std::cout.precision(5);
+    std::cout << "iter: " << iter << ", loss: " << loss.value() 
+               << ", accuracy: " << accuracy << "\n";
+
+    store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
+    apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old,
+                               gradients, momentums, velocities, 1.0,
+                               LEARNING_RATE, iter+1);
+  }
+
+  std::cout << input[0][0];
+}
+
+
 int main(int argc, const char** argv) {
   // learn_connect4();
   // learn_gcn_pubmed();
@@ -2340,7 +2499,8 @@ int main(int argc, const char** argv) {
   // learn_mnist_lenet5_fast();
   
   // learn_identity();
-  my_learn_mnist();
+  // my_learn_mnist();
+  learn_rnn();
 
   return 0;
 }

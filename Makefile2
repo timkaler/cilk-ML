@@ -81,7 +81,7 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O3 -g
+	CFLAGS += -O0 -g
 else
 	CFLAGS += -DDEBUG
 	#CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
