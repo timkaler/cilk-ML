@@ -332,7 +332,7 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
       if (i == 0) {
         tables[i] = my_gradient_table;
       }
-      else if (i > 0 && wids[i-1] == __cilkrts_get_worker_number()) {
+      else if (i > 0 && /*wids[i-1] == __cilkrts_get_worker_number()*/ wids[i-1] != -1) {
         tables[i] = tables[i-1];
       } else {
         table = new tfk_gradient_table(n_gradients, my_gradient_table);

@@ -2355,6 +2355,44 @@ void test_matvec_slow() {
 
 }
 
+void learn_identity() {
+  adept::Stack stack;
+  aMatrix weights = aMatrix(100,100);
+
+
+  std::default_random_engine generator(1000);
+  std::uniform_real_distribution<double> distribution(0.0, 1.0);
+
+  for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 100; j++) {
+      weights(i,j) = distribution(generator) * (1.0 / (100));
+    }
+  }
+    Matrix random_vector = Matrix(100,1);
+    for (int j = 0; j < 100; j++) {
+      random_vector(j,1) = distribution(generator);
+    }
+  for (int iter = 0; iter < 10000; iter++) {
+    stack.new_recording();
+    aMatrix result = weights ** random_vector;
+    aReal loss = sum((result - random_vector) * (result - random_vector));
+
+
+    loss.set_gradient(1.0);
+    stack.reverse();
+    stack.pause_recording();
+
+    for (int i = 0; i < 100; i++) {
+      for (int j = 0; j < 100; j++) {
+        weights(i,j) -= weights(i,j).get_gradient() * 0.001;
+      }
+    }
+    printf("Loss at step %d:\t %f\n", iter, loss.value());
+    stack.continue_recording();
+  }
+
+}
+
 
 int main(int argc, const char** argv) {
   //learn_connect4();
@@ -2365,7 +2403,7 @@ int main(int argc, const char** argv) {
   //learn_mnist();
   //learn_mnist_lenet5();
 
-
+  //learn_identity();
 
   //test_bug();
   //test_opt();
