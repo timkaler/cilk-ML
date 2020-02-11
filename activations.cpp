@@ -25,7 +25,6 @@ aReal crossEntropy(aMatrix yHat, aMatrix y) {
 }
 
 
-
 aReal logitCrossEntropy(aMatrix yHat, aMatrix y) {
   aReal loss_sum = 0.0;
   aReal n = y.dimensions()[0]*1.0*y.dimensions()[1];
@@ -36,9 +35,7 @@ aReal logitCrossEntropy(aMatrix yHat, aMatrix y) {
     }
   }
   return loss_sum/n;
-  
 }
-
 
 
 aReal tfksig(aReal arg) {
@@ -76,7 +73,10 @@ aReal tfksigmoid(aReal arg) {
 }
 
 aMatrix tfksigmoid(aMatrix arg) {
-  return tfksig(arg);
+  // TODO: Should include a branch for numerical stability like above
+  return 1.0 / (1.0 + exp(-1.0 * arg));
 }
 
-
+aMatrix tanh(aMatrix arg) {
+  return 2.0 * tfksigmoid(2.0 * arg) - 1;
+}
