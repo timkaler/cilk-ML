@@ -100,6 +100,7 @@ namespace adept {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
+        //printf("hello there\n");
 	ADEPT_ACTIVE_STACK->push_lhs(gradient_index_);
 #ifdef ADEPT_RECORDING_PAUSABLE
       }

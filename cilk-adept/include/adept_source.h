@@ -608,10 +608,25 @@ namespace adept {
     tfk_reducer.collect();
     //printf("num gradients initialized is %d\n", n_gradients_registered_);
     tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
+
+    for (int i = 0; i < n_gradients_registered_; i++) {
+      if (gradient_[i] == 1.0) {
+        printf("gradient index is %d\n", i);
+      }
+    } 
     //my_gradient_table->gradient_table_local = gradient_;
 
     //tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
+
+    printf("Num gradients registered is %d\n", n_gradients_registered_); 
+    //SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
+
+    //tfk_reducer.sp_tree.test(n_gradients_registered_);
+    tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+
     tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
+    //tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
+    //tfk_gradient_table* ret = transformed_tree->walk_tree_process(transformed_tree->get_root(), my_gradient_table, n_gradients_registered_);
     delete ret;
     tfk_reducer.sp_tree.set_recording(true);
 
@@ -1134,7 +1149,7 @@ namespace adept {
   void
   Stack::initialize_gradients()
   {
-    //printf("num allocated gradients is %d, max_gradient %d, n registered gradients: %d\n", n_allocated_gradients_, max_gradient_, n_gradients_registered_);
+    printf("num allocated gradients is %d, max_gradient %d, n registered gradients: %d\n", n_allocated_gradients_, max_gradient_, n_gradients_registered_);
 
     uIndex max_gradient = n_gradients_registered_;
     if (max_gradient > 0) {
@@ -1142,12 +1157,14 @@ namespace adept {
 	if (gradient_) {
 	  delete[] gradient_;
 	}
-	gradient_ = new Real[max_gradient];
+	gradient_ = new Real[max_gradient]();
 	n_allocated_gradients_ = max_gradient;
       }
+      printf("init gradients from 0 to %d\n", max_gradient);
       for (uIndex i = 0; i < max_gradient; i++) {
-	gradient_[i] = 0.0;
+	gradient_[i] = 0;//0.0f;
       }
+      //tfk_reducer.sp_tree.make_ids_deterministic(max_gradient);
     }
     //max_gradient_ = n_gradients_registered_;
     gradients_initialized_ = true;

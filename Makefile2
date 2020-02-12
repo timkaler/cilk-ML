@@ -24,7 +24,7 @@ CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-instrument-basic-blocks=false -mllvm 
 # for IR testing
 #CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-config-mode -mllvm "whitelist" -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false 
 
-CFLAGS += -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include -I./cilk-adept/include/ -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE -DTFK_ONE_THREAD -DADEPT_RECORDING_PAUSABLE
+CFLAGS += -g -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include -I./cilk-adept/include/ -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE -DADEPT_RECORDING_PAUSABLE -DTFK_ONE_THREAD
 
 OPENCV_INCLUDE=$(OPENCV_ROOT)/include
 OPENCV_LIB=$(OPENCV_ROOT)/lib
@@ -81,11 +81,11 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O3 -g
+	CFLAGS += -O0 -g
 else
-	CFLAGS += -DDEBUG
+	CFLAGS += -DNDEBUG
 	#CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
-	CFLAGS += -O3 -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
+	CFLAGS += -O3 -g -mavx2 -m64 -march=native -fcilkplus
 	#-Ofast
 endif
 
@@ -101,11 +101,13 @@ endif
 
 .PHONY:	all clean
 
-all: $(BINS) 
+all: $(BINS)
 
 $(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/tool.bc
 	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
 
+$(BUILD_DIR)/semisort: semisort.cpp
+	$(CC) -g $(CFLAGS) -lprofiler $(DEFINES) -o $@ $<
 
 $(BUILD_DIR)/main.ll: main.cpp $(BUILD_DIR)/tool.bc
 	$(CC) $(CFLAGS) -g -fcsi -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<

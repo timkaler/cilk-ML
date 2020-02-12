@@ -36,12 +36,12 @@ namespace adept {
   // -------------------------------------------------------------------
   // Global variables
   // -------------------------------------------------------------------
-  namespace internal {
-    // To check for memory leaks, we keep a running total of the number
-    // of Storage objects that are created and destroyed
-    extern Index n_storage_objects_created_;
-    extern Index n_storage_objects_deleted_;
-  }
+  //namespace internal {
+  //  // To check for memory leaks, we keep a running total of the number
+  //  // of Storage objects that are created and destroyed
+  //  extern Index n_storage_objects_created_;
+  //  extern Index n_storage_objects_deleted_;
+  //}
 
   // -------------------------------------------------------------------
   // Definition of Storage class
@@ -59,8 +59,13 @@ namespace adept {
     // the stack.
     Storage(Index n, bool IsActive = false)
       : n_(n), n_links_(1), gradient_index_(-1) {
+      //for (int i = 0; i < 36*128; i++) {
+      //  n_links_arr[i] = 0;
+      //  n_links_locks[i] = 0;
+      //}
+      //n_links_arr[__cilkrts_get_worker_number()*64] = 1;
       data_ = internal::alloc_aligned<Type>(n);
-      internal::n_storage_objects_created_++; 
+      //internal::n_storage_objects_created_++; 
 #ifndef ADEPT_NO_AUTOMATIC_DIFFERENTIATION
       if (IsActive) {
 	gradient_index_ = ADEPT_ACTIVE_STACK->register_gradients(n);
@@ -87,7 +92,7 @@ namespace adept {
       }
 #endif
 #endif
-      internal::n_storage_objects_deleted_++; 
+      //internal::n_storage_objects_deleted_++; 
     }
 
 
@@ -104,18 +109,61 @@ namespace adept {
   public:
     // Add link to an existing storage object
     void add_link()
-    { n_links_++; } 
-    
+    { n_links_++;}//__sync_fetch_and_add(&n_links_arr[128], 1);/*n_links_++;*/ } 
+
     // Remove link as follows; this is only safe in a multi-threaded
     // environment if ADEPT_STORAGE_THREAD_SAFE is defined, making
     // n_links_ atomic
     void remove_link() {
-      if (n_links_ == 0) {
-	throw invalid_operation("Attempt to remove more links to a storage object than set"
-				ADEPT_EXCEPTION_LOCATION);
-      }
-      else if (--n_links_ == 0) {
-	delete this;
+
+      //int wid = __cilkrts_get_worker_number();
+
+      //while (!__sync_bool_compare_and_swap(&n_links_locks[64*wid], 0, 1)) {
+      //  continue;
+      //}
+
+      //if (n_links_arr[64*wid] == 0) {
+      //  // need to steal.
+      //  bool success = false;
+      //  while (!success) {
+      //    for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
+      //      if (n_links_arr[64*i] <= 0) continue;
+      //      if (__sync_bool_compare_and_swap(&n_links_locks[64*i], 0, 1)) {
+      //        if (n_links_arr[64*i] > 0) {
+      //          n_links_arr[64*i]--;
+      //          n_links_arr[64*wid]++;
+      //          n_links_locks[64*i] = 0;
+      //          success = true;
+      //          break;
+      //        }
+      //      }
+      //    }
+      //  }
+      //}
+
+      //assert(n_links_arr[64*wid] > 0);
+      //if (--n_links_arr[64*wid] == 0) {
+      //  delete this;
+      //}
+      //n_links_locks[64*wid] = 0;
+      //return;
+
+
+
+
+      //if (n_links_arr[128] == 0) {
+      ////if (n_links_arr[128] == 0) {
+      //  throw invalid_operation("Attempt to remove more links to a storage object than set"
+      //  			ADEPT_EXCEPTION_LOCATION);
+      //} else {
+
+      //}
+
+      //else if (__sync_sub_and_fetch(&n_links_arr[128], 1) == 0) {
+      //  delete this;
+      //}
+      if (--n_links_ == 0) {
+        delete this;
       }
     }
 
@@ -125,7 +173,7 @@ namespace adept {
 
     // Return the number of links to an object
     int n_links() const
-    { return n_links_; }
+    { return n_links_;}//n_links_arr[128];}//n_links_; }
 
     Index gradient_index() const
     { return gradient_index_; }
@@ -143,7 +191,7 @@ namespace adept {
     info_string() const {
       std::stringstream x;
       x << n_ << " " << sizeof(Type) << "-byte elements allocated with "
-	<< n_links_ << " links";
+	<< n_links_ << " links"; //n_links_ << " links";
       return x.str();
     }
 
@@ -162,7 +210,12 @@ namespace adept {
     // If multiple threads are to simultaneously read subsets of this
     // array then accesses to the reference counter must be made
     // atomic
+
+//    int n_links_arr[36*128];
     std::atomic<int> n_links_;
+//    int n_links_locks[36*128];
+
+
 #else
     int n_links_;
 #endif
@@ -178,14 +231,14 @@ namespace adept {
   // Helper functions
   // -------------------------------------------------------------------
   inline Index n_storage_objects()
-  { return internal::n_storage_objects_created_
-      - internal::n_storage_objects_deleted_; }
+  { return 0;}/*return internal::n_storage_objects_created_
+      - internal::n_storage_objects_deleted_; }*/
 
   inline Index n_storage_objects_created()
-  { return internal::n_storage_objects_created_; }
+  { return 0;}//internal::n_storage_objects_created_; }
   
   inline Index n_storage_objects_deleted()
-  { return internal::n_storage_objects_deleted_; }
+  { return 0;}//internal::n_storage_objects_deleted_; }
   
 } // End namespace adept
 

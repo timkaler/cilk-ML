@@ -18,7 +18,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/
 
 #export CPATH=$CPATH:/efs/home/tfk/archive-linux/lib
 
-#export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
+export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 
 export N_TEMPORARY_BYTES=500000000
 

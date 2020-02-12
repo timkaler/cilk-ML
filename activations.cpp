@@ -18,7 +18,7 @@ aReal crossEntropy(aMatrix yHat, aMatrix y) {
   aReal n = y.dimensions()[0]*1.0*y.dimensions()[1];
   for (int i = 0; i < y.dimensions()[0]; i++) {
     for (int j = 0; j < y.dimensions()[1]; j++) {
-      loss_sum += -1.0*y[i][j]*log(yHat[i][j]+1e-12) - (1.0-y[i][j])*log(1-yHat[i][j]+1e-12);
+      loss_sum += -1.0*y(i,j)*log(yHat(i,j)+1e-12) - (1.0-y(i,j))*log(1-yHat(i,j)+1e-12);
     }
   }
   return loss_sum/n;
@@ -31,7 +31,7 @@ aReal logitCrossEntropy(aMatrix yHat, aMatrix y) {
   aReal n = y.dimensions()[0]*1.0*y.dimensions()[1];
   for (int i = 0; i < y.dimensions()[0]; i++) {
     for (int j = 0; j < y.dimensions()[1]; j++) {
-      loss_sum += -1.0*y[i][j]*log(yHat[i][j] + 1e-12);
+      loss_sum += -1.0*y(i,j)*log(yHat(i,j) + 1e-12);
       //loss_sum += -1.0*y[i][j]*log(yHat[i][j]+1e-12) - (1.0-y[i][j])*log(1-yHat[i][j]+1e-12);
     }
   }

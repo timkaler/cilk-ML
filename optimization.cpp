@@ -11,6 +11,8 @@ double PARAM_ADAM_EPSILON = 1e-8;
 #include "./optimization.hpp"
 
 
+#define opt_par_for for
+
 
 double* allocate_weights_zero(std::vector<aMatrix>& weights) {
   int _pcount = 0;
@@ -62,11 +64,11 @@ void read_values(std::vector<aMatrix>& weights, double* total_params) {
     sums[i] += sums[i-1];
   }
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         total_params[_pcount+k] = weights[i][j][k].value();
       }
     }
@@ -98,11 +100,11 @@ void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* 
     sums[i] += sums[i-1];
   }
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         curr[_pcount + k] = old[_pcount + k] - gradients[_pcount + k]*mul;
       }
     }
@@ -139,11 +141,11 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
   double lr_t = lr * (sqrt(1.0-pow(PARAM_ADAM_B2, t)) / (1.0-pow(PARAM_ADAM_B1, t)));
 
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         double g = gradients[_pcount + k]*mul;
         double m = momentums[_pcount + k];
         double v = velocities[_pcount + k];
@@ -188,11 +190,11 @@ void store_values_into_old(std::vector<aMatrix>& weights, double* current, doubl
     sums[i] += sums[i-1];
   }
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
         old[_pcount+k] = current[_pcount+k];
       }
     }
@@ -221,7 +223,7 @@ double compute_gradient_norm(std::vector<aMatrix>& weights, double* total_params
   double norm = 0.0;
   cilk::reducer_opadd<double> norm_reduction;
 
-  cilk_for (int i = 0; i < _pcount; i+=1) {
+  opt_par_for (int i = 0; i < _pcount; i+=1) {
     int end = i+1;
     if (end > _pcount) end = _pcount;
     double norm_tmp = 0.0;
@@ -261,12 +263,12 @@ void read_gradients(std::vector<aMatrix>& weights, double* total_params) {
     sums[i] += sums[i-1];
   }
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
-        total_params[_pcount+k] = weights[i][j][k].get_gradient();
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+        total_params[_pcount+k] = weights[i](j,k).get_gradient();
       }
     }
   }
@@ -296,12 +298,12 @@ void set_values(std::vector<aMatrix>& weights, double* total_params) {
     sums[i] += sums[i-1];
   }
 
-  cilk_for (int i = 0; i < weights.size(); i++) {
+  opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
-    cilk_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
+    opt_par_for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       int _pcount = _pcount_outer + j*weights[i].dimensions()[1];
-      cilk_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
-        weights[i][j][k].set_value(total_params[_pcount+k]);
+      opt_par_for (int k = 0; k < weights[i].dimensions()[1]; k++) {
+        weights[i](j,k).set_value(total_params[_pcount+k]);
       }
     }
   }

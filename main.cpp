@@ -1,12 +1,9 @@
 // Copyright 2019 Tim Kaler MIT License
 
-
-#include <cilk/cilk.h>
-#include <cilk/reducer_opadd.h>
-//#include <cilk/cilk_stub.h>
-
 #include <adept_source.h>
 #include <adept_arrays.h>
+#include <cilk/cilk.h>
+#include <cilk/reducer_opadd.h>
 #include <random>
 
 #include <iostream>
@@ -59,7 +56,6 @@ std::default_random_engine generator(44);
 
 void tfk_init() {
   thread_local_worker_id = __cilkrts_get_worker_number();
-  //printf("thread local worker id is %d\n", thread_local_worker_id);
   tfk_reducer.get_tls_references();
 }
 
@@ -97,7 +93,6 @@ aMatrix lenet_pool2_maxpool(aMatrix& output3) {
     // pooling layer 2
     //   aMatrix pool2_weights(5)
     aMatrix _output4(16*5*5+1, 1);
-    _output4(16*5*5, 0) = 1.0;
     for (int x = 0; x < 10; x += 2) {
       for (int y = 0; y < 10; y += 2) {
 
@@ -134,6 +129,12 @@ _output4(4*5*5 + (x/2)*5+(y/2),0) = _max(
 
 _output4(5*5*5 + (x/2)*5+(y/2),0) = _max(
                                    output3(5,(x+0)*10 + (y+0)),
+                                   output3(5,(x+0)*10 + (y+1)),
+                                   output3(5,(x+1)*10 + (y+0)),
+                                   output3(5,(x+1)*10 + (y+1)));
+
+_output4(6*5*5 + (x/2)*5+(y/2),0) = _max(
+				   output3(5,(x+0)*10 + (y+0)),
                                    output3(5,(x+0)*10 + (y+1)),
                                    output3(5,(x+1)*10 + (y+0)),
                                    output3(5,(x+1)*10 + (y+1)));
@@ -544,8 +545,8 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
 
   aReal loss = 0.0;
 
-  bool* correct = new bool[data.size()];
-  aReal* losses = new aReal[data.size()];
+  bool* correct = new bool[data.size()]();
+  aReal* losses = new aReal[data.size()]();
 
   cilk_for (int j = 0; j < data.size(); j += 1) {
     //int _end = _j+4;
@@ -1203,6 +1204,9 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
   bool* correct = new bool[data.size()];
   aReal* losses = new aReal[data.size()];
 
+  aMatrix& biases = weights[weights.size()-1];
+
+  #pragma cilk grainsize 1
   cilk_for (int j = 0; j < data.size(); j++) {
   //cilk_for (int _j = 0; _j < data.size(); _j += 10) {
     //int j_start = _j; 
@@ -1215,10 +1219,10 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     std::vector<aMatrix> results = std::vector<aMatrix>(weights.size()-1);
 
     //data[j][data[j].dimensions()[0]-1][0] = 1.0;
-    aMatrix& biases = weights[weights.size()-1]; 
+    //aMatrix& biases = weights[weights.size()-1];
     results[0] = tfksig(weights[0]**data[j]);
 
-    results[0] += biases[0][0];
+    //results[0] += biases(0,0);
 
     //std::cout << data[j] << std::endl;
     //exit(0);
@@ -1231,7 +1235,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
       } else {
       results[k] = weights[k]**results[k-1];
       }
-      results[k] += biases[k][0];
+      results[k] += biases(k,0);
     }
     aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 1.0);
     //printf("dimensions %d, %d\n", mat_prediction.dimensions()[0], mat_prediction.dimensions()[1]);
@@ -1239,19 +1243,19 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     //std::cout << mat_prediction <<std::endl;
 
     int argmax = 0;
-    double argmaxvalue = mat_prediction[0][0].value();
+    double argmaxvalue = mat_prediction(0,0).value();
     for (int k = 0; k < 10; k++) {
-      if (argmaxvalue <= mat_prediction[k][0].value()) {
-        argmaxvalue = mat_prediction[k][0].value();
+      if (argmaxvalue <= mat_prediction(k,0).value()) {
+        argmaxvalue = mat_prediction(k,0).value();
         argmax = k;
       }
     }
 
     Matrix groundtruth(10,1);
     for (int k = 0; k < 10; k++) {
-      groundtruth[k][0] = 0.0;
+      groundtruth(k,0) = 0.0;
     }
-    groundtruth[labels[j]][0] = 1.0;
+    groundtruth(labels[j],0) = 1.0;
 
     //std::cout << std::endl;
     //std::cout << labels[j] << std::endl;
@@ -1287,7 +1291,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
   delete[] correct;
   *accuracy = (100.0*ncorrect)/total;
 
-  return loss/data.size();
+  return loss/(1.0*data.size());
 }
 
 aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
@@ -1388,7 +1392,7 @@ void learn_connect4() {
   for (int i = 0; i < weight_list.size(); i++) {
     for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
-        weight_list[i][j][k] =
+        weight_list[i](j,k) =
             distribution(generator) /
                 (weight_list[i].dimensions()[0] * weight_list[i].dimensions()[1]);
       }
@@ -1513,9 +1517,9 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
 
     bool last = (l == (G.embedding_dim_list.size()-2));
 
-    cilk_for (int i = 0; i < G.num_vertices; i += 10) {
+    cilk_for (int i = 0; i < G.num_vertices; i += 1) {
     //cilk_for (int i = 0; i < G.num_vertices; i++) {
-      int end = i+10;
+      int end = i+1;
       if (end > G.num_vertices) end = G.num_vertices;
       if (i == end) continue;
       for (int j = i; j < end; j++) {
@@ -1971,7 +1975,7 @@ void learn_mnist_lenet5() {
     double accuracy = 0.0;
     double test_loss = 0.0;
     aReal loss;
-    if (iter%600 == 0 && true) {
+    if (iter%600 == 0 && false) {
       stack.pause_recording();
       loss = compute_mnist_lenet5_fast_maxpool(*weight_hyper_list[0], test_images, test_labels, max_label, &accuracy, &test_loss);
 
@@ -2076,14 +2080,14 @@ void learn_mnist() {
     if (i == weight_list.size()-1) {
       for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
         for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
-          weight_list[i][j][k] = 0.0;// / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
+          weight_list[i][j][k] = 0.0;//distribution(generator);// / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
         }
       }
       continue;
     }
     for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
-        weight_list[i][j][k] = distribution(generator);// / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
+        weight_list[i](j,k) = distribution(generator) / (weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);
       }
     }
   }
@@ -2093,7 +2097,7 @@ void learn_mnist() {
 
   double* weights_raw = allocate_weights(weight_hyper_list);
   double* weights_raw_old = allocate_weights(weight_hyper_list);
-  double* gradients = allocate_weights(weight_hyper_list);
+  double* gradients = allocate_weights_zero(weight_hyper_list);
   double* momentums = allocate_weights_zero(weight_hyper_list);
   double* velocities = allocate_weights_zero(weight_hyper_list);
 
@@ -2103,9 +2107,8 @@ void learn_mnist() {
 
   double learning_rate = 0.01;
 
-  for (int iter = 0; iter < 60*10; iter++) {
+  for (int iter = 0; iter < 60*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
-    stack.new_recording();
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
@@ -2119,8 +2122,9 @@ void learn_mnist() {
 
     double accuracy = 0.0;
     double test_loss = 0.0;
+    stack.new_recording();
     aReal loss;
-    if (iter%100 == 0) {
+    if (iter%100 == 0 && false) {
       stack.pause_recording();
       loss = compute_mnist(*weight_hyper_list[0], test_images, test_labels, max_label, &accuracy, &test_loss);
 
@@ -2129,14 +2133,15 @@ void learn_mnist() {
         std::cout << std::endl << std::endl << "loss:" << loss.value() << ",\t\t lr: " <<
             learning_rate <<
             "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-            "\r" << std::endl << std::endl;
+            "\n" << std::endl << std::endl;
       stack.continue_recording();
       continue;
     } else {
       //stack.pause_recording();
-      loss = compute_mnist(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
+      loss += compute_mnist(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
       //stack.continue_recording();
     }
+    //stack.initialize_gradients();
     loss.set_gradient(1.0);
     stack.reverse();
     read_gradients(weight_hyper_list, gradients);
@@ -2145,7 +2150,7 @@ void learn_mnist() {
     std::cout.setf(ios::fixed, ios::floatfield);
     std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
         "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\r" << std::flush;
+        "\n" << std::endl;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
@@ -2161,250 +2166,15 @@ void learn_mnist() {
 }
 
 
-void test_tb3(int arg) {
-  adept::Stack stack;
-  stack.new_recording();
-
-  // indices 1 through 100000
-  //aReal* B_ = new aReal[100000];
-  float* B = new float[100000];
-
-  // first gradient index assigned is 2;
-  //std::cout << B_[0].gradient_index() << std::endl;
-
-  // index 100001
-  //aReal c_;
-  float c = 1.0*arg;
-
-  //stack.new_recording();
-
-  for (int i = 0; i < 100000; i++) {
-    B[i] += c*c*c;
-    stack.push_rhs(c*c, 100001 + 2);
-    stack.push_lhs(2 + i);
-  }
-
-  // index 100002
-  //aReal loss_;
-  float loss = 0;
-
-  for (int i = 0; i < 100000; i++) {
-    loss += B[i];
-    stack.push_rhs(1.0, 2 + i);
-    stack.push_lhs(100002 + 2);
-  }
-
-  stack.n_gradients_registered_ = 100002 + 2;
-  stack.gradients_initialized_ = true;// = 100002 + 2;
-  stack.gradient_ = (Real*) calloc(100002+3, sizeof(Real));//new Real[100002+3];
-
-  stack.gradient_[100002+2] = 1.0;
-  //loss_.set_gradient(1.0);
-  stack.reverse();
-  std::cout << stack.gradient_[100002+2] << std::endl;
-  //std::cout << c_.get_gradient() << std::endl;
-  std::cout << stack.gradient_[100001 + 2] << std::endl;
-
-
-  //loss.set_gradient(1.0);
-  //stack.reverse();
-  delete[] B;
-}
-
-
-
-void test_tb2(int arg) {
-  //adept::Stack stack;
-
-  float* B = new float[100000];
-  float c = 1.0*arg;
-
-  //stack.new_recording();
-
-
-  for (int i = 0; i < 100000; i++) {
-    B[i] += c;
-  }
-
-  float loss = 0;
-
-  for (int i = 0; i < 100000; i++) {
-    loss += B[i];
-  }
-
-  //loss.set_gradient(1.0);
-  //stack.reverse();
-  //std::cout << c.get_gradient() << std::endl;
-
-  delete[] B;
-}
-
-
-
-void test_tb(int arg) {
-  adept::Stack stack;
-
-  aReal D;
-
-  aReal* B = new aReal[100000];
-  aReal c = 1.0*arg;
-
-  stack.new_recording();
-
-
-  for (int i = 0; i < 100000; i++) {
-    B[i] += c;
-  }
-
-  aReal loss = 0;
-
-  for (int i = 0; i < 100000; i++) {
-    loss += B[i];
-  }
-
-  loss.set_gradient(1.0);
-  stack.reverse();
-  std::cout << c.get_gradient() << std::endl;
-
-  delete[] B;
-}
-
-void test_matvec() {
-  adept::Stack stack;
-
-  aMatrix matrix_weights(100,100);
-
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      matrix_weights(i,j) = 1.0*((i + j)%2) + 1.0;
-    }
-  }
-
-  aMatrix vector(100,1);
-  for (int i = 0; i < 100; i++) {
-    vector(i,1) = (1.0*i+1.0)/100;
-  }
-
-
-  for (int iter = 0; iter < 50000; iter++) {
-    stack.new_recording();
-    aMatrix result = matrix_weights**vector;
-    aMatrix diff = vector - result;
-    aReal loss = sum(diff*diff);
-    loss.set_gradient(1.0);
-    printf("loss is %f\n", loss.value());
-    stack.reverse();
-    stack.pause_recording();
-    for (int i = 0; i < 100; i++) {
-      for (int j = 0; j < 100; j++) {
-        matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.0001;
-      }
-    }
-    stack.continue_recording();
-  }
-
-}
-
-void test_matvec_slow() {
-  adept::Stack stack;
-
-  aMatrix matrix_weights(100,100);
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      //matrix_weights(i,j) = 1.0*(i*100 + j) + 1.0;
-      matrix_weights(i,j) = 1.0*((i + j)%2) + 1.0;
-    }
-  }
-
-  aMatrix vector(100,1);
-  for (int i = 0; i < 100; i++) {
-    vector(i,0) = (1.0*i+1.0)/100;
-  }
-
-
-
-  for (int iter = 0; iter < 50000; iter++) {
-    stack.new_recording();
-    aMatrix result = aMatrix(100,1);
-    for (int i = 0; i < 100; i++) {
-        result(i,0) = 0.0;
-      for (int j = 0; j < 100; j++) {
-        result(i,0) += matrix_weights(i,j) * vector(j,0);
-      }
-    }
-
-    //aMatrix result = matrix_weights**vector;
-    aReal loss = 0.0;
-    for (int i = 0; i < 100; i++) {
-      loss += (vector(i,0) - result(i,0))*(vector(i,0) - result(i,0));
-    }
-    //aMatrix diff = vector - result;
-    //aReal loss = sum(diff*diff);
-    printf("loss is %f\n", loss.value());
-    loss.set_gradient(1.0);
-    stack.reverse();
-    stack.pause_recording();
-    for (int i = 0; i < 100; i++) {
-      for (int j = 0; j < 100; j++) {
-        matrix_weights(i,j) -= matrix_weights(i,j).get_gradient()*0.0001;
-      }
-    }
-    stack.continue_recording();
-
-  }
-
-}
-
-void learn_identity() {
-  adept::Stack stack;
-  aMatrix weights = aMatrix(100,100);
-
-
-  std::default_random_engine generator(1000);
-  std::uniform_real_distribution<double> distribution(0.0, 1.0);
-
-  for (int i = 0; i < 100; i++) {
-    for (int j = 0; j < 100; j++) {
-      weights(i,j) = distribution(generator) * (1.0 / (100));
-    }
-  }
-    Matrix random_vector = Matrix(100,1);
-    for (int j = 0; j < 100; j++) {
-      random_vector(j,1) = distribution(generator);
-    }
-  for (int iter = 0; iter < 10000; iter++) {
-    stack.new_recording();
-    aMatrix result = weights ** random_vector;
-    aReal loss = sum((result - random_vector) * (result - random_vector));
-
-
-    loss.set_gradient(1.0);
-    stack.reverse();
-    stack.pause_recording();
-
-    for (int i = 0; i < 100; i++) {
-      for (int j = 0; j < 100; j++) {
-        weights(i,j) -= weights(i,j).get_gradient() * 0.001;
-      }
-    }
-    printf("Loss at step %d:\t %f\n", iter, loss.value());
-    stack.continue_recording();
-  }
-
-}
-
-
 int main(int argc, const char** argv) {
   //learn_connect4();
-  learn_gcn_pubmed();
+  //learn_gcn_pubmed();
   //test_matvec();
   //test_matvec_slow();
   //test_matvec();
-  //learn_mnist();
+
+  learn_mnist();
   //learn_mnist_lenet5();
-
-  //learn_identity();
-
   //test_bug();
   //test_opt();
   //test_tb3(atoi(argv[1]));

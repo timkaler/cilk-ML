@@ -12,6 +12,18 @@ extern tfkdiff tfk_reducer;
 
 */
 
+
+//#define TFK_WLSTACK_DEBUG
+
+//#ifdef TFK_WLSTACK_DEBUG
+//if (thread_local_worker_id == __cilkrts_get_worker_number() && 
+//       thread_local_worker_id == worker_id) {
+//} else {
+//  printf("ERROR!\n");
+//  assert(false);
+//}
+//#endif
+
 // thread-local worker id for lookups.
 __thread int thread_local_worker_id;
 
@@ -23,7 +35,7 @@ tfkdiff tfk_reducer;
 
 // wl_stacks class.
   wl_stacks::wl_stacks () {
-     statement_stack_arr_len = 0;
+     statement_stack_arr_len = 1;
      operation_stack_arr_len = 0;
      multiplier_stack_arr_len = 0;
      gradient_registered_arr_len = 0;
@@ -47,6 +59,10 @@ tfkdiff tfk_reducer;
 
      statement_stack_arr =
          (adept::internal::Statement*) malloc(sizeof(adept::internal::Statement)*statement_stack_arr_capacity);
+
+     statement_stack_arr[0].index = -1;
+     statement_stack_arr[0].end_plus_one = 0;
+
      operation_stack_arr =
          (adept::uIndex*) malloc(sizeof(adept::uIndex)*operation_stack_arr_capacity);
 
@@ -136,30 +152,37 @@ tfkdiff tfk_reducer;
 
 
    void wl_stacks::add_statement(adept::internal::Statement statement) {
+
      ensure_statement_space(statement_stack_arr_len+1);
      statement_stack_arr[statement_stack_arr_len++] = statement;
    }
 
    void wl_stacks::add_operation(adept::uIndex index) {
+
      ensure_operation_space(operation_stack_arr_len+1);
      operation_stack_arr[operation_stack_arr_len++] = index;
    }
 
    void wl_stacks::add_multiplier(adept::Real mul) {
+     //if (mul != 0 && mul > 0) assert(mul > 1e-40 && "Error!\n");
      ensure_multiplier_space(multiplier_stack_arr_len+1);
      multiplier_stack_arr[multiplier_stack_arr_len++] = mul;
    }
 
    // fast versions of the operators assume that a space check has already been performed.
    void wl_stacks::add_statement_fast(adept::internal::Statement statement) {
+
+
      statement_stack_arr[statement_stack_arr_len++] = statement;
    }
 
    void wl_stacks::add_operation_fast(adept::uIndex index) {
+
      operation_stack_arr[operation_stack_arr_len++] = index;
    }
 
    void wl_stacks::add_multiplier_fast(adept::Real mul) {
+     //if (mul != 0 && mul > 0) assert(mul > 1e-40 && "Error!\n");
      multiplier_stack_arr[multiplier_stack_arr_len++] = mul;
    }
 
@@ -167,6 +190,7 @@ tfkdiff tfk_reducer;
 // triple_vector_wl class.
 
   triple_vector_wl::triple_vector_wl(bool init) {
+    assert(thread_local_worker_id == __cilkrts_get_worker_number());
     worker_id = thread_local_worker_id;
     steal_count = worker_local_stacks[worker_id].wl_steal_count++;
     has_bounds = false;
@@ -250,6 +274,13 @@ tfkdiff tfk_reducer;
         wl_ret[wid][i]->statement_stack_end = wl_ret[wid][i+1]->statement_stack_start;
         wl_ret[wid][i]->operation_stack_end = wl_ret[wid][i+1]->operation_stack_start;
         wl_ret[wid][i]->multiplier_stack_end = wl_ret[wid][i+1]->multiplier_stack_start;
+
+
+        //printf("first statement index is %llu\n", worker_local_stacks[wid].statement_stack_arr[wl_ret[wid][i]->statement_stack_start].index);
+        //printf("statement stack start: %llu, end: %llu\n", wl_ret[wid][i]->statement_stack_start, wl_ret[wid][i]->statement_stack_end);
+        //printf("operation stack start: %llu, end: %llu\n", wl_ret[wid][i]->operation_stack_start, wl_ret[wid][i]->operation_stack_end);
+        //printf("multiplier stack start: %llu, end: %llu\n", wl_ret[wid][i]->multiplier_stack_start, wl_ret[wid][i]->multiplier_stack_end);
+
         wl_ret[wid][i]->gradient_registered_end = wl_ret[wid][i+1]->gradient_registered_start;
         wl_ret[wid][i]->gradient_unregistered_end = wl_ret[wid][i+1]->gradient_unregistered_start;
       }
@@ -263,8 +294,34 @@ tfkdiff tfk_reducer;
             worker_local_stacks[wid].gradient_registered_arr_len;
         wl_ret[wid][wl_ret[wid].size()-1]->gradient_unregistered_end =
             worker_local_stacks[wid].gradient_unregistered_arr_len;
+        //{
+        //  int i = wl_ret[wid].size()-1;
+        //  printf("statement stack start: %llu, end: %llu\n", wl_ret[wid][i]->statement_stack_start, wl_ret[wid][i]->statement_stack_end);
+        //  printf("operation stack start: %llu, end: %llu\n", wl_ret[wid][i]->operation_stack_start, wl_ret[wid][i]->operation_stack_end);
+        //  printf("multiplier stack start: %llu, end: %llu\n", wl_ret[wid][i]->multiplier_stack_start, wl_ret[wid][i]->multiplier_stack_end);
+        //}
       }
     }
+
+    int64_t total_statement_stack_size = 0;
+    int64_t total_operation_stack_size = 0;
+    for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
+      for (int i = 0; i < wl_ret[wid].size(); i++) {
+        total_statement_stack_size += wl_ret[wid][i]->statement_stack_end - wl_ret[wid][i]->statement_stack_start;
+        total_operation_stack_size += wl_ret[wid][i]->operation_stack_end - wl_ret[wid][i]->operation_stack_start;
+      }
+    }
+
+    printf("A) total statement stack size %llu operation stack %llu\n", total_statement_stack_size, total_operation_stack_size);
+    total_statement_stack_size = 0;
+    total_operation_stack_size = 0;
+    for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
+      total_statement_stack_size += worker_local_stacks[wid].statement_stack_arr_len;
+      total_operation_stack_size += worker_local_stacks[wid].operation_stack_arr_len;
+    }
+    printf("B) total statement stack size %llu operation stack %llu\n", total_statement_stack_size, total_operation_stack_size);
+
+
     return;
   }
 

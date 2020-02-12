@@ -4,6 +4,7 @@
     data = data_;
     children = new std::vector<SP_Node*>();
     type = 3;
+    sync_id = NULL;
   }
 
 

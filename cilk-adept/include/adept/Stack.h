@@ -18,6 +18,8 @@
 */
 
 
+#define TFK_WLSTACK_DEBUG
+
 #ifndef AdeptStack_H
 #define AdeptStack_H 1
 
@@ -201,6 +203,15 @@ namespace adept {
       //return 0;//n_gradients_registered_++;
       uIndex ret = __sync_fetch_and_add(&n_gradients_registered_, 1);
 
+
+#ifdef TFK_WLSTACK_DEBUG
+if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+} else {
+  printf("ERROR!\n");
+  assert(false);
+}
+#endif
+
       worker_local_stacks[thread_local_worker_id].add_register_gradient(ret);
 
       #ifdef CILKSAN
@@ -282,6 +293,14 @@ namespace adept {
     void unregister_gradient(const uIndex& gradient_index) {
       //printf("unregistered %d\n", gradient_index);
       __sync_fetch_and_sub(&max_gradient_, 1);
+
+#ifdef TFK_WLSTACK_DEBUG
+if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+} else {
+  printf("ERROR!\n");
+  assert(false);
+}
+#endif
 
       worker_local_stacks[thread_local_worker_id].add_unregister_gradient(gradient_index);
 
@@ -574,7 +593,7 @@ namespace adept {
       }
       // Insert a null statement
       //    std::cerr << "Inserting a null statement; when is this needed?\n";
-      push_lhs(-1);
+      //push_lhs(-1); // NOTE(TFK)
     }
 
     // Are gradients to be computed?  The default is "true", but if
@@ -702,6 +721,16 @@ namespace adept {
 
 
         int wid = thread_local_worker_id;
+
+#ifdef TFK_WLSTACK_DEBUG
+if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+} else {
+  printf("ERROR!\n");
+  assert(false);
+}
+#endif
+
+
         worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+n);
         worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+n);
 	for (int i = 0; i < n; i++, rhs_index += index_stride, 
