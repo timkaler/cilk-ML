@@ -28,6 +28,12 @@ extern __thread int thread_local_worker_id;
 
 class wl_stacks {
   public:
+
+
+    float** statement_stack_deposit_location;
+    float** operation_stack_deposit_location;
+    int* statement_stack_deposit_location_len;
+
     adept::internal::Statement* statement_stack_arr;
     adept::uIndex* operation_stack_arr;
     adept::Real* multiplier_stack_arr;

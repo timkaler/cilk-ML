@@ -2107,13 +2107,13 @@ void learn_mnist() {
 
   double learning_rate = 0.01;
 
-  for (int iter = 0; iter < 60*1; iter++) {
+  for (int iter = 0; iter < 5*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
     std::uniform_int_distribution<int> dis(0, train_images.size()-1);
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10; i++) {
       int _random = dis(generator);
       int random = _random;
       batch_data.push_back(train_images[random]);

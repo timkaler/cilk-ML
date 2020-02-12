@@ -71,7 +71,7 @@ tfkdiff tfk_reducer;
    }
 
    void wl_stacks::init () {
-     statement_stack_arr_len = 0;
+     statement_stack_arr_len = 1;
      operation_stack_arr_len = 0;
      multiplier_stack_arr_len = 0;
      gradient_registered_arr_len = 0;
@@ -95,6 +95,8 @@ tfkdiff tfk_reducer;
 
      statement_stack_arr =
          (adept::internal::Statement*) malloc(sizeof(adept::internal::Statement)*statement_stack_arr_capacity);
+     statement_stack_arr[0].index = -1;
+     statement_stack_arr[0].end_plus_one = 0;
      operation_stack_arr =
          (adept::uIndex*) malloc(sizeof(adept::uIndex)*operation_stack_arr_capacity);
 
@@ -236,7 +238,7 @@ tfkdiff tfk_reducer;
     sp_tree.clear();  // clear the sp_tree.
 
     for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
-      worker_local_stacks[i].statement_stack_arr_len = 0;
+      worker_local_stacks[i].statement_stack_arr_len = 1;
       worker_local_stacks[i].operation_stack_arr_len = 0;
       worker_local_stacks[i].multiplier_stack_arr_len = 0;
       worker_local_stacks[i].gradient_registered_arr_len = 0;

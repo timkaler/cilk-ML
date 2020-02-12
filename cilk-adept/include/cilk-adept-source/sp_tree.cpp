@@ -34,23 +34,23 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64
           last_statement_worker[statement.index] = stack.worker_id;
           last_statement_index[statement.index] = ist;
 
-          if (ist == stack.statement_stack_start) {
-            for (adept::uIndex j = stack.operation_stack_start;
-                 j < statement.end_plus_one; j++) {
-              adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-              if (idx_in_statement[op_index]) {
-                OperationReference ref;
-                ref.statement_wid = last_statement_worker[op_index];
-                ref.statement_ist = last_statement_index[op_index];
-                ref.operation_wid = stack.worker_id;
-                ref.operation_j = j;
-                ref.gradient_index = op_index;
-                ops.push_back(ref);
-              }
+          //if (ist == stack.statement_stack_start) {
+          //  for (adept::uIndex j = stack.operation_stack_start;
+          //       j < statement.end_plus_one; j++) {
+          //    adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+          //    if (idx_in_statement[op_index]) {
+          //      OperationReference ref;
+          //      ref.statement_wid = last_statement_worker[op_index];
+          //      ref.statement_ist = last_statement_index[op_index];
+          //      ref.operation_wid = stack.worker_id;
+          //      ref.operation_j = j;
+          //      ref.gradient_index = op_index;
+          //      ops.push_back(ref);
+          //    }
 
 
-            }
-          } else {
+          //  }
+          //} else {
             for (adept::uIndex j =
                    worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
                    j < statement.end_plus_one; j++) {
@@ -65,12 +65,13 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64
                 ops.push_back(ref);
               }
             }
-          }
+          //}
       }
 
     }
     return;
   }
+
 
   for (int i = 0; i < n->children->size(); i++) {
     //collect_ops_for_semisort((*(n->children))[i], ret);
@@ -82,7 +83,7 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64
 
 void SP_Tree::test(int64_t n_gradients) {
 
-  
+
 
 
   // First identify all gradient indices that appear in statements.
@@ -104,8 +105,89 @@ void SP_Tree::test(int64_t n_gradients) {
   // now do a left first walk of the tree.
   int64_t* last_statement_worker = new int64_t[n_gradients];
   int64_t* last_statement_index = new int64_t[n_gradients];
+
+  for (uint64_t i = 0; i < n_gradients; i++) {
+    last_statement_worker[i] = -1;
+    last_statement_index[i] = -1;
+  }
+
   std::vector<OperationReference> ops;
   collect_ops_for_semisort(get_root(), appears_in_statement, last_statement_worker, last_statement_index, ops);
+
+
+  std::vector<std::pair<int64_t, int64_t> > mapped_ops(ops.size());
+
+  // Map for sort.
+  for (uint64_t i = 0; i < ops.size(); i++) {
+    mapped_ops[i] = std::make_pair(ops[i].gradient_index, i);
+  }
+
+  std::sort(mapped_ops.begin(), mapped_ops.end());
+
+  // Now identify blocks.
+  std::vector<uint64_t> boundaries;
+
+  for (uint64_t i = 0; i < mapped_ops.size(); i++) {
+    if (i == 0 || mapped_ops[i].first != mapped_ops[i-1].first) {
+      boundaries.push_back(i);
+    }
+  }
+
+  std::vector<std::pair<uint64_t, uint64_t> > blocks(boundaries.size());
+
+  for (uint64_t i = 1; i < boundaries.size(); i++) {
+    blocks[i-1] = (std::make_pair(boundaries[i-1], boundaries[i]));
+  }
+  blocks[boundaries.size()-1] = std::make_pair(boundaries[boundaries.size()-1], mapped_ops.size());
+
+
+
+  // now augment each worker's statement stack with a pointer to extra data.
+
+  float* deposit_locations = new float[mapped_ops.size()];
+  for (uint64_t i = 0; i < mapped_ops.size(); i++) {
+    deposit_locations[i] = 0;
+  }
+
+  for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
+    worker_local_stacks[wid].statement_stack_deposit_location = (float**)
+        malloc(sizeof(float*) * worker_local_stacks[wid].statement_stack_arr_len);
+    worker_local_stacks[wid].statement_stack_deposit_location_len = (int*)
+        malloc(sizeof(int) * worker_local_stacks[wid].statement_stack_arr_len);
+    worker_local_stacks[wid].operation_stack_deposit_location = (float**)
+        malloc(sizeof(float*) * worker_local_stacks[wid].operation_stack_arr_len);
+  }
+
+
+  for (uint64_t i = 0; i < blocks.size(); i++) {
+    //printf("block %llu size is %llu\n", i, blocks[i].second-blocks[i].first);
+    for (uint64_t j = blocks[i].first; j < blocks[i].second; j++) {
+      if (mapped_ops[j].first != mapped_ops[blocks[i].first].first) {
+        printf("ERROR!!!!\n "); assert(false);
+      }
+      OperationReference& opref = ops[mapped_ops[j].second];
+
+
+
+      // Map the statement.
+      if (opref.statement_wid != -1) {
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location[opref.statement_ist] = deposit_locations + blocks[i].first;
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location_len[opref.statement_ist] = blocks[i].second - blocks[i].first;
+      }
+
+      worker_local_stacks[opref.operation_wid].operation_stack_deposit_location[opref.operation_j] = deposit_locations + j;
+
+      if (blocks[i].second - blocks[i].first <= 0) {
+        printf("error block size zero!\n");
+        assert(false);
+      }
+    }
+
+  }
+
+
+  
+
 
   return;
   //int64_t* offsets = new int64_t[__cilkrts_get_nworkers()]();
