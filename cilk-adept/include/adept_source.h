@@ -621,13 +621,14 @@ namespace adept {
     printf("Num gradients registered is %d\n", n_gradients_registered_); 
     //SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
 
-    tfk_reducer.sp_tree.test(n_gradients_registered_);
-    tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+    tfk_reducer.sp_tree.test(n_gradients_registered_, gradient_);
 
-    tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
+    //tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+
+    //tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
     //tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
     //tfk_gradient_table* ret = transformed_tree->walk_tree_process(transformed_tree->get_root(), my_gradient_table, n_gradients_registered_);
-    delete ret;
+    //delete ret;
     tfk_reducer.sp_tree.set_recording(true);
 
     //#ifdef TFK_DEBUG_PRINTS

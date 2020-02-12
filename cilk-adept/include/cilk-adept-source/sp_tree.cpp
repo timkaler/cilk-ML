@@ -20,6 +20,70 @@
 #define SPTREE_sync
 
 
+void SP_Tree::walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_table, bool* appears_in_statement, float* gradient_) {
+
+  // If its a data node it must be a terminal node.
+  if (n->type == 3) {
+    // We are going to process one of the stacks.
+    triple_vector_wl stack = n->data;
+    if (stack.statement_stack_end == stack.statement_stack_start) {
+       //delete n;
+       return;
+    }
+    int wid = __cilkrts_get_worker_number();
+    for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
+        const adept::Statement& statement =
+            worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
+        //assert(statement.index != -1 && "Why is statement index -1?\n");
+        if (statement.index == -1) continue;
+
+        // Perform the extraction.
+        float* extract_arr = worker_local_stacks[stack.worker_id].statement_stack_deposit_location[ist];
+        int extract_arr_len = worker_local_stacks[stack.worker_id].statement_stack_deposit_location_len[ist];
+        adept::Real a = gradient_[statement.index];
+        gradient_[statement.index] = 0;
+        for (int i = 0; i < extract_arr_len; i++) {
+        //for (int i = extract_arr_len; i-- > 0; ) {//< extract_arr_len; i++) {
+          a += extract_arr[i];
+          extract_arr[i] = 0;
+        }
+
+        if (a != 0.0) {
+           for (adept::uIndex j =
+                  worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+                  j < statement.end_plus_one; j++) {
+             adept::Real multiplier_test =
+                 worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
+             adept::uIndex operation_stack_index =
+                 worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+             if (appears_in_statement[operation_stack_index] && worker_local_stacks[stack.worker_id].operation_stack_deposit_location[j] != NULL) {
+               *(worker_local_stacks[stack.worker_id].operation_stack_deposit_location[j]) = multiplier_test*a;
+               //gradient_[operation_stack_index] += multiplier_test*a;
+             } else {
+               //gradient_[operation_stack_index] += multiplier_test*a;
+               worker_local_grad_table[wid][operation_stack_index] += multiplier_test*a;
+             }
+           }
+       }
+     }
+    return;
+  }
+
+  if (n->type == 1 || n->type == 0) {
+    for (int i = n->children->size()-1; i >= 0; i--) {
+      walk_tree_process_semisort((*(n->children))[i], worker_local_grad_table, appears_in_statement, gradient_);
+    }
+
+  } else if (n->type == 2) {
+    //#pragma cilk grainsize 1
+    SPTREE_parfor (int j = 0; j < n->children->size(); j++) {
+      int i = n->children->size()-j-1;
+      walk_tree_process_semisort((*(n->children))[i], worker_local_grad_table, appears_in_statement, gradient_);
+    }
+  }
+
+}
+
 
 
 
@@ -27,46 +91,42 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64
   if (n->type == 3) {
     triple_vector_wl stack = n->data;
     if (stack.statement_stack_end != stack.statement_stack_start) {
-      for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
+
+      for (adept::uIndex ist = stack.statement_stack_start; ist < stack.statement_stack_end; ist++) {
         const adept::Statement& statement =
             worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
         if (statement.index == -1) continue;
-          last_statement_worker[statement.index] = stack.worker_id;
-          last_statement_index[statement.index] = ist;
 
-          //if (ist == stack.statement_stack_start) {
-          //  for (adept::uIndex j = stack.operation_stack_start;
-          //       j < statement.end_plus_one; j++) {
-          //    adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-          //    if (idx_in_statement[op_index]) {
-          //      OperationReference ref;
-          //      ref.statement_wid = last_statement_worker[op_index];
-          //      ref.statement_ist = last_statement_index[op_index];
-          //      ref.operation_wid = stack.worker_id;
-          //      ref.operation_j = j;
-          //      ref.gradient_index = op_index;
-          //      ops.push_back(ref);
-          //    }
+        for (adept::uIndex j =
+             worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+             j < statement.end_plus_one; j++) {
+          adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+          if (idx_in_statement[op_index]) {
+            OperationReference ref;
+            ref.statement_wid = last_statement_worker[op_index];
+            ref.statement_ist = last_statement_index[op_index];
+            ref.operation_wid = stack.worker_id;
+            ref.operation_j = j;
+            ref.gradient_index = op_index;
+            ops.push_back(ref);
+          }
+        }
+
+        last_statement_worker[statement.index] = stack.worker_id;
+        last_statement_index[statement.index] = ist;
 
 
-          //  }
-          //} else {
-            for (adept::uIndex j =
-                   worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
-                   j < statement.end_plus_one; j++) {
-              adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-              if (idx_in_statement[op_index]) {
-                OperationReference ref;
-                ref.statement_wid = last_statement_worker[op_index];
-                ref.statement_ist = last_statement_index[op_index];
-                ref.operation_wid = stack.worker_id;
-                ref.operation_j = j;
-                ref.gradient_index = op_index;
-                ops.push_back(ref);
-              }
-            }
-          //}
       }
+
+
+      //for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
+      //  const adept::Statement& statement =
+      //      worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
+      //  if (statement.index == -1) continue;
+      //    last_statement_worker[statement.index] = stack.worker_id;
+      //    last_statement_index[statement.index] = ist;
+
+      //}
 
     }
     return;
@@ -81,7 +141,7 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64
 }
 
 
-void SP_Tree::test(int64_t n_gradients) {
+void SP_Tree::test(int64_t n_gradients, float* _gradient) {
 
 
 
@@ -153,7 +213,7 @@ void SP_Tree::test(int64_t n_gradients) {
     worker_local_stacks[wid].statement_stack_deposit_location = (float**)
         malloc(sizeof(float*) * worker_local_stacks[wid].statement_stack_arr_len);
     worker_local_stacks[wid].statement_stack_deposit_location_len = (int*)
-        malloc(sizeof(int) * worker_local_stacks[wid].statement_stack_arr_len);
+        calloc(worker_local_stacks[wid].statement_stack_arr_len, sizeof(int));
     worker_local_stacks[wid].operation_stack_deposit_location = (float**)
         malloc(sizeof(float*) * worker_local_stacks[wid].operation_stack_arr_len);
   }
@@ -173,9 +233,14 @@ void SP_Tree::test(int64_t n_gradients) {
       if (opref.statement_wid != -1) {
         worker_local_stacks[opref.statement_wid].statement_stack_deposit_location[opref.statement_ist] = deposit_locations + blocks[i].first;
         worker_local_stacks[opref.statement_wid].statement_stack_deposit_location_len[opref.statement_ist] = blocks[i].second - blocks[i].first;
-      }
+        worker_local_stacks[opref.operation_wid].operation_stack_deposit_location[opref.operation_j] = deposit_locations + j;
+      } else {
+        worker_local_stacks[opref.operation_wid].operation_stack_deposit_location[opref.operation_j] = NULL;
+      } /*else {
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location[opref.statement_ist] = NULL; //deposit_locations + blocks[i].first;
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location_len[opref.statement_ist] = 0; //blocks[i].second - blocks[i].first;
+      }*/
 
-      worker_local_stacks[opref.operation_wid].operation_stack_deposit_location[opref.operation_j] = deposit_locations + j;
 
       if (blocks[i].second - blocks[i].first <= 0) {
         printf("error block size zero!\n");
@@ -186,8 +251,45 @@ void SP_Tree::test(int64_t n_gradients) {
   }
 
 
-  
+  float** worker_local_grad_table = (float**) malloc(sizeof(float*) * __cilkrts_get_nworkers());
+  for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
+    worker_local_grad_table[i] = (float*) calloc(n_gradients, sizeof(float));
+  }
 
+
+  walk_tree_process_semisort(get_root(), worker_local_grad_table, appears_in_statement, _gradient);
+
+  int n_workers = __cilkrts_get_nworkers();
+
+  for (int64_t i = 0; i < mapped_ops.size(); i++) {
+    if(deposit_locations[i] != 0.0) {
+      printf("deposit location isn't zero %e, %llu\n", deposit_locations[i], i);
+      //assert(false);
+    }
+  }
+
+  for (int64_t i = 0; i < n_gradients; i++) {
+    _gradient[i] = 0;
+    for (int wid = 0; wid < n_workers; wid++) {
+      _gradient[i] += worker_local_grad_table[wid][i];
+    }
+  }
+
+  for (int i = 0; i < n_workers; i++) {
+    free(worker_local_grad_table[i]);
+  }
+  free(worker_local_grad_table);
+
+
+  for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
+    free(worker_local_stacks[wid].statement_stack_deposit_location);
+    free(worker_local_stacks[wid].statement_stack_deposit_location_len);
+    free(worker_local_stacks[wid].operation_stack_deposit_location);
+  }
+  delete[] deposit_locations;
+  delete[] last_statement_worker;
+  delete[] last_statement_index;
+  delete[] appears_in_statement;
 
   return;
   //int64_t* offsets = new int64_t[__cilkrts_get_nworkers()]();

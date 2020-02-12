@@ -292,7 +292,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // allocated in the reverse pass may be larger than needed.
     void unregister_gradient(const uIndex& gradient_index) {
       //printf("unregistered %d\n", gradient_index);
-      __sync_fetch_and_sub(&max_gradient_, 1);
+      //__sync_fetch_and_sub(&max_gradient_, 1);
 
 #ifdef TFK_WLSTACK_DEBUG
 if (thread_local_worker_id == __cilkrts_get_worker_number()) {

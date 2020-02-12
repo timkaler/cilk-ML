@@ -179,12 +179,14 @@ class SP_Tree {
   void close_P_node();
   void sync_P_nodes(void* sync_id);
 
-  void test(int64_t n_gradients);
+  void test(int64_t n_gradients, float* _gradient);
 
   std::vector<triple_vector_wl*> flatten_to_array();
   void make_ids_deterministic(int64_t n_gradients);
 
   void collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64_t* last_statement_worker, int64_t* last_statement_index, std::vector<OperationReference>& ops);
+
+  void walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_table, bool* appears_in_statement, float* gradient_);
 
   void walk_tree_debug(SP_Node* n);
   void walk_tree_debug(SP_Node* n, int nest_depth, FILE* f);
