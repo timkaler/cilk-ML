@@ -1839,7 +1839,7 @@ void learn_gcn_pubmed() {
 
   double learning_rate = 0.1;//0.01;
 
-  for (int iter = 0; iter < 100; iter++) {
+  for (int iter = 0; iter < 10; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -2107,13 +2107,13 @@ void learn_mnist() {
 
   double learning_rate = 0.01;
 
-  for (int iter = 0; iter < 5*1; iter++) {
+  for (int iter = 0; iter < 60*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
     std::uniform_int_distribution<int> dis(0, train_images.size()-1);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1000; i++) {
       int _random = dis(generator);
       int random = _random;
       batch_data.push_back(train_images[random]);
@@ -2168,12 +2168,12 @@ void learn_mnist() {
 
 int main(int argc, const char** argv) {
   //learn_connect4();
-  //learn_gcn_pubmed();
+  learn_gcn_pubmed();
   //test_matvec();
   //test_matvec_slow();
   //test_matvec();
 
-  learn_mnist();
+  //learn_mnist();
   //learn_mnist_lenet5();
   //test_bug();
   //test_opt();

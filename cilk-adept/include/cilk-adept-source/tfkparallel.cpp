@@ -60,6 +60,11 @@ tfkdiff tfk_reducer;
      statement_stack_arr =
          (adept::internal::Statement*) malloc(sizeof(adept::internal::Statement)*statement_stack_arr_capacity);
 
+
+     statement_stack_deposit_location = NULL;
+     statement_stack_deposit_location_len = NULL;
+     operation_stack_deposit_location = NULL;
+
      statement_stack_arr[0].index = -1;
      statement_stack_arr[0].end_plus_one = 0;
 
@@ -99,6 +104,10 @@ tfkdiff tfk_reducer;
      statement_stack_arr[0].end_plus_one = 0;
      operation_stack_arr =
          (adept::uIndex*) malloc(sizeof(adept::uIndex)*operation_stack_arr_capacity);
+
+     statement_stack_deposit_location = NULL;
+     statement_stack_deposit_location_len = NULL;
+     operation_stack_deposit_location = NULL;
 
      multiplier_stack_arr =
          (adept::Real*) malloc(sizeof(adept::Real)*multiplier_stack_arr_capacity);
@@ -224,6 +233,8 @@ tfkdiff tfk_reducer;
   }
 
   tfkdiff::tfkdiff() {
+    max_gradient_set = false;
+    max_gradient = 0;
     thread_local_worker_id = __cilkrts_get_worker_number();
     worker_local_stacks =(wl_stacks*) malloc(sizeof(wl_stacks)*__cilkrts_get_nworkers());
     for (int i = 0; i < __cilkrts_get_nworkers(); i++) {

@@ -569,6 +569,12 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // Clear the contents of the various lists ready for a new
     // recording
     void new_recording() {
+
+      //if (!tfk_reducer.max_gradient_set) {
+        tfk_reducer.max_gradient_set = true;
+        tfk_reducer.max_gradient = max_gradient_;
+      //}
+
       tfk_reducer.clear();
       clear_stack(); // Defined in the storage class
       clear_independents();

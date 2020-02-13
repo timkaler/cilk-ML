@@ -607,13 +607,15 @@ namespace adept {
     tfk_reducer.sp_tree.set_recording(false);
     tfk_reducer.collect();
     //printf("num gradients initialized is %d\n", n_gradients_registered_);
-    tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
 
-    for (int i = 0; i < n_gradients_registered_; i++) {
-      if (gradient_[i] == 1.0) {
-        printf("gradient index is %d\n", i);
-      }
-    } 
+    //tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
+
+    //for (int i = 0; i < n_gradients_registered_; i++) {
+    //  if (gradient_[i] == 1.0) {
+    //    printf("gradient index is %d\n", i);
+    //  }
+    //} 
+
     //my_gradient_table->gradient_table_local = gradient_;
 
     //tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);

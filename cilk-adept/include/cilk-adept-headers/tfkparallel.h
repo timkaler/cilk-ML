@@ -87,6 +87,8 @@ class tfkdiff {
   public:
     SP_Tree sp_tree;
 
+    bool max_gradient_set;
+    int64_t max_gradient;
     void get_tls_references();
 
     void clear();

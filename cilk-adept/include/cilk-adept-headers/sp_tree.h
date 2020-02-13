@@ -22,6 +22,55 @@ struct OperationReference {
   int64_t gradient_index;
 };
 
+
+
+template<typename T>
+struct WL_VECTOR_PADDED {
+  int64_t padding[8];
+  std::vector<T> vec;
+  int64_t padding2[8];
+};
+
+template<typename T>
+class worker_local_vector {
+  public:
+    WL_VECTOR_PADDED<T>* wl_vectors;
+    worker_local_vector() {
+      wl_vectors = new WL_VECTOR_PADDED<T>[__cilkrts_get_nworkers()];
+    }
+
+    void push_back(int wid, T el) {
+      wl_vectors[wid].vec.push_back(el);
+    }
+    void reserve(int64_t n) {
+      cilk_for(int i = 0; i < __cilkrts_get_nworkers(); i++) {
+        wl_vectors[i].vec.reserve(n);
+      }
+    }
+    void collect(std::vector<T>& ret) {
+
+      int64_t* offsets = new int64_t[__cilkrts_get_nworkers()];
+      int64_t total_size = wl_vectors[0].vec.size();
+      offsets[0] = 0;
+      for (int i = 1; i < __cilkrts_get_nworkers(); i++) {
+        offsets[i] = offsets[i-1] + wl_vectors[i-1].vec.size();
+        total_size += wl_vectors[i].vec.size();
+      }
+
+      ret.resize(total_size);
+
+      cilk_for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
+        int64_t off = offsets[i];
+        cilk_for (int j = 0; j < wl_vectors[i].vec.size(); j++) {
+          ret[off+j] = wl_vectors[i].vec[j];
+        }
+      }
+      delete[] offsets;
+      delete[] wl_vectors;
+    }
+};
+
+
 class tfk_gradient_table {
   public:
     tfk_gradient_table* gradient_table;
@@ -184,7 +233,7 @@ class SP_Tree {
   std::vector<triple_vector_wl*> flatten_to_array();
   void make_ids_deterministic(int64_t n_gradients);
 
-  void collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64_t* last_statement_worker, int64_t* last_statement_index, std::vector<OperationReference>& ops);
+  void collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64_t* last_statement_worker, int64_t* last_statement_index, worker_local_vector<OperationReference>& wl_ops);
 
   void walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_table, bool* appears_in_statement, float* gradient_);
 
