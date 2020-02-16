@@ -32,6 +32,7 @@ class wl_stacks {
 
     float** statement_stack_deposit_location;
     float** operation_stack_deposit_location;
+    bool* operation_stack_deposit_location_valid;
     int* statement_stack_deposit_location_len;
 
     adept::internal::Statement* statement_stack_arr;

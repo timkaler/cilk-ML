@@ -27,8 +27,8 @@ void Graph::setup_embeddings(std::vector<int> _embedding_dim_list) {
     float w = 1.0/(weights[i].dimensions()[0]*weights[i].dimensions()[1]);
     for (int j = 0; j < weights[i].dimensions()[0]; j++) {
       for (int k = 0; k < weights[i].dimensions()[1]; k++) {
-        weights[i][j][k] = distribution(generator)*w;
-        skip_weights[i][j][k] = distribution(generator)*w;
+        weights[i](j,k) = distribution(generator)*w;
+        skip_weights[i](j,k) = distribution(generator)*w;
       }
     }
   }
@@ -68,6 +68,30 @@ void Graph::set_initial_embeddings(std::vector<Matrix>& initial_embeddings) {
   vertex_first_embeddings = initial_embeddings;
 }
 
+
+aMatrix* reduce_mat(aMatrix** mat_arr, int start, int end) {
+  if (end - start < 5) {
+    aMatrix* ret = mat_arr[start];
+    for (int i = start+1; i < end; i++) {
+      *ret += *(mat_arr[i]);
+    }
+    return ret;
+  } else {
+    int size = end-start;
+    int start1 = start;
+    int end1 = start + size/2;
+    int start2 = end1;
+    int end2 = end;
+
+    aMatrix* left = cilk_spawn reduce_mat(mat_arr, start1, end1);
+    aMatrix* right = reduce_mat(mat_arr, start2, end2);
+    cilk_sync;
+    *left += *right;
+    return left;
+    //return left+right;
+  }
+}
+
 aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix> >& embeddings) {
   if (layer == 0) {
     Matrix initial_embedding = vertex_first_embeddings[vid];
@@ -75,13 +99,13 @@ aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix
     // don't apply the activation function on the initial embeddings.
     return (weights[0]**initial_embedding);
   } else {
-    aMatrix ret(embedding_dim_list[layer+1], 1);
+    //aMatrix ret(embedding_dim_list[layer+1], 1);
 
-    for (int i = 0; i < ret.dimensions()[0]; i++) {
-      for (int j = 0; j < ret.dimensions()[1]; j++) {
-        ret[i][j] = 0.0;
-      }
-    }
+    //for (int i = 0; i < ret.dimensions()[0]; i++) {
+    //  for (int j = 0; j < ret.dimensions()[1]; j++) {
+    //    ret[i][j] = 0.0;
+    //  }
+    //}
 
     // NOTE(TFK): This is a bit of a nonsense way to implement a bias term,
     //              remnant of a hacky experiment.
@@ -93,13 +117,45 @@ aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix
     //}
     //bias_[0][0] = 1.0;
 
-    ret = mmul(skip_weights[layer], embeddings[layer-1][vid]);
+    aMatrix pre_ret = edge_weight(vid,vid) * embeddings[layer-1][vid];
 
-    for (int i = 0; i < adj[vid].size(); i++) {
-      if (adj[vid][i] == vid) continue;
-      Real eweight = edge_weight(vid, adj[vid][i]);
-      ret += eweight*mmul(weights[layer], embeddings[layer-1][adj[vid][i]]);
+    if (adj[vid].size() > 5 && false) {
+      aMatrix** ret_arr = (aMatrix**) malloc(sizeof(aMatrix*) * adj[vid].size());
+      cilk_for (int i = 0; i < adj[vid].size(); i++) {
+        if (adj[vid][i]==vid) {
+          ret_arr[i] = new aMatrix(embeddings[layer-1][vid].dimensions()[0], embeddings[layer-1][vid].dimensions()[1]);
+          for (int k = 0; k < ret_arr[i]->dimensions()[0]; k++) {
+            for (int j = 0; j < ret_arr[i]->dimensions()[1]; j++) {
+              (*ret_arr[i])(k,j) = 0;
+            }
+          }
+          continue;
+        }
+        Real eweight = edge_weight(vid, adj[vid][i]);
+        ret_arr[i] = new aMatrix(embeddings[layer-1][vid].dimensions()[0], embeddings[layer-1][vid].dimensions()[1]);
+        *(ret_arr[i]) = eweight*embeddings[layer-1][adj[vid][i]];
+        //ret_arr[i] = eweight*embeddings[layer-1][adj[vid][i]];
+      }
+      pre_ret += *(reduce_mat(ret_arr, 0, adj[vid].size()));
+      cilk_for (int i = 0; i < adj[vid].size(); i++) {
+        delete ret_arr[i];
+      }
+      free(ret_arr);
+    } else {
+      for (int i = 0; i < adj[vid].size(); i++) {
+        if (adj[vid][i]==vid) continue;
+        Real eweight = edge_weight(vid, adj[vid][i]);
+        pre_ret += eweight*embeddings[layer-1][adj[vid][i]];
+      }
     }
+    aMatrix ret = mmul(weights[layer], pre_ret);
+
+    //ret = mmul(skip_weights[layer], embeddings[layer-1][vid]);
+    //for (int i = 0; i < adj[vid].size(); i++) {
+    //  if (adj[vid][i] == vid) continue;
+    //  Real eweight = edge_weight(vid, adj[vid][i]);
+    //  ret += eweight*mmul(weights[layer], embeddings[layer-1][adj[vid][i]]);
+    //}
 
     if (layer == embedding_dim_list.size()-2) {
       return tfksig(ret);

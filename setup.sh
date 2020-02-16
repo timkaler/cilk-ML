@@ -4,7 +4,8 @@
 
 export TAPIR_PREFIX=/efs/tools/tapir-csi/src/build
 
-export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
+export PATH=$TAPIR_PREFIX/bin:$PATH
+#:/efs/tools/protobuf_c4/bin:$PATH
 
 export CXX=clang++
 export OPENCV_ROOT=/efs/tools/OpenCV3
@@ -24,7 +25,7 @@ export N_TEMPORARY_BYTES=500000000
 
 # for wheatman stuff.
 export PYTHONPATH=$PYTHONPATH:/efs/python_local/lib/python2.7/site-packages
-export LD_LIBRARY_PATH=/efs/tools/protobuf_c4/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/efs/tools/protobuf_c4/lib:$LD_LIBRARY_PATH
 
 mkdir -p build
 $@

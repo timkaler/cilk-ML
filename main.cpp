@@ -22,8 +22,9 @@
 #include "./mnist_parser.h"
 
 
+#include "./common/gettime.h"
 
-
+#include "./cxxopts.hpp"
 
 
 
@@ -41,7 +42,13 @@
 
 
 
-// #define TFK_ADEPT_SERIAL
+//#define TFK_ADEPT_SERIAL
+
+#ifdef TFK_ADEPT_SERIAL
+#include <cilk/cilk_stub.h>
+#endif
+
+
 
 using adept::Real;
 using adept::aReal;
@@ -54,12 +61,34 @@ using std::vector;
 
 std::default_random_engine generator(44);
 
+#ifndef TFK_ADEPT_SERIAL
 void tfk_init() {
   thread_local_worker_id = __cilkrts_get_worker_number();
   tfk_reducer.get_tls_references();
 }
+#endif
 
 
+
+aReal recursive_sum(aReal* arr, int start, int end) {
+  if (end - start < 128) {
+    aReal ret = arr[start];
+    for (int i = start+1; i < end; i++) {
+      ret += arr[i];
+    }
+    return ret;
+  }
+
+  int size = end-start;
+  int start1 = start;
+  int end1 = start + size/2;
+  int start2 = end1;
+  int end2 = end;
+  aReal left = cilk_spawn recursive_sum(arr, start1, end1);
+  aReal right = recursive_sum(arr, start2, end2);
+  cilk_sync;
+  return left+right;
+}
 
 
 #define _max(a,b,c,d) max(max(a,b), max(c,d))
@@ -486,12 +515,12 @@ aReal b = 2.0;
 
 stack.new_recording();
 
-cilk_for(int i = 0; i < 10; i++) {
-  if (i == __cilkrts_get_worker_number()) {
-    a += b;
-    b = a;
-  }
-}
+//cilk_for(int i = 0; i < 10; i++) {
+//  if (i == __cilkrts_get_worker_number()) {
+//    a += b;
+//    b = a;
+//  }
+//}
 
 
 aReal d = a*a + b;
@@ -548,7 +577,7 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
   bool* correct = new bool[data.size()]();
   aReal* losses = new aReal[data.size()]();
 
-  cilk_for (int j = 0; j < data.size(); j += 1) {
+  cilk_for (int j = 0; j < data.size(); j++) {
     //int _end = _j+4;
     //if (_end > data.size()) _end = data.size();
     //for (int j = _j; j < _end; j++) {
@@ -567,8 +596,8 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     }
 
 
-    cilk_for (int x = 0; x < 28; x++) {
-      cilk_for (int y = 0; y < 28; y++) {
+    for (int x = 0; x < 28; x++) {
+      for (int y = 0; y < 28; y++) {
         for (int k = 0; k < 6; k++) {
           output(k,x*28+y) += conv1_weights(k,25); // bias.
         }
@@ -614,8 +643,8 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     //   aMatrix pool1_weights(5)
     aMatrix _output2(6,14*14);
 
-    cilk_for (int x = 0; x < 28; x += 2) {
-      cilk_for (int y = 0; y < 28; y += 2) {
+    for (int x = 0; x < 28; x += 2) {
+      for (int y = 0; y < 28; y += 2) {
         for (int k = 0; k < 6; k++) {
           _output2(k,(x/2)*14+(y/2)) = pool1_weights(k,4); // bias.
         }
@@ -1206,13 +1235,15 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
 
   aMatrix& biases = weights[weights.size()-1];
 
-  #pragma cilk grainsize 1
-  cilk_for (int j = 0; j < data.size(); j++) {
-  //cilk_for (int _j = 0; _j < data.size(); _j += 10) {
-    //int j_start = _j; 
-    //int j_end = j_start + 10;
-    //if (j_end > data.size()) j_end = data.size();
-    //for (int j = j_start; j < j_end; j++) { 
+  //#ifndef TFK_ADEPT_SERIAL
+  //#pragma cilk grainsize 1
+  //#endif
+  //cilk_for (int j = 0; j < data.size(); j++) {
+  cilk_for (int _j = 0; _j < data.size(); _j += 10) {
+    int j_start = _j; 
+    int j_end = j_start + 10;
+    if (j_end > data.size()) j_end = data.size();
+    for (int j = j_start; j < j_end; j++) { 
 
     losses[j] = 0.0;
 
@@ -1268,7 +1299,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     if (argmax == labels[j]) {
       correct[j] = true;
     }
-    //}
+    } // note
   }
 
   int ncorrect = 0;
@@ -1536,7 +1567,16 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
   int total_correct = 0;
 
   int num_train_items = 0;
-  for (int i = 0; i < G.num_vertices; i++) {
+
+  aReal* losses = new aReal[G.num_vertices];
+  aReal* loss_norms = new aReal[G.num_vertices];
+
+
+  cilk::reducer_opadd<float> red_test_set_loss(0.0);
+  cilk::reducer_opadd<int> red_total_predictions(0);
+  cilk::reducer_opadd<int> red_total_correct(0);
+
+  cilk_for (int i = 0; i < G.num_vertices; i++) {
     aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
     //aMatrix yhat = tfksoftmax(yhat_, 0.5);
 
@@ -1556,21 +1596,80 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
     }
 
 
- 
     y[gt_label][0] = 1.0;
     //if (!G.vertex_training[i]) {
     if (!is_train[i] && !is_val[i]) {
-      if (max_label == gt_label) total_correct++;
-      total_predictions++;
+      if (max_label == gt_label) {
+        *red_total_correct += 1;
+      }
+      *red_total_predictions += 1;
+      //total_predictions++;
       //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
       aReal tmp = crossEntropy(yhat, y);
-      *test_set_loss += tmp.value();
+      //*test_set_loss += tmp.value();
+      *red_test_set_loss += tmp.value();
+      losses[i] = 0.0;
+      loss_norms[i] = 0.0;
     } else if (is_train[i]) {
-      loss += crossEntropy(yhat,y);
-      loss_norm += 1.0;
+      losses[i] = crossEntropy(yhat,y);
+      loss_norms[i] = 1.0;//crossEntropy(yhat,y);
+      //loss += crossEntropy(yhat,y);
+      //loss_norm += 1.0;
       //num_train_items++;
     }
   }
+
+  *test_set_loss = red_test_set_loss.get_value();
+  total_predictions = red_total_predictions.get_value();
+  total_correct = red_total_correct.get_value();
+
+  loss = recursive_sum(losses, 0, G.num_vertices);
+  loss_norm = recursive_sum(loss_norms, 0, G.num_vertices);
+
+  delete[] loss_norms;
+  delete[] losses;
+
+  //for (int i = 0; i < G.num_vertices; i++) {
+  //  aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
+  //  //aMatrix yhat = tfksoftmax(yhat_, 0.5);
+
+  //  Matrix y(max_labels,1);
+  //  double max_label_val = 0.0;
+  //  int max_label = 0;
+
+  //  int gt_label = 0;
+
+  //  for (int j = 0; j < y.dimensions()[0]; j++) {
+  //    y[j][0] = 0.0;
+  //    if (yhat[j][0].value() > max_label_val) {
+  //      max_label_val = yhat[j][0].value();
+  //      max_label = j;
+  //    }
+  //    if (groundtruth_labels[i](j,0) > 0.5) gt_label = j;
+  //  }
+
+
+
+  //  y[gt_label][0] = 1.0;
+  //  //if (!G.vertex_training[i]) {
+  //  if (!is_train[i] && !is_val[i]) {
+  //    if (max_label == gt_label) total_correct++;
+  //    total_predictions++;
+  //    //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
+  //    aReal tmp = crossEntropy(yhat, y);
+  //    *test_set_loss += tmp.value();
+  //    losses[i] = 0.0;
+  //    loss_norms[i] = 0.0;
+  //  } else if (is_train[i]) {
+  //    losses[i] = crossEntropy(yhat,y);
+  //    loss_norms[i] = 1.0;//crossEntropy(yhat,y);
+  //    //loss += crossEntropy(yhat,y);
+  //    //loss_norm += 1.0;
+  //    //num_train_items++;
+  //  }
+  //}
+
+
 
   loss = loss / loss_norm;
   //loss /= (1.0*num_train_items);
@@ -1604,9 +1703,9 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_labe
 
     bool last = (l == (G.embedding_dim_list.size()-2));
 
-    cilk_for (int i = 0; i < G.num_vertices; i += 10) {
+    cilk_for (int i = 0; i < G.num_vertices; i += 1) {
     //cilk_for (int i = 0; i < G.num_vertices; i++) {
-      int end = i+10;
+      int end = i+1;
       if (end > G.num_vertices) end = G.num_vertices;
       if (i == end) continue;
       for (int j = i; j < end; j++) {
@@ -1656,6 +1755,7 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_labe
 }
 
 void learn_gcn() {
+  timer s0,s1,s2,s3,s4;
   using adept::Stack;
 
   Stack stack;
@@ -1673,30 +1773,40 @@ void learn_gcn() {
   }
   max_label = max_label + 1;
   G.max_label = max_label;
-
+  printf("max label is %d\n", max_label);
   std::vector<int> counts(max_label+1);
   for (int i = 0; i < pairs.size(); i++) {
     counts[pairs[i].second]++;
   }
 
 
+  std::default_random_engine generator(1000);
+  std::uniform_real_distribution<double> distribution(0.0,1.0);
+
+  std::vector<Matrix> feature_vectors;
+  for (int i = 0; i < G.num_vertices; i++) {
+    Matrix tmp2(1024, 1);
+    for (int j = 0; j < 1024; j++) {
+      tmp2(j,0) = distribution(generator);
+    }
+    feature_vectors.push_back(tmp2);
+  }
+
+
   std::vector<int> _embedding_dim_list;
+  _embedding_dim_list.push_back(1024);
   _embedding_dim_list.push_back(64);
-  _embedding_dim_list.push_back(128);
-  _embedding_dim_list.push_back(128);
-  _embedding_dim_list.push_back(128);
   _embedding_dim_list.push_back(max_label);
 
 
+  //G.generate_random_initial_embeddings();
   G.setup_embeddings(_embedding_dim_list);
-  G.generate_random_initial_embeddings();
+  G.set_initial_embeddings(feature_vectors);
 
   std::vector<std::vector<aMatrix>*> weight_hyper_list;
   weight_hyper_list.push_back(&G.weights);
   weight_hyper_list.push_back(&G.skip_weights);
 
-  std::default_random_engine generator(1000);
-  std::uniform_real_distribution<double> distribution(0.0,1.0);
 
   G.vertex_values.resize(G.num_vertices);
   G.vertex_training.resize(G.num_vertices);
@@ -1725,24 +1835,40 @@ void learn_gcn() {
 
   double learning_rate = 0.001;
 
-  for (int iter = 0; iter < 10000; iter++) {
+  int ITER_THRESH = 5;
+  for (int iter = 0; iter < 20; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
     double accuracy = 0.0;
     double test_loss = 0.0;
 
+    if (iter > ITER_THRESH) {
+    s2.start();
+    s0.start();
+    }
     aReal loss = compute_gcn(G, department_labels, max_label, &accuracy, &test_loss);
 
+    if (iter > ITER_THRESH) {
+    s0.stop();
+    }
+
     loss.set_gradient(1.0);
+    if (iter > ITER_THRESH) {
+    s1.start();
+    }
     stack.reverse();
+    if (iter > ITER_THRESH) {
+    s1.stop();
+    s2.stop();
+    }
     read_gradients(weight_hyper_list, gradients);
 
     std::cout.precision(14);
     std::cout.setf(ios::fixed, ios::floatfield);
     std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
         "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\r" << std::flush;
+        "\n";// << std::flush;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
@@ -1756,10 +1882,14 @@ void learn_gcn() {
     //                      learning_rate/norm);
 
   }
+    s0.reportTotal("Forward pass");
+    s1.reportTotal("Reverse pass");
+    s2.reportTotal("Forward+Reverse pass");
 }
 
 
 void learn_gcn_pubmed() {
+  timer s0,s1,s2,s3,s4;
   using adept::Stack;
 
   Stack stack;
@@ -1796,8 +1926,8 @@ void learn_gcn_pubmed() {
 
   std::vector<int> _embedding_dim_list;
   _embedding_dim_list.push_back(feature_dim);
+  //_embedding_dim_list.push_back(32);
   _embedding_dim_list.push_back(32);
-  //_embedding_dim_list.push_back(16);
   _embedding_dim_list.push_back(max_label);
 
 
@@ -1839,18 +1969,34 @@ void learn_gcn_pubmed() {
 
   double learning_rate = 0.1;//0.01;
 
-  for (int iter = 0; iter < 10; iter++) {
+  int ITER_THRESH = 5;
+
+  for (int iter = 0; iter < 15; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
     double accuracy = 0.0;
     double test_loss = 0.0;
-
+    if (iter > ITER_THRESH) {
+    s2.start();
+    s0.start();
+    }
     aReal loss = compute_gcn_pubmed(G, groundtruth_labels, is_train, is_val, max_label, &accuracy,
                                     &test_loss);
+    if (iter > ITER_THRESH) {
+    s0.stop();
+    }
 
     loss.set_gradient(1.0);
+
+    if (iter > ITER_THRESH) {
+    s1.start();
+    }
     stack.reverse();
+    if (iter > ITER_THRESH) {
+    s1.stop();
+    s2.stop();
+    }
     read_gradients(weight_hyper_list, gradients);
 
     std::cout.precision(14);
@@ -1871,12 +2017,15 @@ void learn_gcn_pubmed() {
     //                      learning_rate/norm);
 
   }
+    s0.reportTotal("Forward pass");
+    s1.reportTotal("Reverse pass");
+    s2.reportTotal("Forward+Reverse pass");
 }
 
 
 
-
-void learn_mnist_lenet5() {
+void learn_mnist_lenet5_tanh() {
+  timer s0,s1,s2,s3,s4;
   using adept::Stack;
   Stack stack;
 
@@ -1959,14 +2108,177 @@ void learn_mnist_lenet5() {
 
 
 
-  for (int iter = 1; iter < 60*1; iter++) {
+  int TIME_THRESH=5;
+  for (int iter = 1; iter < 30*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
     std::uniform_int_distribution<int> dis(0, train_images.size()-1);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
+      int _random = dis(generator);
+      int random = _random;
+      batch_data.push_back(train_images[random]);
+      batch_labels.push_back(train_labels[random]);
+    }
+    double accuracy = 0.0;
+    double test_loss = 0.0;
+    aReal loss;
+    if (iter%600 == 0 && false) {
+      stack.pause_recording();
+      loss = compute_mnist_lenet5_fast(*weight_hyper_list[0], test_images, test_labels, max_label, &accuracy, &test_loss);
+
+        std::cout.precision(14);
+        std::cout.setf(ios::fixed, ios::floatfield);
+        std::cout << std::endl << std::endl << "loss:" << loss.value() << ",\t\t lr: " <<
+            learning_rate <<
+            "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+            "\r" << std::endl << std::endl;
+      stack.continue_recording();
+      continue;
+    } else {
+      //stack.pause_recording();
+      if (iter > TIME_THRESH) {
+      s2.start();
+      s0.start();
+      }
+      loss = compute_mnist_lenet5_fast(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
+      if (iter > TIME_THRESH) {
+      s0.stop();
+      }
+      //stack.continue_recording();
+      //continue;
+    }
+    loss.set_gradient(1.0);
+    if (iter > TIME_THRESH) {
+    s1.start();
+    }
+    stack.reverse();
+    if (iter > TIME_THRESH) {
+    s1.stop();
+    s2.stop();
+    }
+    read_gradients(weight_hyper_list, gradients);
+
+    std::cout.precision(14);
+    std::cout.setf(ios::fixed, ios::floatfield);
+    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
+        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+        "\n";// << std::flush;
+
+    store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
+
+
+    double norm = compute_gradient_norm(weight_hyper_list, gradients);
+    //printf("gradient norm is %f\n", norm);
+    //if (norm < 1.0) norm = 1.0;
+    apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
+                               momentums, velocities, 1.0, learning_rate, iter+1);
+  }
+
+    s0.reportTotal("Forward pass");
+    s1.reportTotal("Reverse pass");
+    s2.reportTotal("Forward+Reverse pass");
+
+}
+
+
+
+
+void learn_mnist_lenet5() {
+  timer s0,s1,s2,s3,s4;
+  using adept::Stack;
+  Stack stack;
+
+  std::string data_dir_path = "datasets";
+
+  // load MNIST dataset
+  std::vector<uint8_t> train_labels, test_labels;
+  std::vector<Matrix> train_images, test_images;
+
+  tiny_dnn::parse_mnist_labels(data_dir_path + "/train-labels.idx1-ubyte",
+                               &train_labels);
+  tiny_dnn::parse_mnist_images(data_dir_path + "/train-images.idx3-ubyte",
+                               &train_images, -1.0, 1.0, 2, 2);
+  tiny_dnn::parse_mnist_labels(data_dir_path + "/t10k-labels.idx1-ubyte",
+                               &test_labels);
+  tiny_dnn::parse_mnist_images(data_dir_path + "/t10k-images.idx3-ubyte",
+                               &test_images, -1.0, 1.0, 2, 2);
+
+
+  int dim1 = train_images[0].dimensions()[0];
+  int dim2 = train_images[0].dimensions()[1];
+
+
+  int max_label = 0;
+  int min_label = 100;
+
+  for (int i = 0; i < train_labels.size(); i++) {
+    if (train_labels[i] > max_label) max_label = train_labels[i];
+    if (train_labels[i] < min_label) min_label = train_labels[i];
+  }
+
+
+
+  printf("dim1 is %d, dim2 is %d, max label %d, min label %d\n", dim1, dim2, max_label, min_label);
+
+
+  std::vector<aMatrix> weight_list;
+  std::vector<std::vector<aMatrix>*> weight_hyper_list;
+  weight_list.push_back(aMatrix(6, 26)); // conv1_weights
+  weight_list.push_back(aMatrix(6, 5)); // pool1_weights
+  weight_list.push_back(aMatrix(16, 26)); // conv2_weights
+  weight_list.push_back(aMatrix(16, 5)); // pool2_weights
+  weight_list.push_back(aMatrix(121, 401)); // fully_connected_weights
+  weight_list.push_back(aMatrix(85, 121)); // fully_connected_weights2
+  weight_list.push_back(aMatrix(10, 85)); // output_layer_weights
+  weight_hyper_list.push_back(&weight_list);
+
+
+
+  // Initialize the weights.
+  std::default_random_engine generator(1000);
+  std::uniform_real_distribution<double> distribution(0.0, 1.0);
+  for (int i = 0; i < weight_list.size(); i++) {
+    double mul = sqrt(1.0/(weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]));
+    for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
+      for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
+        weight_list[i][j][k] = distribution(generator)*mul;
+                               //(weight_list[i].dimensions()[0]*weight_list[i].dimensions()[1]);*/
+      }
+    }
+  }
+
+
+
+
+  double* weights_raw = allocate_weights(weight_hyper_list);
+  double* weights_raw_old = allocate_weights(weight_hyper_list);
+  double* gradients = allocate_weights(weight_hyper_list);
+  double* momentums = allocate_weights_zero(weight_hyper_list);
+  double* velocities = allocate_weights_zero(weight_hyper_list);
+
+  read_values(weight_hyper_list, weights_raw);
+  read_values(weight_hyper_list, weights_raw_old);
+
+  double learning_rate = 0.001;
+
+  //printf("train image size %d\n", train_images.size());
+
+
+
+
+
+  int TIME_THRESH=5;
+  for (int iter = 1; iter < 30*1; iter++) {
+    set_values(weight_hyper_list, weights_raw);
+    stack.new_recording();
+
+    std::vector<Matrix> batch_data;
+    std::vector<uint8_t> batch_labels;
+    std::uniform_int_distribution<int> dis(0, train_images.size()-1);
+    for (int i = 0; i < 1000; i++) {
       int _random = dis(generator);
       int random = _random;
       batch_data.push_back(train_images[random]);
@@ -1989,19 +2301,33 @@ void learn_mnist_lenet5() {
       continue;
     } else {
       //stack.pause_recording();
+      if (iter > TIME_THRESH) {
+      s2.start();
+      s0.start();
+      }
       loss = compute_mnist_lenet5_fast_maxpool(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
+      if (iter > TIME_THRESH) {
+      s0.stop();
+      }
       //stack.continue_recording();
       //continue;
     }
     loss.set_gradient(1.0);
+    if (iter > TIME_THRESH) {
+    s1.start();
+    }
     stack.reverse();
+    if (iter > TIME_THRESH) {
+    s1.stop();
+    s2.stop();
+    }
     read_gradients(weight_hyper_list, gradients);
 
     std::cout.precision(14);
     std::cout.setf(ios::fixed, ios::floatfield);
     std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
         "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\r" << std::flush;
+        "\n";// << std::flush;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
@@ -2013,12 +2339,18 @@ void learn_mnist_lenet5() {
                                momentums, velocities, 1.0, learning_rate, iter+1);
   }
 
+    s0.reportTotal("Forward pass");
+    s1.reportTotal("Reverse pass");
+    s2.reportTotal("Forward+Reverse pass");
 
 }
 
 
 
-void learn_mnist() {
+void learn_mnist(std::vector<int>& layer_sizes) {
+
+  timer s0,s1,s2,s3,s4;
+
   using adept::Stack;
   Stack stack;
   std::string data_dir_path = "datasets";
@@ -2061,9 +2393,12 @@ void learn_mnist() {
 
   std::vector<aMatrix> weight_list;
   std::vector<std::vector<aMatrix>*> weight_hyper_list;
-  weight_list.push_back(aMatrix(800, 28*28));
-  weight_list.push_back(aMatrix(10, 800));
-  weight_list.push_back(aMatrix(2,1));
+  weight_list.push_back(aMatrix(layer_sizes[0], 28*28));
+  for (int i = 1; i < layer_sizes.size(); i++) {
+    weight_list.push_back(aMatrix(layer_sizes[1], layer_sizes[0]));
+  }
+  weight_list.push_back(aMatrix(10, layer_sizes[layer_sizes.size()-1]));
+  weight_list.push_back(aMatrix(weight_list.size(),1));
   //weight_list.push_back(aMatrix(256+1, 1024));
   //weight_list.push_back(aMatrix(64+1, 256+1));
   //weight_list.push_back(aMatrix(16+1, 64+1));
@@ -2106,13 +2441,14 @@ void learn_mnist() {
 
 
   double learning_rate = 0.01;
-
+  int TIME_THRESH=5;
   for (int iter = 0; iter < 60*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
 
     std::vector<Matrix> batch_data;
     std::vector<uint8_t> batch_labels;
     std::uniform_int_distribution<int> dis(0, train_images.size()-1);
+
     for (int i = 0; i < 1000; i++) {
       int _random = dis(generator);
       int random = _random;
@@ -2123,6 +2459,7 @@ void learn_mnist() {
     double accuracy = 0.0;
     double test_loss = 0.0;
     stack.new_recording();
+    s2.start();
     aReal loss;
     if (iter%100 == 0 && false) {
       stack.pause_recording();
@@ -2138,12 +2475,27 @@ void learn_mnist() {
       continue;
     } else {
       //stack.pause_recording();
+      if (iter > TIME_THRESH) {
+      s0.start();
+      }
       loss += compute_mnist(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
+      if (iter > TIME_THRESH) {
+      s0.stop();
+      }
       //stack.continue_recording();
     }
     //stack.initialize_gradients();
+    if (iter > TIME_THRESH) {
+    s1.start();
+    }
     loss.set_gradient(1.0);
     stack.reverse();
+    if (iter > TIME_THRESH) {
+    s1.stop();
+    }
+    if (iter > TIME_THRESH) {
+    s2.stop();
+    }
     read_gradients(weight_hyper_list, gradients);
 
     std::cout.precision(14);
@@ -2162,18 +2514,59 @@ void learn_mnist() {
                                momentums, velocities, 1.0, learning_rate, iter+1);
   }
 
+    s0.reportTotal("Forward pass");
+    s1.reportTotal("Reverse pass");
+    s2.reportTotal("Forward+Reverse pass");
 
 }
 
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
+
+
+  int alg = -1;
+  cxxopts::Options options(argv[0], "Options");
+  options.add_options()
+	("a,algorithm", "Algorithm 0,1", cxxopts::value<int>(alg));
+  options.parse(argc, argv);
+
+  std::vector<int> layer_sizes;
+  switch(alg) {
+    case 0:
+      layer_sizes.push_back(800);
+      learn_mnist(layer_sizes);
+      break;
+    case 1:
+      learn_gcn_pubmed();
+      break;
+    case 2:
+      layer_sizes.push_back(400);
+      layer_sizes.push_back(100);
+      learn_mnist(layer_sizes);
+      break;
+    case 3:
+      learn_mnist_lenet5();
+      break;
+    case 4:
+      learn_mnist_lenet5_tanh();
+      break;
+    case 5:
+      learn_gcn();
+      break;
+    default:
+      printf("no algorithm specified");
+      break;
+  }
+
   //learn_connect4();
-  learn_gcn_pubmed();
+
+  //learn_gcn_pubmed();
+  //learn_mnist();
+
   //test_matvec();
   //test_matvec_slow();
   //test_matvec();
 
-  //learn_mnist();
   //learn_mnist_lenet5();
   //test_bug();
   //test_opt();

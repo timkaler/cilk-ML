@@ -25,7 +25,7 @@ void __csi_task_exit(const csi_id_t task_exit_id,
   if (!tfk_reducer.sp_tree.recording) return;
   //std::cout << "Exiting task\n";
   tfk_reducer.sp_tree.close_S_node();
-  //tfk_init(); // new
+  tfk_init(); // new
 }
 
 void __csi_detach_continue(const csi_id_t detach_continue_id,

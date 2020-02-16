@@ -61,9 +61,13 @@ tfkdiff tfk_reducer;
          (adept::internal::Statement*) malloc(sizeof(adept::internal::Statement)*statement_stack_arr_capacity);
 
 
-     statement_stack_deposit_location = NULL;
-     statement_stack_deposit_location_len = NULL;
-     operation_stack_deposit_location = NULL;
+     statement_stack_deposit_location = (float**) malloc(sizeof(float*) * statement_stack_arr_capacity);
+     statement_stack_deposit_location_len = (int*) malloc(sizeof(int) * statement_stack_arr_capacity);
+
+     operation_stack_deposit_location = (float**) malloc(sizeof(float*) * operation_stack_arr_capacity);
+     operation_stack_deposit_location_valid = (bool*) malloc(sizeof(bool) * operation_stack_arr_capacity);
+     //statement_stack_deposit_location_len = NULL;
+     //operation_stack_deposit_location = NULL;
 
      statement_stack_arr[0].index = -1;
      statement_stack_arr[0].end_plus_one = 0;
@@ -105,9 +109,17 @@ tfkdiff tfk_reducer;
      operation_stack_arr =
          (adept::uIndex*) malloc(sizeof(adept::uIndex)*operation_stack_arr_capacity);
 
-     statement_stack_deposit_location = NULL;
-     statement_stack_deposit_location_len = NULL;
-     operation_stack_deposit_location = NULL;
+
+
+     statement_stack_deposit_location = (float**) malloc(sizeof(float*) * statement_stack_arr_capacity);
+     statement_stack_deposit_location_len = (int*) malloc(sizeof(int) * statement_stack_arr_capacity);
+
+     operation_stack_deposit_location = (float**) malloc(sizeof(float*) * operation_stack_arr_capacity);
+     operation_stack_deposit_location_valid = (bool*) malloc(sizeof(bool) * operation_stack_arr_capacity);
+
+     //statement_stack_deposit_location = NULL;
+     //statement_stack_deposit_location_len = NULL;
+     //operation_stack_deposit_location = NULL;
 
      multiplier_stack_arr =
          (adept::Real*) malloc(sizeof(adept::Real)*multiplier_stack_arr_capacity);
@@ -132,6 +144,8 @@ tfkdiff tfk_reducer;
    void wl_stacks::ensure_statement_space(uint64_t size) {
      if (size >= statement_stack_arr_capacity) {
        statement_stack_arr = (adept::internal::Statement*) realloc(statement_stack_arr, size*2*sizeof(adept::internal::Statement));
+       statement_stack_deposit_location = (float**) realloc(statement_stack_deposit_location, size*2*sizeof(float*));
+       statement_stack_deposit_location_len = (int*) realloc(statement_stack_deposit_location_len, size*2*sizeof(int));
        statement_stack_arr_capacity = size*2;
      }
    }
@@ -139,6 +153,8 @@ tfkdiff tfk_reducer;
    void wl_stacks::ensure_operation_space(uint64_t size) {
      if (size >= operation_stack_arr_capacity) {
        operation_stack_arr = (adept::uIndex*) realloc(operation_stack_arr, size*2*sizeof(adept::uIndex));
+       operation_stack_deposit_location = (float**) realloc(operation_stack_deposit_location, size*2*sizeof(float*));
+       operation_stack_deposit_location_valid = (bool*) realloc(operation_stack_deposit_location_valid, size*2*sizeof(bool));
        operation_stack_arr_capacity = size*2;
      }
    }

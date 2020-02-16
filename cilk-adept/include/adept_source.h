@@ -40,7 +40,7 @@
   required.
 
 */
-
+#include "../../common/gettime.h"
 // #define TFK_DEBUG_PRINTS
 
 
@@ -568,7 +568,7 @@ namespace adept {
   void
   Stack::compute_adjoint()
   {
-
+    timer t0,t1,t2,t3; 
 
     if (gradients_are_initialized()) {
         // Loop backwards through the derivative statements
@@ -600,12 +600,15 @@ namespace adept {
         //return;
 
 
-
+    t0.start();
     tfk_reducer.get_tls_references();
+    t0.stop();
     /*std::vector<triple_vector_wl> stacks =*/
 
     tfk_reducer.sp_tree.set_recording(false);
+    t1.start();
     tfk_reducer.collect();
+    t1.stop();
     //printf("num gradients initialized is %d\n", n_gradients_registered_);
 
     //tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
@@ -623,9 +626,22 @@ namespace adept {
     printf("Num gradients registered is %d\n", n_gradients_registered_); 
     //SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
 
-    tfk_reducer.sp_tree.test(n_gradients_registered_, gradient_);
-
     //tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+
+    t2.start();
+
+    #ifdef TFK_USE_LOCKS
+    int64_t* locks = new int64_t[n_gradients_registered_];
+    cilk_for(int64_t i = 0; i < n_gradients_registered_; i++) {
+      locks[i] = 0;
+    }
+    tfk_reducer.sp_tree.walk_tree_process_locks(tfk_reducer.sp_tree.get_root(), gradient_, locks);
+    //tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
+    delete[] locks;
+    #else
+    tfk_reducer.sp_tree.test(n_gradients_registered_, gradient_);
+    #endif
+    t2.stop();
 
     //tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
     //tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
@@ -684,6 +700,9 @@ namespace adept {
     //   }
 
     //}
+    t0.reportTotal("gettlsrefs");
+    t1.reportTotal("collect");
+    t2.reportTotal("test");
     return;
     }
 
@@ -1160,11 +1179,12 @@ namespace adept {
 	if (gradient_) {
 	  delete[] gradient_;
 	}
-	gradient_ = new Real[max_gradient]();
+	gradient_ = new Real[max_gradient];
+        printf("reinit gradients\n");
 	n_allocated_gradients_ = max_gradient;
       }
       printf("init gradients from 0 to %d\n", max_gradient);
-      for (uIndex i = 0; i < max_gradient; i++) {
+      cilk_for (uIndex i = 0; i < max_gradient; i++) {
 	gradient_[i] = 0;//0.0f;
       }
       //tfk_reducer.sp_tree.make_ids_deterministic(max_gradient);
@@ -1292,7 +1312,10 @@ namespace adept {
 #include <cstring>
 
 
-#include <cilk-adept-source/sp_tree.cpp>
+
+//#include <cilk-adept-headers/sp_tree.cpp>
+#include <cilk-adept-headers/sp_tree.h>
+
 #include <cilk-adept-source/tfkparallel.cpp>
 
 #include <adept/StackStorageOrig.h>

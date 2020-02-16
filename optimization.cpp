@@ -11,7 +11,7 @@ double PARAM_ADAM_EPSILON = 1e-8;
 #include "./optimization.hpp"
 
 
-#define opt_par_for for
+#define opt_par_for cilk_for
 
 
 double* allocate_weights_zero(std::vector<aMatrix>& weights) {

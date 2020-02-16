@@ -1,27 +1,34 @@
 // Copyright (c) 2019, Tim Kaler - MIT License
 
-#include <cilk/cilk.h>
-#include <cilk/reducer.h>
 #include <cilk-adept-headers/triple_vector_wl.h>
 #include <cilk-adept-headers/flat_hash_map.hpp>
+#include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
+#include <cilk/reducer.h>
+//#include <adept.h>
+#include <adept/base.h>
+//#include <adept_arrays.h>
+
 
 #include <vector>
 
 
 #ifndef SP_TREE_H
 #define SP_TREE_H
+
+
+
 struct OperationReference {
   // Allows indexing into a parallel array for the statement.
-  int64_t statement_wid;
-  int64_t statement_ist;
+  int statement_wid;
+  int statement_ist;
 
   // Allows indexing into a parallel array for the operation.
-  int64_t operation_wid;
-  int64_t operation_j;
+  int operation_wid;
+  int operation_j;
 
-  int64_t gradient_index;
+  int gradient_index;
 };
-
 
 
 template<typename T>
@@ -39,6 +46,7 @@ class worker_local_vector {
       wl_vectors = new WL_VECTOR_PADDED<T>[__cilkrts_get_nworkers()];
     }
 
+    __attribute__((always_inline))
     void push_back(int wid, T el) {
       wl_vectors[wid].vec.push_back(el);
     }
@@ -47,7 +55,7 @@ class worker_local_vector {
         wl_vectors[i].vec.reserve(n);
       }
     }
-    void collect(std::vector<T>& ret) {
+    int64_t collect(T*& ret) {
 
       int64_t* offsets = new int64_t[__cilkrts_get_nworkers()];
       int64_t total_size = wl_vectors[0].vec.size();
@@ -56,8 +64,8 @@ class worker_local_vector {
         offsets[i] = offsets[i-1] + wl_vectors[i-1].vec.size();
         total_size += wl_vectors[i].vec.size();
       }
-
-      ret.resize(total_size);
+      ret = (T*)malloc(sizeof(T)*total_size);
+      //ret.resize(total_size);
 
       cilk_for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
         int64_t off = offsets[i];
@@ -67,6 +75,7 @@ class worker_local_vector {
       }
       delete[] offsets;
       delete[] wl_vectors;
+      return total_size;
     }
 };
 
@@ -126,6 +135,15 @@ class SP_Node {
   ~SP_Node();
   SP_Node(int type_, SP_Node* parent_, void* sync_id);
 };
+
+struct args_for_collect_ops {
+  bool* idx_in_statement;
+  int8_t* last_statement_worker;
+  int32_t* last_statement_index;
+  SP_Node* last_statement_node;
+  float* gradient_;
+};
+
 
 class SP_Tree {
   struct Monoid: cilk::monoid_base<SP_Node*> {
@@ -233,9 +251,11 @@ class SP_Tree {
   std::vector<triple_vector_wl*> flatten_to_array();
   void make_ids_deterministic(int64_t n_gradients);
 
-  void collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64_t* last_statement_worker, int64_t* last_statement_index, worker_local_vector<OperationReference>& wl_ops);
+  //void collect_ops_for_semisort(SP_Node* n, bool* idx_in_statement, int64_t* last_statement_worker, int64_t* last_statement_index, float* gradient_, worker_local_vector<OperationReference>& wl_ops);
+  void collect_ops_for_semisort(SP_Node* n, args_for_collect_ops* args, worker_local_vector<OperationReference>& wl_ops);
 
   void walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_table, bool* appears_in_statement, float* gradient_);
+  void walk_tree_process_locks(SP_Node* n, float* gradient_, int64_t* locks);
 
   void walk_tree_debug(SP_Node* n);
   void walk_tree_debug(SP_Node* n, int nest_depth, FILE* f);

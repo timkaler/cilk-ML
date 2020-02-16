@@ -66,9 +66,14 @@ namespace adept {
   thread_local_statement = stacks.statement_stack;
   }
   #endif
+      #ifdef TFK_SPEC_OPT
+      worker_local_stacks[thread_local_worker_id].add_multiplier_fast(multiplier);
+      worker_local_stacks[thread_local_worker_id].add_operation_fast(gradient_index);
+      #else
+      worker_local_stacks[thread_local_worker_id].add_multiplier(multiplier);
+      worker_local_stacks[thread_local_worker_id].add_operation(gradient_index);
+      #endif
 
-          worker_local_stacks[thread_local_worker_id].add_multiplier(multiplier);
-          worker_local_stacks[thread_local_worker_id].add_operation(gradient_index);
 
           //thread_local_multiplier->emplace_back(multiplier);
           //thread_local_index->emplace_back(gradient_index);
@@ -202,6 +207,9 @@ namespace adept {
 	//if (n_allocated_operations_ < n_operations_+n+1) {
 	//  grow_operation_stack(n);
 	//}
+        int wid = thread_local_worker_id;
+        worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+n);
+        worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+n);
       }
       template<uIndex n>
       void check_space_static() {

@@ -10,6 +10,12 @@
 
 #include "./activations.hpp"
 
+#include <cilk/cilk.h>
+
+#ifdef TFK_ADEPT_SERIAL
+#include <cilk/cilk_stub.h>
+#endif
+
 using adept::Real;
 using adept::aReal;
 using adept::Matrix;

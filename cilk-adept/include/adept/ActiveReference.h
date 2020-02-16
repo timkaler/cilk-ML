@@ -93,6 +93,12 @@ namespace adept {
     typename enable_if<is_not_expression<PType>::value,
 		       ActiveReference&>::type
     operator=(const PType& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
+
       val_ = rhs;
       // Pushing the gradient index on to the statement stack with no
       // corresponding operations ensures that the gradient will be
@@ -112,6 +118,12 @@ namespace adept {
     // non-template version because otherwise compiler will generate
     // its own
     ActiveReference& operator=(const ActiveReference& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
+
       // Check there is space in the operation stack for one more
       // entry
 #ifdef ADEPT_RECORDING_PAUSABLE
@@ -134,6 +146,12 @@ namespace adept {
     // Assignment operator with an active variable on the rhs
     template <class AType>
     ActiveReference& operator=(const Active<AType>& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
+
       // Check there is space in the operation stack for one more
       // entry
 #ifdef ADEPT_RECORDING_PAUSABLE
@@ -158,6 +176,12 @@ namespace adept {
     template <typename AType, class E>
     typename enable_if<E::is_active && E::rank==0, ActiveReference&>::type
     operator=(const Expression<AType, E>& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
+
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
@@ -180,6 +204,11 @@ namespace adept {
     template<typename AType, class E>
     typename enable_if<E::rank==0, ActiveReference&>::type
     operator+=(const Expression<AType,E>& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
       return *this = (*this + rhs);
     }
     template<typename AType, class E>
@@ -202,6 +231,12 @@ namespace adept {
     template <typename PType>
     typename enable_if<is_not_expression<PType>::value, ActiveReference&>::type
     operator+=(const PType& rhs) {
+      #ifdef TFK_SPEC_OPT
+      int wid = thread_local_worker_id;
+      worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+2048);
+      worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+2048);
+      #endif
+
       val_ += rhs;
       return *this;
     }
