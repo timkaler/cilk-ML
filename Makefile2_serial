@@ -1,0 +1,151 @@
+
+
+BUILD_DIR := build
+
+CC := $(CXX) #g++
+LD := $(CXX) #g++
+
+ADEPT_INCLUDE := -I./adept-serial/include
+
+#ADEPT_INCLUDE := -I./cilk-adept/include
+
+LLVM_BIN=/efs/tools/tapir-csi/src/build/bin
+
+# Use the first one for divide and conquer loops, use latter for multispawn representation of loops.
+CSIFLAGS_OPT := -fcsi=aftertapirloops
+#CSIFLAGS_OPT := -fcsi
+
+#CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-config-mode -mllvm "whitelist" -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false 
+
+#CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-config-mode -mllvm "whitelist" -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-arithmetic=false
+
+
+CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
+
+
+CSIFLAGS := 
+
+#CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
+
+
+# for IR testing
+#CSIFLAGS += -g $(CSIFLAGS_OPT) -mllvm -csi-config-mode -mllvm "whitelist" -mllvm -csi-tool-bitcode -mllvm "build/tool.bc" -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false 
+
+#CFLAGS += -g -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread $(ADEPT_INCLUDE) -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE -DADEPT_RECORDING_PAUSABLE -DTFK_ONE_THREAD -DTFK_ADEPT_SERIAL
+
+CFLAGS += -g -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread $(ADEPT_INCLUDE) -DADEPT_RECORDING_PAUSABLE -DTFK_ADEPT_SERIAL
+
+OPENCV_INCLUDE=$(OPENCV_ROOT)/include
+OPENCV_LIB=$(OPENCV_ROOT)/lib
+
+CFLAGS += -I$(OPENCV_INCLUDE)
+LDFLAGS = -ldl $(EXTRA_LDFLAGS) -O3 -lcilkrts -lprofiler -lpthread 
+
+
+#CFLAGS += -flto
+#LDFLAGS += -flto -fuse-ld=gold
+
+
+
+ifdef PROFILE
+  CFLAGS += -DPROFILE
+  LDFLAGS += -lprofiler
+endif
+
+ifdef NOCACHE
+  CFLAGS += -DNOCACHE
+endif
+
+ifdef 3D
+  CFLAGS += -DALIGN3D
+endif
+
+ifdef SKIPOUTPUT
+  CFLAGS += -DSKIPOUTPUT
+endif
+
+ifdef LOGIMAGES
+  CFLAGS += -DLOGIMAGES
+endif
+
+ifndef INCLUDEHDF5
+  CFLAGS += -DSKIPHDF5
+endif
+
+ifdef MEMCHECK
+  CFLAGS += -DMEMCHECK
+endif
+
+ifndef INCLUDEJSON
+  CFLAGS += -DSKIPJSON
+endif
+
+ifeq ($(CILKSAN),1)
+CFLAGS += -fsanitize=cilk
+endif
+
+
+ifdef ASSEMBLY
+	CFLAGS += -S
+endif
+
+ifdef DEBUG
+	CFLAGS += -O0 -g
+else
+	CFLAGS += -DNDEBUG
+	#CFLAGS += -O3 -fno-vectorize -funsafe-math-optimizations -g -mavx2 -m64 -march=native -fcilkplus
+	CFLAGS += -O3 -g -mavx2 -m64 -march=native -fcilkplus
+	#-Ofast
+endif
+
+#LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_ml -ladept
+#LDFLAGS += -ladept
+LDFLAGS += -lblas
+
+ifdef ASSEMBLY
+	BINS = common.S align.S run.S
+else
+	BINS = run_serial
+endif
+
+.PHONY:	all clean
+
+all: $(BINS)
+
+
+$(BUILD_DIR)/semisort: semisort.cpp
+	$(CC) -g $(CFLAGS) -lprofiler $(DEFINES) -o $@ $<
+
+#$(BUILD_DIR)/main.ll: main.cpp $(BUILD_DIR)/tool.bc
+#	$(CC) $(CFLAGS) -g -fcsi -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<
+#$(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/tool.bc
+#	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/main.ll: main.cpp 
+	$(CC) $(CFLAGS) -g -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<
+$(BUILD_DIR)/main.o: main.cpp 
+	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/Graph.o: Graph.cpp Graph.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/optimization.o: optimization.cpp optimization.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/activations.o: activations.cpp activations.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+#$(BUILD_DIR)/tool.bc: tool.cpp
+#	$(CC) $(CFLAGS) $(DEFINES) -c -emit-llvm -o $@ $<
+#
+#$(BUILD_DIR)/tool.o: tool.cpp $(BUILD_DIR)/tool.bc
+#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+#run: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(LLVM_BIN)/../lib/clang/6.0.0/lib/linux/libclang_rt.csi-x86_64.a
+#	$(LD) -v -o $@ $^ $(LDFLAGS)
+
+run_serial: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o
+	$(LD) -v -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -f $(BINS) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.bc $(BUILD_DIR)/*.ll

@@ -59,6 +59,11 @@ void SP_Tree::walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_t
         if (statement.index == -1) continue;
 
         // Perform the extraction.
+        //adept::Real a = gradient_[statement.index];
+        //for (int j = 0; j < __cilkrts_get_nworkers(); j++) {
+        //  a += worker_local_grad_table[j][statement.index];
+        //  worker_local_grad_table[j][statement.index] = 0;
+        //}
         float* extract_arr = worker_local_stacks[stack.worker_id].statement_stack_deposit_location[ist];
         int extract_arr_len = worker_local_stacks[stack.worker_id].statement_stack_deposit_location_len[ist];
         adept::Real a = gradient_[statement.index];
@@ -79,10 +84,47 @@ void SP_Tree::walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_t
             a += extract_arr[i];
             extract_arr[i] = 0;
           }
-       }
+        }
 
         if (a != 0.0) {
            if (statement.end_plus_one - worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one <= 5000 || true) {
+
+
+             // partition the statement stack.
+             //int size = statement.end_plus_one - worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+             //adept::uIndex* indices1 = (adept::uIndex*) malloc(sizeof(float*) * size);
+             //adept::uIndex* indices2 = (adept::uIndex*) malloc(sizeof(float*) * size);
+             //int count1 = 0;
+             //int count2 = 0;
+             //for (adept::uIndex j =
+             //       worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+             //       j < statement.end_plus_one; j++) {
+             //  if(worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[j]) {
+             //    indices1[count1++] = j;
+             //  } else {
+             //    indices2[count2++] = j;
+             //  }
+             //}
+
+             //for (int _j = 0; _j < count1; _j++) {
+             //  int j = indices1[_j];
+             //  adept::Real multiplier_test =
+             //      worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
+             //  adept::uIndex operation_stack_index =
+             //      worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+             //  *(worker_local_stacks[stack.worker_id].operation_stack_deposit_location[j]) += multiplier_test*a;
+             //}
+
+             //for (int _j = 0; _j < count2; _j++) {
+             //  int j = indices2[_j];
+             //  adept::Real multiplier_test =
+             //      worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
+             //  adept::uIndex operation_stack_index =
+             //      worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+             //  worker_local_grad_table[wid][operation_stack_index] += multiplier_test*a;
+             //}
+             //free(indices1);
+             //free(indices2);
              for (adept::uIndex j =
                     worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
                     j < statement.end_plus_one; j++) {
@@ -94,8 +136,8 @@ void SP_Tree::walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_t
                  *(worker_local_stacks[stack.worker_id].operation_stack_deposit_location[j]) += multiplier_test*a;
                  //gradient_[operation_stack_index] += multiplier_test*a;
                } else {
-                 //gradient_[operation_stack_index] += multiplier_test*a;
-                 worker_local_grad_table[wid][operation_stack_index] += multiplier_test*a;
+               //gradient_[operation_stack_index] += multiplier_test*a;
+               worker_local_grad_table[wid][operation_stack_index] += multiplier_test*a;
                }
              }
            } else {
