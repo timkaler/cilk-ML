@@ -28,26 +28,13 @@
 
 
 
-//int sched_yield(void) {
-//for (int i=0; i< 4000; i++) _mm_pause(); //usleep(1);
-//
-//return 0;
-//
-//}
-
-
-
-
-
-
-
-
-//#define TFK_ADEPT_SERIAL
-
+// Defined by Makefile_serial
 #ifdef TFK_ADEPT_SERIAL
 #include <cilk/cilk_stub.h>
 #endif
 
+
+#define GLOBAL_ITER_THRESH 5
 
 
 using adept::Real;
@@ -1835,7 +1822,7 @@ void learn_gcn() {
 
   double learning_rate = 0.001;
 
-  int ITER_THRESH = 5;
+  int ITER_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 0; iter < 20; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
@@ -1969,7 +1956,7 @@ void learn_gcn_pubmed() {
 
   double learning_rate = 0.1;//0.01;
 
-  int ITER_THRESH = 5;
+  int ITER_THRESH = GLOBAL_ITER_THRESH;
 
   for (int iter = 0; iter < 15; iter++) {
     set_values(weight_hyper_list, weights_raw);
@@ -2108,7 +2095,7 @@ void learn_mnist_lenet5_tanh() {
 
 
 
-  int TIME_THRESH=5;
+  int TIME_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 1; iter < 30*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
@@ -2270,7 +2257,7 @@ void learn_mnist_lenet5() {
 
 
 
-  int TIME_THRESH=5;
+  int TIME_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 1; iter < 30*1; iter++) {
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();

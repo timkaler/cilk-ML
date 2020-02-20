@@ -1,6 +1,6 @@
 #include <csi/csi.h>
 #include <adept.h>
-#include <cilk-adept-headers/tfkparallel.h>
+#include "parad/parad.h"
 
 void tfk_init();
 
@@ -12,7 +12,7 @@ void __csi_init() {/*tfk_reducer.sp_tree.recording = true;*/}
         const instrumentation_counts_t counts) {}
 
 
-void __csi_task(const csi_id_t task_id, const csi_id_t detach_id) {
+void __csi_task(const csi_id_t task_id, const csi_id_t detach_id, const task_prop_t prop) {
   //std::cout << "Started task\n";
   if (!tfk_reducer.sp_tree.recording) return;
   tfk_reducer.sp_tree.open_S_node();
@@ -21,7 +21,7 @@ void __csi_task(const csi_id_t task_id, const csi_id_t detach_id) {
 
 void __csi_task_exit(const csi_id_t task_exit_id,
                           const csi_id_t task_id,
-                          const csi_id_t detach_id) {
+                          const csi_id_t detach_id, const task_exit_prop_t prop) {
   if (!tfk_reducer.sp_tree.recording) return;
   //std::cout << "Exiting task\n";
   tfk_reducer.sp_tree.close_S_node();

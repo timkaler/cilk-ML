@@ -2,7 +2,8 @@
 
 #NOTE(TFK): You'll need this if you use GCC.
 
-export TAPIR_PREFIX=/efs/tools/tapir-csi/src/build
+#export TAPIR_PREFIX=/efs/tools/tapir-csi/src/build
+export TAPIR_PREFIX=/efs/tools/opencilk2/llvm
 
 export PATH=$TAPIR_PREFIX/bin:$PATH
 #:/efs/tools/protobuf_c4/bin:$PATH
@@ -15,7 +16,7 @@ export OMP_NUM_THREADS=1
 #export EXTRA_CFLAGS="-fcilkplus -Wall" #-Werror"
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/home/tfk/archive-linux/lib/:/usr/lib/x86_64-linux-gnu/
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/
 
 #export CPATH=$CPATH:/efs/home/tfk/archive-linux/lib
 

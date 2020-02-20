@@ -68,9 +68,10 @@
 
 */
 
+#include <parad/parad.h>
+#include <parad/tfkparallel.cpp>
 #ifndef AdeptSource_H
 #define AdeptSource_H 1
-
 
 
 
@@ -461,6 +462,7 @@ namespace adept {
 
   // Destructor: frees dynamically allocated memory (if any)
   Stack::~Stack() {
+    PARAD::report_times();
     // If this is the currently active stack then set to NULL as
     // "this" is shortly to become invalid
     if (is_thread_unsafe_) {
@@ -559,8 +561,9 @@ namespace adept {
   }
 
 
-
-
+  //void tfk_debug_report_times() {
+  //  tfk_reducer.sp_tree.report_times();
+  //}
 
   // Perform to adjoint computation (reverse mode). It is assumed that
   // some gradients have been assigned already, otherwise the function
@@ -639,7 +642,9 @@ namespace adept {
     //tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
     delete[] locks;
     #else
-    tfk_reducer.sp_tree.test(n_gradients_registered_, gradient_);
+    //tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
+    //tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
+    PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
     #endif
     t2.stop();
 
@@ -1313,10 +1318,6 @@ namespace adept {
 
 
 
-//#include <cilk-adept-headers/sp_tree.cpp>
-#include <cilk-adept-headers/sp_tree.h>
-
-#include <cilk-adept-source/tfkparallel.cpp>
 
 #include <adept/StackStorageOrig.h>
 

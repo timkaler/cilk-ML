@@ -1,0 +1,419 @@
+libadept_la-StackStorageOrig.lo: StackStorageOrig.cpp \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstring \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++config.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/os_defines.h \
+  /usr/include/features.h /usr/include/stdc-predef.h \
+  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/cpu_defines.h \
+  /usr/include/string.h \
+  /efs/tools/tapir-6/build/lib/clang/6.0.0/include/stddef.h \
+  /usr/include/xlocale.h ../include/adept/StackStorageOrig.h \
+  ../include/adept/base.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstddef \
+  /efs/tools/tapir-6/build/lib/clang/6.0.0/include/__stddef_max_align_t.h \
+  ../include/adept/exception.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/exception \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/atomic_lockfree_defines.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/exception_ptr.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/exception_defines.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/nested_exception.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/string \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stringfwd.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/memoryfwd.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/char_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_algobase.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/functexcept.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/cpp_type_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/type_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/numeric_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_pair.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/move.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/concept_check.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/type_traits \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator_base_types.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator_base_funcs.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/debug/debug.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ptr_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/predefined_ops.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/postypes.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cwchar \
+  /usr/include/wchar.h /usr/include/stdio.h \
+  /efs/tools/tapir-6/build/lib/clang/6.0.0/include/stdarg.h \
+  /usr/include/x86_64-linux-gnu/bits/wchar.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdint \
+  /efs/tools/tapir-6/build/lib/clang/6.0.0/include/stdint.h \
+  /usr/include/stdint.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/allocator.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++allocator.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/new_allocator.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/new \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/localefwd.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++locale.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/clocale \
+  /usr/include/locale.h /usr/include/x86_64-linux-gnu/bits/locale.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/iosfwd \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cctype \
+  /usr/include/ctype.h /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/typesizes.h /usr/include/endian.h \
+  /usr/include/x86_64-linux-gnu/bits/endian.h \
+  /usr/include/x86_64-linux-gnu/bits/byteswap.h \
+  /usr/include/x86_64-linux-gnu/bits/byteswap-16.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ostream_insert.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/cxxabi_forced.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_function.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/backward/binders.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/range_access.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/initializer_list \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_string.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/atomicity.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/gthr.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/gthr-default.h \
+  /usr/include/pthread.h /usr/include/sched.h /usr/include/time.h \
+  /usr/include/x86_64-linux-gnu/bits/sched.h \
+  /usr/include/x86_64-linux-gnu/bits/time.h \
+  /usr/include/x86_64-linux-gnu/bits/timex.h \
+  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
+  /usr/include/x86_64-linux-gnu/bits/setjmp.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/atomic_word.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/alloc_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/alloc_traits.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/string_conversions.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdlib \
+  /usr/include/stdlib.h /usr/include/x86_64-linux-gnu/bits/waitflags.h \
+  /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
+  /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/include/x86_64-linux-gnu/sys/select.h \
+  /usr/include/x86_64-linux-gnu/bits/select.h \
+  /usr/include/x86_64-linux-gnu/bits/sigset.h \
+  /usr/include/x86_64-linux-gnu/sys/sysmacros.h /usr/include/alloca.h \
+  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
+  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdio \
+  /usr/include/libio.h /usr/include/_G_config.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+  /usr/include/x86_64-linux-gnu/bits/sys_errlist.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cerrno \
+  /usr/include/errno.h /usr/include/x86_64-linux-gnu/bits/errno.h \
+  /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
+  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/functional_hash.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/hash_bytes.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_string.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/sstream \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/istream \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ios \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ios_base.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_classes.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_classes.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/system_error \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/error_constants.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/stdexcept \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/streambuf \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/streambuf.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_ios.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_facets.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cwctype \
+  /usr/include/wctype.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/ctype_base.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/streambuf_iterator.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/ctype_inline.h \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_facets.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_ios.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ostream \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ostream.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/istream.tcc \
+  /usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/sstream.tcc \
+  ../include/adept/Statement.h
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstring:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++config.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/os_defines.h:
+
+/usr/include/features.h:
+
+/usr/include/stdc-predef.h:
+
+/usr/include/x86_64-linux-gnu/sys/cdefs.h:
+
+/usr/include/x86_64-linux-gnu/bits/wordsize.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/cpu_defines.h:
+
+/usr/include/string.h:
+
+/efs/tools/tapir-6/build/lib/clang/6.0.0/include/stddef.h:
+
+/usr/include/xlocale.h:
+
+../include/adept/StackStorageOrig.h:
+
+../include/adept/base.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstddef:
+
+/efs/tools/tapir-6/build/lib/clang/6.0.0/include/__stddef_max_align_t.h:
+
+../include/adept/exception.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/exception:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/atomic_lockfree_defines.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/exception_ptr.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/exception_defines.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/nested_exception.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/string:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stringfwd.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/memoryfwd.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/char_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_algobase.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/functexcept.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/cpp_type_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/type_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/numeric_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_pair.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/move.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/concept_check.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/type_traits:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator_base_types.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator_base_funcs.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/debug/debug.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_iterator.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ptr_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/predefined_ops.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/postypes.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cwchar:
+
+/usr/include/wchar.h:
+
+/usr/include/stdio.h:
+
+/efs/tools/tapir-6/build/lib/clang/6.0.0/include/stdarg.h:
+
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdint:
+
+/efs/tools/tapir-6/build/lib/clang/6.0.0/include/stdint.h:
+
+/usr/include/stdint.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/allocator.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++allocator.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/new_allocator.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/new:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/localefwd.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/c++locale.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/clocale:
+
+/usr/include/locale.h:
+
+/usr/include/x86_64-linux-gnu/bits/locale.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/iosfwd:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cctype:
+
+/usr/include/ctype.h:
+
+/usr/include/x86_64-linux-gnu/bits/types.h:
+
+/usr/include/x86_64-linux-gnu/bits/typesizes.h:
+
+/usr/include/endian.h:
+
+/usr/include/x86_64-linux-gnu/bits/endian.h:
+
+/usr/include/x86_64-linux-gnu/bits/byteswap.h:
+
+/usr/include/x86_64-linux-gnu/bits/byteswap-16.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ostream_insert.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/cxxabi_forced.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/stl_function.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/backward/binders.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/range_access.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/initializer_list:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_string.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/atomicity.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/gthr.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/gthr-default.h:
+
+/usr/include/pthread.h:
+
+/usr/include/sched.h:
+
+/usr/include/time.h:
+
+/usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/usr/include/x86_64-linux-gnu/bits/time.h:
+
+/usr/include/x86_64-linux-gnu/bits/timex.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
+
+/usr/include/x86_64-linux-gnu/bits/setjmp.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/atomic_word.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/alloc_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/alloc_traits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ext/string_conversions.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdlib:
+
+/usr/include/stdlib.h:
+
+/usr/include/x86_64-linux-gnu/bits/waitflags.h:
+
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/x86_64-linux-gnu/sys/types.h:
+
+/usr/include/x86_64-linux-gnu/sys/select.h:
+
+/usr/include/x86_64-linux-gnu/bits/select.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigset.h:
+
+/usr/include/x86_64-linux-gnu/sys/sysmacros.h:
+
+/usr/include/alloca.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cstdio:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/sys_errlist.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cerrno:
+
+/usr/include/errno.h:
+
+/usr/include/x86_64-linux-gnu/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/x86_64-linux-gnu/asm/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/functional_hash.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/hash_bytes.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_string.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/sstream:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/istream:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ios:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ios_base.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_classes.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_classes.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/system_error:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/error_constants.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/stdexcept:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/streambuf:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/streambuf.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_ios.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_facets.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/cwctype:
+
+/usr/include/wctype.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/ctype_base.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/streambuf_iterator.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/x86_64-linux-gnu/c++/5.4.1/bits/ctype_inline.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/locale_facets.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/basic_ios.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/ostream:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/ostream.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/istream.tcc:
+
+/usr/lib/gcc/x86_64-linux-gnu/5.4.1/../../../../include/c++/5.4.1/bits/sstream.tcc:
+
+../include/adept/Statement.h:

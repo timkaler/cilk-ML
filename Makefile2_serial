@@ -1,6 +1,6 @@
 
 
-BUILD_DIR := build
+BUILD_DIR := build_serial
 
 CC := $(CXX) #g++
 LD := $(CXX) #g++
@@ -9,7 +9,6 @@ ADEPT_INCLUDE := -I./adept-serial/include
 
 #ADEPT_INCLUDE := -I./cilk-adept/include
 
-LLVM_BIN=/efs/tools/tapir-csi/src/build/bin
 
 # Use the first one for divide and conquer loops, use latter for multispawn representation of loops.
 CSIFLAGS_OPT := -fcsi=aftertapirloops
@@ -113,17 +112,8 @@ endif
 all: $(BINS)
 
 
-$(BUILD_DIR)/semisort: semisort.cpp
-	$(CC) -g $(CFLAGS) -lprofiler $(DEFINES) -o $@ $<
 
-#$(BUILD_DIR)/main.ll: main.cpp $(BUILD_DIR)/tool.bc
-#	$(CC) $(CFLAGS) -g -fcsi -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<
-#$(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/tool.bc
-#	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
-
-$(BUILD_DIR)/main.ll: main.cpp 
-	$(CC) $(CFLAGS) -g -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<
-$(BUILD_DIR)/main.o: main.cpp 
+$(BUILD_DIR)/main.o: main.cpp
 	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
 
 $(BUILD_DIR)/Graph.o: Graph.cpp Graph.hpp
