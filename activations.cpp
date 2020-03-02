@@ -76,7 +76,10 @@ aReal tfksigmoid(aReal arg) {
 }
 
 aMatrix tfksigmoid(aMatrix arg) {
-  return tfksig(arg);
+  // TODO: should include a branch for numerical stability like above
+  return 1.0 / (1.0 + exp(-1.0 * arg));
 }
 
-
+aMatrix tfktanh(aMatrix arg) {
+  return 2.0 * tfksigmoid(2.0 * arg) - 1;
+}

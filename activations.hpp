@@ -24,6 +24,7 @@ aMatrix tfksoftmax(aMatrix arg, aReal p);
 
 aReal tfksigmoid(aReal arg);
 aMatrix tfksigmoid(aMatrix arg);
+aMatrix tfktanh(aMatrix arg);
 
 aMatrix mmul(aMatrix weights, aMatrix input);
 

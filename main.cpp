@@ -2507,10 +2507,245 @@ void learn_mnist(std::vector<int>& layer_sizes) {
 
 }
 
+// =============================================================================
+
+std::vector<std::vector<Matrix>> parse_paul_graham(int N, int LEN, int NUM_CHARS) {
+  // Load Paul Graham dataset to a string
+  std::ifstream t("./datasets/paul_graham.txt");
+  string text((std::istreambuf_iterator<char>(t)),
+              std::istreambuf_iterator<char>());
+
+  // Split the dataset into 500 separate data entries of 100 characters each
+  // Transform each character to a 1-hot ASCII encoding of the characters
+  std::vector<std::vector<Matrix>> input;
+  for (int i = 0; i < N; ++i) {
+    string raw_datapoint = text.substr(i * LEN, LEN);
+    std::vector<Matrix> datapoint;
+    for (int j = 0; j < LEN; ++j) {
+      int value = int(raw_datapoint[j]);
+      Matrix char_encoding = Matrix(NUM_CHARS, 1);
+      for (int k = 0; k < NUM_CHARS; ++k) {
+        char_encoding[k] = 0.0;
+        if (k == value)
+          char_encoding[k] = 1.0;
+      }
+      datapoint.push_back(char_encoding);
+    }
+    input.push_back(datapoint);
+  }
+  return input;
+}
+
+std::vector<std::vector<aMatrix>> compute_lstm(
+                                  std::vector<aMatrix>& weights,
+                                  std::vector<std::vector<Matrix>>& batch_input,
+                                  int NUM_ASCII, int HIDDEN_FEATURES) {
+  std::vector<std::vector<aMatrix>> batch_output = 
+                          std::vector<std::vector<aMatrix>>(batch_input.size());
+
+  cilk_for (int i = 0; i < batch_input.size(); ++i) {
+    // NOTE: the hidden/cell matrices are offset to allow us to initialize the
+    // first element in the vectors to a 0 matrix
+    std::vector<Matrix> input = batch_input[i];
+    std::vector<aMatrix> hidden = std::vector<aMatrix>(input.size()+1);
+    std::vector<aMatrix> cell = std::vector<aMatrix>(input.size()+1);
+    std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
+    hidden[0] = aMatrix(HIDDEN_FEATURES, 1);
+    for (int j = 0; j < HIDDEN_FEATURES; ++j) {
+      hidden[0][j][0] = 0.0;
+    }
+    cell[0] = aMatrix(HIDDEN_FEATURES, 1);
+    for (int j = 0; j < HIDDEN_FEATURES; ++j) {
+      cell[0][j][0] = 0.0;
+    }
+
+    // Weights are in the following order: 
+    // W_f, input_f, b_f, W_i, input_i, b_i,
+    // W_c, input_c, b_C, W_o, input_o, b_o, output matrix
+    aMatrix temp_f, temp_i, temp_c, temp_o;
+
+    // Compute the cell layer and the hidden layer
+    for (int j = 0; j < input.size(); ++j) {
+      temp_f = tfksigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
+      temp_i = tfksigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
+      temp_c = tfktanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
+      temp_o = tfksigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
+      cell[j+1] = cell[j] * temp_f + temp_i * temp_c;
+      hidden[j+1] = temp_o * tfktanh(cell[j+1]);
+      output[j] = tfksoftmax(weights[12] ** hidden[j+1], 1.0);
+    }
+    batch_output[i] = output;
+  }
+  return batch_output;
+}
+
+void learn_lstm() {
+  // Hyperparameters
+  using adept::Stack;
+  Stack stack;
+  int N = 500;
+  int LEN = 100;
+  int NUM_ASCII = 128;
+  int BATCH_SIZE = 10;
+  int NUM_ITER = 100;
+  double LR = 0.01;
+  int HIDDEN_FEATURES = 300; // Same number of hidden features as cell features
+
+  std::default_random_engine generator(17);
+  std::uniform_int_distribution<int> batch_dis(0, N-1);
+
+  // Load the Paul Graham dataset to 500 100-char datapoints, using a one-hot
+  // encoding of each character
+  std::vector<std::vector<Matrix>> input = parse_paul_graham(N, LEN, NUM_ASCII);
+
+  // Randomly initialize the weights
+  std::vector<std::vector<aMatrix>*> weight_hyper_list;
+  std::vector<aMatrix> weight_list;
+  // W_f, input_f, b_f: "forget gate layer"
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+    // W_i, input_i, b_i: "input gate layer"
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // W_c, input_c, b_c: candidate values for cell state
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // W_o, input_o, b_o: "output gate layer"
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // Weight matrix for output layer: [HIDDEN_FEATURES, NUM_ASCII]
+  weight_list.push_back(aMatrix(NUM_ASCII, HIDDEN_FEATURES));
+  weight_hyper_list.push_back(&weight_list);
+
+  for (int i = 0; i < weight_list.size(); ++i) {
+    float range = sqrt(6.0 / (weight_list[i].dimensions()[0] + weight_list[i].dimensions()[1]));
+    std::uniform_real_distribution<double> distribution(-range, range);
+    for (int j = 0; j < weight_list[i].dimensions()[0]; ++j) {
+      for (int k = 0; k < weight_list[i].dimensions()[1]; ++k) {
+        weight_list[i][j][k] = distribution(generator);
+      }
+    }
+  }
+
+  double* weights_raw = allocate_weights(weight_hyper_list);
+  double* weights_raw_old = allocate_weights(weight_hyper_list);
+  double* gradients = allocate_weights(weight_hyper_list);
+  double* momentums = allocate_weights(weight_hyper_list);
+  double* velocities = allocate_weights(weight_hyper_list);
+  read_values(weight_hyper_list, weights_raw);
+  read_values(weight_hyper_list, weights_raw_old);
+
+  // Train the LSTM over many iterations
+  for (int iter = 0; iter < NUM_ITER; ++iter) {
+    set_values(weight_hyper_list, weights_raw);
+    stack.new_recording();
+
+    // Randomly sample input to create the batch data
+    std::vector<std::vector<Matrix>> batch_input;
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      batch_input.push_back(input[batch_dis(generator)]);
+    }
+
+    // Run the LSTM on the batch data
+    aReal loss = 0.0;
+    std::vector<std::vector<aMatrix>> output_softmax = compute_lstm(
+            *weight_hyper_list[0], batch_input, NUM_ASCII, HIDDEN_FEATURES);
+
+    // Compute the loss
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      for (int j = 0; j < LEN-1; ++j) {
+        loss += 1.0 * logitCrossEntropy(output_softmax[i][j], batch_input[i][j+1])
+                    / (1.0 * BATCH_SIZE * (LEN - 1));
+      }
+    }
+
+    // Compute and apply gradient update using ADAM optimizer
+    loss.set_gradient(1.0);
+    stack.reverse();
+    read_gradients(weight_hyper_list, gradients);
+
+    // Compute the accuracy
+    double accuracy = 0.0;
+    for (int i = 0; i < BATCH_SIZE; ++i) {
+      for (int j = 0; j < LEN-1; ++j) {
+        int argmax = 0;
+        double argmaxvalue = output_softmax[i][j][0][0].value();
+        for (int k = 0; k < NUM_ASCII; ++k) {
+          if (argmaxvalue < output_softmax[i][j][k][0].value()) {
+            argmaxvalue = output_softmax[i][j][k][0].value();
+            argmax = k;
+          }
+        }
+        if (batch_input[i][j+1][argmax][0] == 1) {
+          accuracy += 1.0 / BATCH_SIZE / LEN;
+        }
+      }
+    }
+
+    std::cout.precision(5);
+    std::cout << "iter: " << iter << ", loss: " << loss.value() << ", accuracy: " << accuracy << "\n";
+
+    store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
+    apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old,
+                               gradients, momentums, velocities, 1.0, LR, iter+1);
+  }
+
+  // Now do some inference (generate text) =====================================
+  
+  stack.pause_recording();
+  for (int iter = 0; iter < 10; ++iter) {
+    // Start with the letter 'T'
+    string out_text = "T";
+    aMatrix cell = aMatrix(HIDDEN_FEATURES, 1);
+    aMatrix hidden = aMatrix(HIDDEN_FEATURES, 1);
+    for (int i = 0; i < HIDDEN_FEATURES; ++i) {
+      cell[i][0] = 0.0;
+      hidden[i][0] = 0.0;
+    }
+    aMatrix in = aMatrix(NUM_ASCII, 1);
+    for (int i = 0; i < NUM_ASCII; ++i) {
+      in[i][0] = 0.0;
+    }
+    in[int('T')][0] = 1.0;
+    aMatrix output = aMatrix(NUM_ASCII, 1);
+
+    // Generate 1000 characters
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    for (int i = 0; i < 1000; ++i) {
+      // Compute the cell, hidden, and output
+      aMatrix temp_f = tfksigmoid(weight_list[0] ** hidden + weight_list[1] ** in + weight_list[2]);
+      aMatrix temp_i = tfksigmoid(weight_list[3] ** hidden + weight_list[4] ** in + weight_list[5]);
+      aMatrix temp_c = tanh(weight_list[6] ** hidden + weight_list[7] ** in + weight_list[8]);
+      aMatrix temp_o = tfksigmoid(weight_list[9] ** hidden + weight_list[10] ** in + weight_list[11]);
+      cell = cell * temp_f + temp_i * temp_c;
+      hidden = temp_o * tanh(cell);
+      output = tfksoftmax(weight_list[12] ** hidden, 1.0);
+
+      // Generate a character the output distribution and a random distribution
+      double val = distribution(generator);
+      int j;
+      for (j = 0; j < NUM_ASCII; ++j) {
+        val -= output[j][0].value();
+        if (val <= 0) break;
+      }
+      out_text += char(j);
+
+      // Assign generated output character to next input
+      for (int k = 0; k < NUM_ASCII; ++k) {
+        in[k][0] = 0.0;
+      }
+      in[j][0] = 1.0;
+    }
+    std::cout << "\nGenerated output text:\n" << out_text << "\n";
+  }
+}
+
 
 int main(int argc, char** argv) {
-
-
   int alg = -1;
   cxxopts::Options options(argv[0], "Options");
   options.add_options()
@@ -2540,6 +2775,9 @@ int main(int argc, char** argv) {
     case 5:
       learn_gcn();
       break;
+    case 6:
+      learn_lstm();
+      break;
     default:
       printf("no algorithm specified");
       break;
@@ -2561,26 +2799,3 @@ int main(int argc, char** argv) {
   //learn_mnist_lenet5_fast();
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
