@@ -2562,19 +2562,19 @@ std::vector<std::vector<aMatrix>> compute_lstm(
     }
 
     // Weights are in the following order: 
-    // W_f, input_f, W_i, input_i, W_c, input_c, W_o, input_o, output matrix
+    // W_f, input_f, b_f, W_i, input_i, b_i,
+    // W_c, input_c, b_C, W_o, input_o, b_o, output matrix
     aMatrix temp_f, temp_i, temp_c, temp_o;
 
     // Compute the cell layer and the hidden layer
     for (int j = 0; j < input.size(); ++j) {
-      temp_f = tfksigmoid(weights[0] ** hidden[j] + weights[1] ** input[j]);
-      temp_i = tfksigmoid(weights[2] ** hidden[j] + weights[3] ** input[j]);
-      temp_c = tanh(weights[4] ** hidden[j] + weights[5] ** input[j]);
-      temp_o = tfksigmoid(weights[6] ** hidden[j] + weights[7] ** input[j]);
-      // This should be an elementwise multiply
+      temp_f = tfksigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
+      temp_i = tfksigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
+      temp_c = tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
+      temp_o = tfksigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
       cell[j+1] = cell[j] * temp_f + temp_i * temp_c;
       hidden[j+1] = temp_o * tanh(cell[j+1]);
-      output[j] = tfksoftmax(weights[8] ** hidden[j+1], 1.0);
+      output[j] = tfksoftmax(weights[12] ** hidden[j+1], 1.0);
     }
     batch_output[i] = output;
   }
@@ -2600,21 +2600,25 @@ void learn_lstm() {
   // encoding of each character
   std::vector<std::vector<Matrix>> input = parse_paul_graham(N, LEN, NUM_ASCII);
   
-  // Randomly initialize the weights. weight_list in the following order: 
+  // Randomly initialize the weights. 
   std::vector<std::vector<aMatrix>*> weight_hyper_list;
   std::vector<aMatrix> weight_list;
-  // W_f, input_f: "forget gate layer"
+  // W_f, input_f, b_f: "forget gate layer"
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
-  // W_i, input_i: "input gate layer"
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // W_i, input_i, b_i: "input gate layer"
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
-  // W_c, input_c: candidate values for cell state
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // W_c, input_c, b_c: candidate values for cell state
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
-  // W_o, input_o: "output gate layer"
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
+  // W_o, input_o, b_o: "output gate layer"
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, HIDDEN_FEATURES));
   weight_list.push_back(aMatrix(HIDDEN_FEATURES, NUM_ASCII));
+  weight_list.push_back(aMatrix(HIDDEN_FEATURES, 1));
   // Weight matrix for output layer: [HIDDEN_FEATURES, NUM_ASCII]
   weight_list.push_back(aMatrix(NUM_ASCII, HIDDEN_FEATURES));
   weight_hyper_list.push_back(&weight_list);
@@ -2694,49 +2698,52 @@ void learn_lstm() {
   
   // Now do some inference (generate text) =====================================
 
-  // Start with the letter 'T'
-  string out_text = "T";
-  aMatrix cell = aMatrix(HIDDEN_FEATURES, 1);
-  aMatrix hidden = aMatrix(HIDDEN_FEATURES, 1);
-  for (int i = 0; i < HIDDEN_FEATURES; ++i) {
-    cell[i][0] = 0.0;
-    hidden[i][0] = 0.0;
-  }
-  aMatrix in = aMatrix(NUM_ASCII, 1);
-  for (int i = 0; i < NUM_ASCII; ++i) {
-    in[i][0] = 0.0;
-  }
-  in[int('T')][0] = 1.0;
-  aMatrix output = aMatrix(NUM_ASCII, 1);
-
-  // Generate 1000 characters
-  std::uniform_real_distribution<double> distribution(0.0, 1.0);
-  for (int i = 0; i < 1000; ++i) {
-    // Compute the cell, hidden, and output
-    aMatrix temp_f = tfksigmoid(weight_list[0] ** hidden + weight_list[1] ** in);
-    aMatrix temp_i = tfksigmoid(weight_list[2] ** hidden + weight_list[3] ** in);
-    aMatrix temp_c = tanh(weight_list[4] ** hidden + weight_list[5] ** in);
-    aMatrix temp_o = tfksigmoid(weight_list[6] ** hidden + weight_list[7] ** in);
-    cell = cell * temp_f + temp_i * temp_c;
-    hidden = temp_o * tanh(cell);
-    output = tfksoftmax(weight_list[8] ** hidden, 1.0);
-
-    // Generate a character the output distribution and a random distribution
-    double val = distribution(generator);
-    int j;
-    for (j = 0; j < NUM_ASCII; ++j) {
-      val -= output[j][0].value();
-      if (val <= 0) break;
+  stack.pause_recording();
+  for (int iter = 0; iter < 10; ++iter) {
+    // Start with the letter 'T'
+    string out_text = "T";
+    aMatrix cell = aMatrix(HIDDEN_FEATURES, 1);
+    aMatrix hidden = aMatrix(HIDDEN_FEATURES, 1);
+    for (int i = 0; i < HIDDEN_FEATURES; ++i) {
+      cell[i][0] = 0.0;
+      hidden[i][0] = 0.0;
     }
-    out_text += char(j);
-
-    // Assign generated output character to next input
-    for (int k = 0; k < NUM_ASCII; ++k) {
-      in[k][0] = 0.0;
+    aMatrix in = aMatrix(NUM_ASCII, 1);
+    for (int i = 0; i < NUM_ASCII; ++i) {
+      in[i][0] = 0.0;
     }
-    in[j][0] = 1.0;
+    in[int('T')][0] = 1.0;
+    aMatrix output = aMatrix(NUM_ASCII, 1);
+
+    // Generate 1000 characters
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    for (int i = 0; i < 1000; ++i) {
+      // Compute the cell, hidden, and output
+      aMatrix temp_f = tfksigmoid(weight_list[0] ** hidden + weight_list[1] ** in + weight_list[2]);
+      aMatrix temp_i = tfksigmoid(weight_list[3] ** hidden + weight_list[4] ** in + weight_list[5]);
+      aMatrix temp_c = tanh(weight_list[6] ** hidden + weight_list[7] ** in + weight_list[8]);
+      aMatrix temp_o = tfksigmoid(weight_list[9] ** hidden + weight_list[10] ** in + weight_list[11]);
+      cell = cell * temp_f + temp_i * temp_c;
+      hidden = temp_o * tanh(cell);
+      output = tfksoftmax(weight_list[12] ** hidden, 1.0);
+
+      // Generate a character the output distribution and a random distribution
+      double val = distribution(generator);
+      int j;
+      for (j = 0; j < NUM_ASCII; ++j) {
+        val -= output[j][0].value();
+        if (val <= 0) break;
+      }
+      out_text += char(j);
+
+      // Assign generated output character to next input
+      for (int k = 0; k < NUM_ASCII; ++k) {
+        in[k][0] = 0.0;
+      }
+      in[j][0] = 1.0;
+    }
+    std::cout << "\nGenerated output text:\n" << out_text << "\n";
   }
-  std::cout << "\nGenerated output text:\n" << out_text << "\n";
 }
 
 
