@@ -400,7 +400,6 @@ void reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
   r16.start();
   int n_workers = __cilkrts_get_nworkers();
   int64_t max_gradient = tfk_reducer.max_gradient;
-  printf("max gradient is %llu\n", max_gradient);
   // Accumulate the gradients. Should technically use sparse arrays here,
   //   but this is presently not a common bottleneck.
   cilk_for (int64_t i = 0; i < max_gradient; i++) {

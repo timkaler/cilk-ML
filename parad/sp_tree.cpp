@@ -404,7 +404,6 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   r16.start();
   int n_workers = __cilkrts_get_nworkers();
   int64_t max_gradient = tfk_reducer.max_gradient;
-  printf("max gradient is %llu\n", max_gradient);
   // Accumulate the gradients. Should technically use sparse arrays here,
   //   but this is presently not a common bottleneck.
   cilk_for (int64_t i = 0; i < max_gradient; i++) {
@@ -663,12 +662,10 @@ void SP_Tree::make_ids_deterministic(int64_t n_gradients) {
 
 SP_Tree* SP_Tree::transform_to_rootset_form() {
   int n_rootsets = walk_tree_rootset_transform(this->get_root(), 0);
-  printf("Number of rootsets is %d\n", n_rootsets);
   std::vector<SP_Node*> data_nodes;
   std::vector<SP_Node*> all_nodes;
   walk_tree_flatten_datanodes(this->get_root(), data_nodes);
   walk_tree_flatten_allnodes(this->get_root(), all_nodes);
-  printf("Number of data nodes is %llu, all nodes %llu\n", data_nodes.size(), all_nodes.size());
 
   std::map<int, std::vector<SP_Node*> > rootset_to_nodes;
 
@@ -722,7 +719,6 @@ void SP_Tree::open_P_node(void* sync_id) {
 
 void SP_Tree::open_P_node() {
   if (!recording) return;
-  printf("DEBUG: Open P node should not be called right now without sync id\n");
   SP_Node*& current_node = imp_.view();
 
   if (current_node == NULL) printf("Error current node is null in open P node\n");
@@ -981,7 +977,6 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
         //}
         if (a != 0.0) {
          #ifdef TFK_DEBUG_PRINTS
-         printf("statement %d edges:", statement.index);
          #endif
          if (ist == 0/*stack.statement_stack_start*/ && false) {
            for (adept::uIndex j = stack.operation_stack_start;

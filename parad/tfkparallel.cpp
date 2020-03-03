@@ -341,14 +341,12 @@ tfkdiff tfk_reducer;
       }
     }
 
-    printf("A) total statement stack size %llu operation stack %llu\n", total_statement_stack_size, total_operation_stack_size);
     total_statement_stack_size = 0;
     total_operation_stack_size = 0;
     for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
       total_statement_stack_size += worker_local_stacks[wid].statement_stack_arr_len;
       total_operation_stack_size += worker_local_stacks[wid].operation_stack_arr_len;
     }
-    printf("B) total statement stack size %llu operation stack %llu\n", total_statement_stack_size, total_operation_stack_size);
 
 
     return;

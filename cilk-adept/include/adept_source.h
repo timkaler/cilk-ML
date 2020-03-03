@@ -626,7 +626,6 @@ namespace adept {
 
     //tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
 
-    printf("Num gradients registered is %d\n", n_gradients_registered_); 
     //SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
 
     //tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
@@ -705,13 +704,9 @@ namespace adept {
     //   }
 
     //}
-    t0.reportTotal("gettlsrefs");
-    t1.reportTotal("collect");
-    t2.reportTotal("test");
     return;
     }
 
-    printf("should never get to this point\n");
 
     if (gradients_are_initialized()) {
 //
@@ -1176,8 +1171,6 @@ namespace adept {
   void
   Stack::initialize_gradients()
   {
-    printf("num allocated gradients is %d, max_gradient %d, n registered gradients: %d\n", n_allocated_gradients_, max_gradient_, n_gradients_registered_);
-
     uIndex max_gradient = n_gradients_registered_;
     if (max_gradient > 0) {
       if (n_allocated_gradients_ < max_gradient) {
@@ -1185,10 +1178,8 @@ namespace adept {
 	  delete[] gradient_;
 	}
 	gradient_ = new Real[max_gradient];
-        printf("reinit gradients\n");
 	n_allocated_gradients_ = max_gradient;
       }
-      printf("init gradients from 0 to %d\n", max_gradient);
       cilk_for (uIndex i = 0; i < max_gradient; i++) {
 	gradient_[i] = 0;//0.0f;
       }

@@ -2779,7 +2779,7 @@ int main(int argc, char** argv) {
       learn_lstm();
       break;
     default:
-      printf("no algorithm specified");
+      printf("no algorithm specified\n");
       break;
   }
 
