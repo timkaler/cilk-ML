@@ -148,19 +148,19 @@ aMatrix Graph::get_embedding(int vid, int layer, std::vector<std::vector<aMatrix
         pre_ret += eweight*embeddings[layer-1][adj[vid][i]];
       }
     }
-    aMatrix ret = mmul(weights[layer], pre_ret);
+    aMatrix ret = weights[layer] ** pre_ret;
 
-    //ret = mmul(skip_weights[layer], embeddings[layer-1][vid]);
+    //ret = skip_weights[layer] ** embeddings[layer-1][vid];
     //for (int i = 0; i < adj[vid].size(); i++) {
     //  if (adj[vid][i] == vid) continue;
     //  Real eweight = edge_weight(vid, adj[vid][i]);
-    //  ret += eweight*mmul(weights[layer], embeddings[layer-1][adj[vid][i]]);
+    //  ret += eweight * (weights[layer] ** embeddings[layer-1][adj[vid][i]]);
     //}
 
     if (layer == embedding_dim_list.size()-2) {
-      return tfksig(ret);
+      return activations::relu(ret);
     } else {
-      return tfksig(ret);
+      return activations::relu(ret);
     }
   }
 }

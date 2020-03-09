@@ -4,7 +4,7 @@ CC := $(CXX) #g++
 LD := $(CXX) #g++
 
 #ADEPT_INCLUDE := -I./adept-serial/include
-ADEPT_INCLUDE := -I./cilk-adept/include -I./
+ADEPT_INCLUDE := -I./adept-cilk/include -I./
 
 CSI_RT_PATH=/efs/tools/opencilk2/llvm/lib/clang/9.0.1/lib/linux/libclang_rt.csi-x86_64.a
 
@@ -70,7 +70,10 @@ $(BUILD_DIR)/tool.bc: tool.cpp
 $(BUILD_DIR)/tool.o: tool.cpp $(BUILD_DIR)/tool.bc
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-run_plocks: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/rad_algs.o $(CSI_RT_PATH)
+$(BUILD_DIR)/io_helpers.o: io_helpers.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+run_plocks: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/rad_algs.o $(CSI_RT_PATH)
 	$(LD) -v -o $@ $^ $(LDFLAGS)
 
 clean:

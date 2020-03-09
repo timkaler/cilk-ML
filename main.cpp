@@ -11,31 +11,25 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <chrono>
 #include <map>
 #include <vector>
 
 #include "./activations.hpp"
-#include "./Graph.hpp"
-#include "./optimization.hpp"
+#include "./cxxopts.hpp"
 #include "./io_helpers.hpp"
-
+#include "./Graph.hpp"
 #include "./mnist_parser.h"
-
+#include "./optimization.hpp"
 
 #include "./common/gettime.h"
-
-#include "./cxxopts.hpp"
-
-
 
 // Defined by Makefile_serial
 #ifdef TFK_ADEPT_SERIAL
 #include <cilk/cilk_stub.h>
 #endif
 
-
 #define GLOBAL_ITER_THRESH 5
-
 
 using adept::Real;
 using adept::aReal;
@@ -44,6 +38,7 @@ using adept::aMatrix;
 using adept::Vector;
 using adept::aVector;
 
+using std::ios;
 using std::vector;
 
 std::default_random_engine generator(44);
@@ -54,8 +49,6 @@ void tfk_init() {
   tfk_reducer.get_tls_references();
 }
 #endif
-
-
 
 aReal recursive_sum(aReal* arr, int start, int end) {
   if (end - start < 128) {
@@ -77,480 +70,406 @@ aReal recursive_sum(aReal* arr, int start, int end) {
   return left+right;
 }
 
-
 #define _max(a,b,c,d) max(max(a,b), max(c,d))
 
-//aReal _max(aReal a, aReal b, aReal c, aReal d) {
-//
-//  float max_val = a.value();
-//  int cas = 0;
-//  if (b.value() > max_val) {
-//    max_val = b.value();
-//    cas = 1;
-//  }
-//
-//  if (c.value() > max_val) {
-//    max_val = c.value();
-//    cas = 2;
-//  }
-//  if (d.value() > max_val) {
-//    max_val = d.value();
-//    cas = 3;
-//  }
-//
-//  if (cas == 0) return a;
-//  if (cas == 1) return b;
-//  if (cas == 2) return c;
-//  if (cas == 3) return d;
-//  return a;
-//}
+/*
+aReal _max(aReal a, aReal b, aReal c, aReal d) {
+  float max_val = a.value();
+  int cas = 0;
+  if (b.value() > max_val) {
+    max_val = b.value();
+    cas = 1;
+  }
+  if (c.value() > max_val) {
+    max_val = c.value();
+    cas = 2;
+  }
+  if (d.value() > max_val) {
+    max_val = d.value();
+    cas = 3;
+  }
+  if (cas == 0) return a;
+  if (cas == 1) return b;
+  if (cas == 2) return c;
+  if (cas == 3) return d;
+  return a;
+}
+*/
 
 aMatrix lenet_pool2_maxpool(aMatrix& output3) {
-    // pooling layer 2
-    //   aMatrix pool2_weights(5)
-    aMatrix _output4(16*5*5+1, 1);
-    for (int x = 0; x < 10; x += 2) {
-      for (int y = 0; y < 10; y += 2) {
-
-
-_output4(0*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(0,(x+0)*10 + (y+0)),
-                                   output3(0,(x+0)*10 + (y+1)),
-                                   output3(0,(x+1)*10 + (y+0)),
-                                   output3(0,(x+1)*10 + (y+1)));
-
-_output4(1*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(1,(x+0)*10 + (y+0)),
-                                   output3(1,(x+0)*10 + (y+1)),
-                                   output3(1,(x+1)*10 + (y+0)),
-                                   output3(1,(x+1)*10 + (y+1)));
-
-_output4(2*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(2,(x+0)*10 + (y+0)),
-                                   output3(2,(x+0)*10 + (y+1)),
-                                   output3(2,(x+1)*10 + (y+0)),
-                                   output3(2,(x+1)*10 + (y+1)));
-
-_output4(3*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(3,(x+0)*10 + (y+0)),
-                                   output3(3,(x+0)*10 + (y+1)),
-                                   output3(3,(x+1)*10 + (y+0)),
-                                   output3(3,(x+1)*10 + (y+1)));
-
-_output4(4*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(4,(x+0)*10 + (y+0)),
-                                   output3(4,(x+0)*10 + (y+1)),
-                                   output3(4,(x+1)*10 + (y+0)),
-                                   output3(4,(x+1)*10 + (y+1)));
-
-_output4(5*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(5,(x+0)*10 + (y+0)),
-                                   output3(5,(x+0)*10 + (y+1)),
-                                   output3(5,(x+1)*10 + (y+0)),
-                                   output3(5,(x+1)*10 + (y+1)));
-
-_output4(6*5*5 + (x/2)*5+(y/2),0) = _max(
-				   output3(5,(x+0)*10 + (y+0)),
-                                   output3(5,(x+0)*10 + (y+1)),
-                                   output3(5,(x+1)*10 + (y+0)),
-                                   output3(5,(x+1)*10 + (y+1)));
-
-_output4(6*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(6,(x+0)*10 + (y+0)),
-                                   output3(6,(x+0)*10 + (y+1)),
-                                   output3(6,(x+1)*10 + (y+0)),
-                                   output3(6,(x+1)*10 + (y+1)));
-
-_output4(7*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(7,(x+0)*10 + (y+0)),
-                                   output3(7,(x+0)*10 + (y+1)),
-                                   output3(7,(x+1)*10 + (y+0)),
-                                   output3(7,(x+1)*10 + (y+1)));
-
-_output4(8*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(8,(x+0)*10 + (y+0)),
-                                   output3(8,(x+0)*10 + (y+1)),
-                                   output3(8,(x+1)*10 + (y+0)),
-                                   output3(8,(x+1)*10 + (y+1)));
-
-_output4(9*5*5 + (x/2)*5+(y/2),0) = _max(
-                                   output3(9,(x+0)*10 + (y+0)),
-                                   output3(9,(x+0)*10 + (y+1)),
-                                   output3(9,(x+1)*10 + (y+0)),
-                                   output3(9,(x+1)*10 + (y+1)));
-
-_output4(10*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(10,(x+0)*10 + (y+0)),
-                                    output3(10,(x+0)*10 + (y+1)),
-                                    output3(10,(x+1)*10 + (y+0)),
-                                    output3(10,(x+1)*10 + (y+1)));
-
-_output4(11*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(11,(x+0)*10 + (y+0)),
-                                    output3(11,(x+0)*10 + (y+1)),
-                                    output3(11,(x+1)*10 + (y+0)),
-                                    output3(11,(x+1)*10 + (y+1)));
-
-_output4(12*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(12,(x+0)*10 + (y+0)),
-                                    output3(12,(x+0)*10 + (y+1)),
-                                    output3(12,(x+1)*10 + (y+0)),
-                                    output3(12,(x+1)*10 + (y+1)));
-
-_output4(13*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(13,(x+0)*10 + (y+0)),
-                                    output3(13,(x+0)*10 + (y+1)),
-                                    output3(13,(x+1)*10 + (y+0)),
-                                    output3(13,(x+1)*10 + (y+1)));
-
-_output4(14*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(14,(x+0)*10 + (y+0)),
-                                    output3(14,(x+0)*10 + (y+1)),
-                                    output3(14,(x+1)*10 + (y+0)),
-                                    output3(14,(x+1)*10 + (y+1)));
-
-_output4(15*5*5 + (x/2)*5+(y/2),0) = _max(
-                                    output3(15,(x+0)*10 + (y+0)),
-                                    output3(15,(x+0)*10 + (y+1)),
-                                    output3(15,(x+1)*10 + (y+0)),
-                                    output3(15,(x+1)*10 + (y+1)));
-      }
+  aMatrix _output4(16*5*5+1, 1);
+  for (int x = 0; x < 10; x += 2) {
+    for (int y = 0; y < 10; y += 2) {
+      _output4(0*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(0,(x+0)*10 + (y+0)),
+              output3(0,(x+0)*10 + (y+1)),
+              output3(0,(x+1)*10 + (y+0)),
+              output3(0,(x+1)*10 + (y+1)));
+      _output4(1*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(1,(x+0)*10 + (y+0)),
+              output3(1,(x+0)*10 + (y+1)),
+              output3(1,(x+1)*10 + (y+0)),
+              output3(1,(x+1)*10 + (y+1)));
+      _output4(2*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(2,(x+0)*10 + (y+0)),
+              output3(2,(x+0)*10 + (y+1)),
+              output3(2,(x+1)*10 + (y+0)),
+              output3(2,(x+1)*10 + (y+1)));
+      _output4(3*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(3,(x+0)*10 + (y+0)),
+              output3(3,(x+0)*10 + (y+1)),
+              output3(3,(x+1)*10 + (y+0)),
+              output3(3,(x+1)*10 + (y+1)));
+      _output4(4*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(4,(x+0)*10 + (y+0)),
+              output3(4,(x+0)*10 + (y+1)),
+              output3(4,(x+1)*10 + (y+0)),
+              output3(4,(x+1)*10 + (y+1)));
+      _output4(5*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(5,(x+0)*10 + (y+0)),
+              output3(5,(x+0)*10 + (y+1)),
+              output3(5,(x+1)*10 + (y+0)),
+              output3(5,(x+1)*10 + (y+1)));
+      _output4(6*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(5,(x+0)*10 + (y+0)),
+              output3(5,(x+0)*10 + (y+1)),
+              output3(5,(x+1)*10 + (y+0)),
+              output3(5,(x+1)*10 + (y+1)));
+      _output4(6*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(6,(x+0)*10 + (y+0)),
+              output3(6,(x+0)*10 + (y+1)),
+              output3(6,(x+1)*10 + (y+0)),
+              output3(6,(x+1)*10 + (y+1)));
+      _output4(7*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(7,(x+0)*10 + (y+0)),
+              output3(7,(x+0)*10 + (y+1)),
+              output3(7,(x+1)*10 + (y+0)),
+              output3(7,(x+1)*10 + (y+1)));
+      _output4(8*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(8,(x+0)*10 + (y+0)),
+              output3(8,(x+0)*10 + (y+1)),
+              output3(8,(x+1)*10 + (y+0)),
+              output3(8,(x+1)*10 + (y+1)));
+      _output4(9*5*5 + (x/2)*5+(y/2),0) = _max(
+              output3(9,(x+0)*10 + (y+0)),
+              output3(9,(x+0)*10 + (y+1)),
+              output3(9,(x+1)*10 + (y+0)),
+              output3(9,(x+1)*10 + (y+1)));
+      _output4(10*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(10,(x+0)*10 + (y+0)),
+               output3(10,(x+0)*10 + (y+1)),
+               output3(10,(x+1)*10 + (y+0)),
+               output3(10,(x+1)*10 + (y+1)));
+      _output4(11*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(11,(x+0)*10 + (y+0)),
+               output3(11,(x+0)*10 + (y+1)),
+               output3(11,(x+1)*10 + (y+0)),
+               output3(11,(x+1)*10 + (y+1)));
+      _output4(12*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(12,(x+0)*10 + (y+0)),
+               output3(12,(x+0)*10 + (y+1)),
+               output3(12,(x+1)*10 + (y+0)),
+               output3(12,(x+1)*10 + (y+1)));
+      _output4(13*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(13,(x+0)*10 + (y+0)),
+               output3(13,(x+0)*10 + (y+1)),
+               output3(13,(x+1)*10 + (y+0)),
+               output3(13,(x+1)*10 + (y+1)));
+      _output4(14*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(14,(x+0)*10 + (y+0)),
+               output3(14,(x+0)*10 + (y+1)),
+               output3(14,(x+1)*10 + (y+0)),
+               output3(14,(x+1)*10 + (y+1)));
+      _output4(15*5*5 + (x/2)*5+(y/2),0) = _max(
+               output3(15,(x+0)*10 + (y+0)),
+               output3(15,(x+0)*10 + (y+1)),
+               output3(15,(x+1)*10 + (y+0)),
+               output3(15,(x+1)*10 + (y+1)));
     }
+  }
   return _output4;
 }
 
-
 aMatrix lenet_pool2(aMatrix& output3, aMatrix& pool2_weights) {
-    // pooling layer 2
-    //   aMatrix pool2_weights(5)
-    aMatrix _output4(16*5*5+1, 1);
-    for (int x = 0; x < 10; x += 2) {
-      for (int y = 0; y < 10; y += 2) {
-        //#include "kernel4.txt"
-_output4(0*5*5 + (x/2)*5+(y/2),0) = pool2_weights(0,4) +
-                                   output3(0,(x+0)*10 + (y+0))*pool2_weights(0,0*2+0) +
-                                   output3(0,(x+0)*10 + (y+1))*pool2_weights(0,0*2+1) +
-                                   output3(0,(x+1)*10 + (y+0))*pool2_weights(0,1*2+0) +
-                                   output3(0,(x+1)*10 + (y+1))*pool2_weights(0,1*2+1) ;
+  aMatrix _output4(16*5*5+1, 1);
+  for (int x = 0; x < 10; x += 2) {
+    for (int y = 0; y < 10; y += 2) {
+      _output4(0*5*5 + (x/2)*5+(y/2),0) = pool2_weights(0,4) +
+              output3(0,(x+0)*10 + (y+0))*pool2_weights(0,0*2+0) +
+              output3(0,(x+0)*10 + (y+1))*pool2_weights(0,0*2+1) +
+              output3(0,(x+1)*10 + (y+0))*pool2_weights(0,1*2+0) +
+              output3(0,(x+1)*10 + (y+1))*pool2_weights(0,1*2+1) ;
+      _output4(1*5*5 + (x/2)*5+(y/2),0) = pool2_weights(1,4) +
+              output3(1,(x+0)*10 + (y+0))*pool2_weights(1,0*2+0) +
+              output3(1,(x+0)*10 + (y+1))*pool2_weights(1,0*2+1) +
+              output3(1,(x+1)*10 + (y+0))*pool2_weights(1,1*2+0) +
+              output3(1,(x+1)*10 + (y+1))*pool2_weights(1,1*2+1) ;
+      _output4(2*5*5 + (x/2)*5+(y/2),0) = pool2_weights(2,4) +
+              output3(2,(x+0)*10 + (y+0))*pool2_weights(2,0*2+0) +
+              output3(2,(x+0)*10 + (y+1))*pool2_weights(2,0*2+1) +
+              output3(2,(x+1)*10 + (y+0))*pool2_weights(2,1*2+0) +
+              output3(2,(x+1)*10 + (y+1))*pool2_weights(2,1*2+1) ;
+      _output4(3*5*5 + (x/2)*5+(y/2),0) = pool2_weights(3,4) +
+              output3(3,(x+0)*10 + (y+0))*pool2_weights(3,0*2+0) +
+              output3(3,(x+0)*10 + (y+1))*pool2_weights(3,0*2+1) +
+              output3(3,(x+1)*10 + (y+0))*pool2_weights(3,1*2+0) +
+              output3(3,(x+1)*10 + (y+1))*pool2_weights(3,1*2+1) ;
+      _output4(4*5*5 + (x/2)*5+(y/2),0) = pool2_weights(4,4) +
+              output3(4,(x+0)*10 + (y+0))*pool2_weights(4,0*2+0) +
+              output3(4,(x+0)*10 + (y+1))*pool2_weights(4,0*2+1) +
+              output3(4,(x+1)*10 + (y+0))*pool2_weights(4,1*2+0) +
+              output3(4,(x+1)*10 + (y+1))*pool2_weights(4,1*2+1) ;
+      _output4(5*5*5 + (x/2)*5+(y/2),0) = pool2_weights(5,4) +
+              output3(5,(x+0)*10 + (y+0))*pool2_weights(5,0*2+0) +
+              output3(5,(x+0)*10 + (y+1))*pool2_weights(5,0*2+1) +
+              output3(5,(x+1)*10 + (y+0))*pool2_weights(5,1*2+0) +
+              output3(5,(x+1)*10 + (y+1))*pool2_weights(5,1*2+1) ;
+      _output4(6*5*5 + (x/2)*5+(y/2),0) = pool2_weights(6,4) +
+              output3(6,(x+0)*10 + (y+0))*pool2_weights(6,0*2+0) +
+              output3(6,(x+0)*10 + (y+1))*pool2_weights(6,0*2+1) +
+              output3(6,(x+1)*10 + (y+0))*pool2_weights(6,1*2+0) +
+              output3(6,(x+1)*10 + (y+1))*pool2_weights(6,1*2+1) ;
+      _output4(7*5*5 + (x/2)*5+(y/2),0) = pool2_weights(7,4) +
+              output3(7,(x+0)*10 + (y+0))*pool2_weights(7,0*2+0) +
+              output3(7,(x+0)*10 + (y+1))*pool2_weights(7,0*2+1) +
+              output3(7,(x+1)*10 + (y+0))*pool2_weights(7,1*2+0) +
+              output3(7,(x+1)*10 + (y+1))*pool2_weights(7,1*2+1) ;
+      _output4(8*5*5 + (x/2)*5+(y/2),0) = pool2_weights(8,4) +
+              output3(8,(x+0)*10 + (y+0))*pool2_weights(8,0*2+0) +
+              output3(8,(x+0)*10 + (y+1))*pool2_weights(8,0*2+1) +
+              output3(8,(x+1)*10 + (y+0))*pool2_weights(8,1*2+0) +
+              output3(8,(x+1)*10 + (y+1))*pool2_weights(8,1*2+1) ;
+      _output4(9*5*5 + (x/2)*5+(y/2),0) = pool2_weights(9,4) +
+              output3(9,(x+0)*10 + (y+0))*pool2_weights(9,0*2+0) +
+              output3(9,(x+0)*10 + (y+1))*pool2_weights(9,0*2+1) +
+              output3(9,(x+1)*10 + (y+0))*pool2_weights(9,1*2+0) +
+              output3(9,(x+1)*10 + (y+1))*pool2_weights(9,1*2+1) ;
+      _output4(10*5*5 + (x/2)*5+(y/2),0) = pool2_weights(10,4) +
+              output3(10,(x+0)*10 + (y+0))*pool2_weights(10,0*2+0) +
+              output3(10,(x+0)*10 + (y+1))*pool2_weights(10,0*2+1) +
+              output3(10,(x+1)*10 + (y+0))*pool2_weights(10,1*2+0) +
+              output3(10,(x+1)*10 + (y+1))*pool2_weights(10,1*2+1) ;
+      _output4(11*5*5 + (x/2)*5+(y/2),0) = pool2_weights(11,4) +
+              output3(11,(x+0)*10 + (y+0))*pool2_weights(11,0*2+0) +
+              output3(11,(x+0)*10 + (y+1))*pool2_weights(11,0*2+1) +
+              output3(11,(x+1)*10 + (y+0))*pool2_weights(11,1*2+0) +
+              output3(11,(x+1)*10 + (y+1))*pool2_weights(11,1*2+1) ;
+      _output4(12*5*5 + (x/2)*5+(y/2),0) = pool2_weights(12,4) +
+              output3(12,(x+0)*10 + (y+0))*pool2_weights(12,0*2+0) +
+              output3(12,(x+0)*10 + (y+1))*pool2_weights(12,0*2+1) +
+              output3(12,(x+1)*10 + (y+0))*pool2_weights(12,1*2+0) +
+              output3(12,(x+1)*10 + (y+1))*pool2_weights(12,1*2+1) ;
+      _output4(13*5*5 + (x/2)*5+(y/2),0) = pool2_weights(13,4) +
+              output3(13,(x+0)*10 + (y+0))*pool2_weights(13,0*2+0) +
+              output3(13,(x+0)*10 + (y+1))*pool2_weights(13,0*2+1) +
+              output3(13,(x+1)*10 + (y+0))*pool2_weights(13,1*2+0) +
+              output3(13,(x+1)*10 + (y+1))*pool2_weights(13,1*2+1) ;
+      _output4(14*5*5 + (x/2)*5+(y/2),0) = pool2_weights(14,4) +
+              output3(14,(x+0)*10 + (y+0))*pool2_weights(14,0*2+0) +
+              output3(14,(x+0)*10 + (y+1))*pool2_weights(14,0*2+1) +
+              output3(14,(x+1)*10 + (y+0))*pool2_weights(14,1*2+0) +
+              output3(14,(x+1)*10 + (y+1))*pool2_weights(14,1*2+1) ;
+      _output4(15*5*5 + (x/2)*5+(y/2),0) = pool2_weights(15,4) +
+              output3(15,(x+0)*10 + (y+0))*pool2_weights(15,0*2+0) +
+              output3(15,(x+0)*10 + (y+1))*pool2_weights(15,0*2+1) +
+              output3(15,(x+1)*10 + (y+0))*pool2_weights(15,1*2+0) +
+              output3(15,(x+1)*10 + (y+1))*pool2_weights(15,1*2+1) ;
 
-_output4(1*5*5 + (x/2)*5+(y/2),0) = pool2_weights(1,4) +
-                                   output3(1,(x+0)*10 + (y+0))*pool2_weights(1,0*2+0) +
-                                   output3(1,(x+0)*10 + (y+1))*pool2_weights(1,0*2+1) +
-                                   output3(1,(x+1)*10 + (y+0))*pool2_weights(1,1*2+0) +
-                                   output3(1,(x+1)*10 + (y+1))*pool2_weights(1,1*2+1) ;
-
-_output4(2*5*5 + (x/2)*5+(y/2),0) = pool2_weights(2,4) +
-                                   output3(2,(x+0)*10 + (y+0))*pool2_weights(2,0*2+0) +
-                                   output3(2,(x+0)*10 + (y+1))*pool2_weights(2,0*2+1) +
-                                   output3(2,(x+1)*10 + (y+0))*pool2_weights(2,1*2+0) +
-                                   output3(2,(x+1)*10 + (y+1))*pool2_weights(2,1*2+1) ;
-
-_output4(3*5*5 + (x/2)*5+(y/2),0) = pool2_weights(3,4) +
-                                   output3(3,(x+0)*10 + (y+0))*pool2_weights(3,0*2+0) +
-                                   output3(3,(x+0)*10 + (y+1))*pool2_weights(3,0*2+1) +
-                                   output3(3,(x+1)*10 + (y+0))*pool2_weights(3,1*2+0) +
-                                   output3(3,(x+1)*10 + (y+1))*pool2_weights(3,1*2+1) ;
-
-_output4(4*5*5 + (x/2)*5+(y/2),0) = pool2_weights(4,4) +
-                                   output3(4,(x+0)*10 + (y+0))*pool2_weights(4,0*2+0) +
-                                   output3(4,(x+0)*10 + (y+1))*pool2_weights(4,0*2+1) +
-                                   output3(4,(x+1)*10 + (y+0))*pool2_weights(4,1*2+0) +
-                                   output3(4,(x+1)*10 + (y+1))*pool2_weights(4,1*2+1) ;
-
-_output4(5*5*5 + (x/2)*5+(y/2),0) = pool2_weights(5,4) +
-                                   output3(5,(x+0)*10 + (y+0))*pool2_weights(5,0*2+0) +
-                                   output3(5,(x+0)*10 + (y+1))*pool2_weights(5,0*2+1) +
-                                   output3(5,(x+1)*10 + (y+0))*pool2_weights(5,1*2+0) +
-                                   output3(5,(x+1)*10 + (y+1))*pool2_weights(5,1*2+1) ;
-
-_output4(6*5*5 + (x/2)*5+(y/2),0) = pool2_weights(6,4) +
-                                   output3(6,(x+0)*10 + (y+0))*pool2_weights(6,0*2+0) +
-                                   output3(6,(x+0)*10 + (y+1))*pool2_weights(6,0*2+1) +
-                                   output3(6,(x+1)*10 + (y+0))*pool2_weights(6,1*2+0) +
-                                   output3(6,(x+1)*10 + (y+1))*pool2_weights(6,1*2+1) ;
-
-_output4(7*5*5 + (x/2)*5+(y/2),0) = pool2_weights(7,4) +
-                                   output3(7,(x+0)*10 + (y+0))*pool2_weights(7,0*2+0) +
-                                   output3(7,(x+0)*10 + (y+1))*pool2_weights(7,0*2+1) +
-                                   output3(7,(x+1)*10 + (y+0))*pool2_weights(7,1*2+0) +
-                                   output3(7,(x+1)*10 + (y+1))*pool2_weights(7,1*2+1) ;
-
-_output4(8*5*5 + (x/2)*5+(y/2),0) = pool2_weights(8,4) +
-                                   output3(8,(x+0)*10 + (y+0))*pool2_weights(8,0*2+0) +
-                                   output3(8,(x+0)*10 + (y+1))*pool2_weights(8,0*2+1) +
-                                   output3(8,(x+1)*10 + (y+0))*pool2_weights(8,1*2+0) +
-                                   output3(8,(x+1)*10 + (y+1))*pool2_weights(8,1*2+1) ;
-
-_output4(9*5*5 + (x/2)*5+(y/2),0) = pool2_weights(9,4) +
-                                   output3(9,(x+0)*10 + (y+0))*pool2_weights(9,0*2+0) +
-                                   output3(9,(x+0)*10 + (y+1))*pool2_weights(9,0*2+1) +
-                                   output3(9,(x+1)*10 + (y+0))*pool2_weights(9,1*2+0) +
-                                   output3(9,(x+1)*10 + (y+1))*pool2_weights(9,1*2+1) ;
-
-_output4(10*5*5 + (x/2)*5+(y/2),0) = pool2_weights(10,4) +
-                                    output3(10,(x+0)*10 + (y+0))*pool2_weights(10,0*2+0) +
-                                    output3(10,(x+0)*10 + (y+1))*pool2_weights(10,0*2+1) +
-                                    output3(10,(x+1)*10 + (y+0))*pool2_weights(10,1*2+0) +
-                                    output3(10,(x+1)*10 + (y+1))*pool2_weights(10,1*2+1) ;
-
-_output4(11*5*5 + (x/2)*5+(y/2),0) = pool2_weights(11,4) +
-                                    output3(11,(x+0)*10 + (y+0))*pool2_weights(11,0*2+0) +
-                                    output3(11,(x+0)*10 + (y+1))*pool2_weights(11,0*2+1) +
-                                    output3(11,(x+1)*10 + (y+0))*pool2_weights(11,1*2+0) +
-                                    output3(11,(x+1)*10 + (y+1))*pool2_weights(11,1*2+1) ;
-
-_output4(12*5*5 + (x/2)*5+(y/2),0) = pool2_weights(12,4) +
-                                    output3(12,(x+0)*10 + (y+0))*pool2_weights(12,0*2+0) +
-                                    output3(12,(x+0)*10 + (y+1))*pool2_weights(12,0*2+1) +
-                                    output3(12,(x+1)*10 + (y+0))*pool2_weights(12,1*2+0) +
-                                    output3(12,(x+1)*10 + (y+1))*pool2_weights(12,1*2+1) ;
-
-_output4(13*5*5 + (x/2)*5+(y/2),0) = pool2_weights(13,4) +
-                                    output3(13,(x+0)*10 + (y+0))*pool2_weights(13,0*2+0) +
-                                    output3(13,(x+0)*10 + (y+1))*pool2_weights(13,0*2+1) +
-                                    output3(13,(x+1)*10 + (y+0))*pool2_weights(13,1*2+0) +
-                                    output3(13,(x+1)*10 + (y+1))*pool2_weights(13,1*2+1) ;
-
-_output4(14*5*5 + (x/2)*5+(y/2),0) = pool2_weights(14,4) +
-                                    output3(14,(x+0)*10 + (y+0))*pool2_weights(14,0*2+0) +
-                                    output3(14,(x+0)*10 + (y+1))*pool2_weights(14,0*2+1) +
-                                    output3(14,(x+1)*10 + (y+0))*pool2_weights(14,1*2+0) +
-                                    output3(14,(x+1)*10 + (y+1))*pool2_weights(14,1*2+1) ;
-
-_output4(15*5*5 + (x/2)*5+(y/2),0) = pool2_weights(15,4) +
-                                    output3(15,(x+0)*10 + (y+0))*pool2_weights(15,0*2+0) +
-                                    output3(15,(x+0)*10 + (y+1))*pool2_weights(15,0*2+1) +
-                                    output3(15,(x+1)*10 + (y+0))*pool2_weights(15,1*2+0) +
-                                    output3(15,(x+1)*10 + (y+1))*pool2_weights(15,1*2+1) ;
-
-        //for (int k = 0; k < 16; k++) {
-        //  _output4(k*5*5 + (x/2)*5+(y/2),0) = pool2_weights(k,4); // bias.
-        //}
-        //for (int dx = 0; dx < 2; dx++) {
-        //  for (int dy = 0; dy < 2; dy++) {
-        //    for (int k = 0; k < 16; k++) {
-        //      _output4(k*5*5 + (x/2)*5+(y/2),0) += output3(k,(x+dx)*10 + (y+dy))*pool2_weights(k,dx*2+dy);
-        //    }
-        //  }
-        //}
-      }
+      //for (int k = 0; k < 16; k++) {
+      //  _output4(k*5*5 + (x/2)*5+(y/2),0) = pool2_weights(k,4); // bias.
+      //}
+      //for (int dx = 0; dx < 2; dx++) {
+      //  for (int dy = 0; dy < 2; dy++) {
+      //    for (int k = 0; k < 16; k++) {
+      //      _output4(k*5*5 + (x/2)*5+(y/2),0) += output3(k,(x+dx)*10 + (y+dy))*pool2_weights(k,dx*2+dy);
+      //    }
+      //  }
+      //}
     }
+  }
   return _output4;
 }
 
 aMatrix lenet_conv2(aMatrix& output2, aMatrix& conv2_weights) {
-    // convolution layer 2
-    //   aMatrix conv2_weights(26,1)
-    aMatrix _output3(16, 10*10);
-    for (int x = 0; x < 10; x++) {
-      for (int y = 0; y < 10; y++) {
-        for (int k = 0; k < 16; k++) {
-          _output3(k,x*10+y) = conv2_weights(k,25); // bias.
-        }
-        for (int dx = -2; dx < 3; dx++) {
-          for (int dy = -2; dy < 3; dy++) {
-
-
-            _output3(0,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2)
-                               + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2)
-                               + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2);
-
-            _output3(1,x*10+y) += output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2)
-                               + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2);
-
-            _output3(2,x*10+y) += output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2);
-  
-            _output3(3,x*10+y) += output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2)
-                               + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2);
-  
-            _output3(4,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2)
-                               + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2);
-  
-            _output3(5,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2)
-                               + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2)
-                               + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2);
-  
-            _output3(6,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2)
-                               + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2)
-                               + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2);
-  
-            _output3(7,x*10+y) += output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2)
-                               + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2);
-
-            _output3(8,x*10+y) += output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2)
-                               + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2);
-  
-            _output3(9,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2)
-                               + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2)
-                               + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2)
-                               + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2);
-  
-            _output3(10,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2)
-                                + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2)
-                                + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2)
-                                + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2);
-  
-            _output3(11,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2)
-                                + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2)
-                                + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2)
-                                + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2);
-  
-            _output3(12,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2)
-                                + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2)
-                                + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2)
-                                + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2);
-  
-            _output3(13,x*10+y) += output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2)
-                                + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2)
-                                + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2)
-                                + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2);
-  
-            _output3(14,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2)
-                                + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2)
-                                + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2)
-                                + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2);
-  
-            _output3(15,x*10+y) += output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2)
-                                + output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2)
-                                + output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2)
-                                + output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2)
-                                + output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2)
-                                + output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2);
-          }
+  aMatrix _output3(16, 10*10);
+  for (int x = 0; x < 10; x++) {
+    for (int y = 0; y < 10; y++) {
+      for (int k = 0; k < 16; k++) {
+        _output3(k,x*10+y) = conv2_weights(k,25); // bias.
+      }
+      for (int dx = -2; dx < 3; dx++) {
+        for (int dy = -2; dy < 3; dy++) {
+          _output3(0, x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(0,(dx+2)*5+dy+2);
+          _output3(1, x*10+y) += 
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(1,(dx+2)*5+dy+2);
+          _output3(2,x*10+y) += 
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(2,(dx+2)*5+dy+2);
+          _output3(3,x*10+y) += 
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(3,(dx+2)*5+dy+2);
+          _output3(4,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(4,(dx+2)*5+dy+2);
+          _output3(5,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(5,(dx+2)*5+dy+2);
+          _output3(6,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(6,(dx+2)*5+dy+2);
+          _output3(7,x*10+y) += 
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(7,(dx+2)*5+dy+2);
+          _output3(8,x*10+y) += 
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(8,(dx+2)*5+dy+2);
+          _output3(9,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(9,(dx+2)*5+dy+2);
+          _output3(10,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(10,(dx+2)*5+dy+2);
+          _output3(11,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(11,(dx+2)*5+dy+2);
+          _output3(12,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(12,(dx+2)*5+dy+2);
+          _output3(13,x*10+y) += 
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(13,(dx+2)*5+dy+2);
+          _output3(14,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(14,(dx+2)*5+dy+2);
+          _output3(15,x*10+y) += 
+              output2(0,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2) +
+              output2(1,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2) +
+              output2(2,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2) +
+              output2(3,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2) +
+              output2(4,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2) +
+              output2(5,(x+dx+2)*14 + y+dy+2) * conv2_weights(15,(dx+2)*5+dy+2);
         }
       }
     }
-
+  }
   return _output3;
 }
 
-
 void test_opt() {
-using adept::Stack;
+  using adept::Stack;
+  Stack stack;
 
-Stack stack;
-
-aMatrix A(2,10);
-aMatrix v(10,1);
-
-for (int i = 0; i < 10; i++) {
-  A(0,i) = i;
-  A(1,i) = 2*i;
-  v(i,0) = 2;
-}
-stack.new_recording();
-
-stack.pause_recording();
-aMatrix B = A**v;
-
-/***
-
-B[0] = sum_i=0..9 A[i]*V[i]
-
-statement stack		operation stack
-B[0]			idxA[0]		v>0
-B[1]			idxA[1]		v>0
-
-
-A**V <- B
-
-***/
-
-stack.continue_recording();
-for (int i = 0; i < 10; i++) {
-  if (v(i,0)>0) {
-    stack.push_rhs(1.0,A(0,i).gradient_index());
+  aMatrix A(2,10);
+  aMatrix v(10,1);
+  for (int i = 0; i < 10; i++) {
+    A(0,i) = i;
+    A(1,i) = 2*i;
+    v(i,0) = 2;
   }
-}
-stack.push_lhs(B[0].gradient_index());
-for (int i = 0; i < 10; i++) {
-  if (v(i,1)>0) {
-    stack.push_rhs(1.0,A(1,i).gradient_index());
+
+  stack.new_recording();
+  stack.pause_recording();
+  aMatrix B = A**v;
+  /***
+  B[0] = sum_i=0..9 A[i]*V[i]
+
+  statement stack		operation stack
+  B[0]			idxA[0]		v>0
+  B[1]			idxA[1]		v>0
+
+  A**V <- B
+  ***/
+  stack.continue_recording();
+  for (int i = 0; i < 10; i++) {
+    if (v(i,0)>0) {
+      stack.push_rhs(1.0,A(0,i).gradient_index());
+    }
   }
+  stack.push_lhs(B[0].gradient_index());
+  for (int i = 0; i < 10; i++) {
+    if (v(i,1)>0) {
+      stack.push_rhs(1.0,A(1,i).gradient_index());
+    }
+  }
+  stack.push_lhs(B[1].gradient_index());
+
+  std::cout << B << std::endl;
+
+  aReal val = sum(B);
+  val.set_gradient(1.0);
+  stack.reverse();
+  std::cout << A.get_gradient() << std::endl;
 }
-stack.push_lhs(B[1].gradient_index());
-
-
-
-std::cout << B << std::endl;
-
-aReal val = sum(B);
-val.set_gradient(1.0);
-stack.reverse();
-std::cout << A.get_gradient() << std::endl;
-
-}
-
 
 void test_bug() {
-using adept::Stack;
+  using adept::Stack;
+  Stack stack;
 
-Stack stack;
+  aReal a = 4.0;
+  aReal b = 2.0;
 
-aReal a = 4.0;
-aReal b = 2.0;
+  stack.new_recording();
 
-stack.new_recording();
+  aReal d = a*a + b;
+  d.set_gradient(1.0);
 
-//cilk_for(int i = 0; i < 10; i++) {
-//  if (i == __cilkrts_get_worker_number()) {
-//    a += b;
-//    b = a;
-//  }
-//}
+  stack.reverse();
 
-
-aReal d = a*a + b;
-
-
-d.set_gradient(1.0);
-stack.reverse();
-
-std::cout << a.get_gradient() << "," << b.get_gradient()<< std::endl;
-
-
-
-
-
+  std::cout << a.get_gradient() << "," << b.get_gradient()<< std::endl;
 }
 
+/*
+void standard_2dconvolution(aMatrix& input, aMatrix& conv_weights, 
+                            int input_stride_x, input_stride_y, 
+                            int output_stride_x, int output_stride_y, 
+                            aMatrix& output) {
+  for (int x = 0; x < ; x++) {
+    for (int y = 0; y < dim2; y++) {
+      output[x*dim2+y] = conv_weights[
+          conv_weights.dimensions()[0]*conv_weights.dimensions()[1] - 1]; // bias
+      for (int dx = -2; dx < 3; dx++) {
+        for (int dy = -2; dy < 3; dy++) {
+            output[x*output_stride_y+y*output_stride_x] +=
+                input[(x+dx+2)*32 + (y+dy+2)][0]*conv1_weights[k][(dx+2)*5+dy+2];
+        }
+      }
+    }
+  }
+}
+*/
 
-
-//void standard_2dconvolution(aMatrix& input, aMatrix& conv_weights, int input_stride_x, input_stride_y, int output_stride_x, int output_stride_y,
-//    aMatrix& output) {
-//
-//
-//  for (int x = 0; x < ; x++) {
-//    for (int y = 0; y < dim2; y++) {
-//      output[x*dim2+y] =
-//          conv_weights[conv_weights.dimensions()[0]*conv_weights.dimensions()[1]-1];  // bias
-//
-//      for (int dx = -2; dx < 3; dx++) {
-//        for (int dy = -2; dy < 3; dy++) {
-//            output[x*output_stride_y+y*output_stride_x] +=
-//                input[(x+dx+2)*32 + (y+dy+2)][0]*conv1_weights[k][(dx+2)*5+dy+2];
-//        }
-//      }
-//
-//    }
-//  }
-//}
-
-
-
-aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
-                    std::vector<uint8_t>& labels,
-                    int max_label, double* accuracy, double* test_set_loss) {
+aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, 
+                                        std::vector<Matrix>& data,
+                                        std::vector<uint8_t>& labels,
+                                        int max_label, double* accuracy, 
+                                        double* test_set_loss) {
   aMatrix& conv1_weights = weights[0];
   aMatrix& pool1_weights = weights[1];
   aMatrix& conv2_weights = weights[2];
@@ -565,30 +484,22 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
   aReal* losses = new aReal[data.size()]();
 
   cilk_for (int j = 0; j < data.size(); j++) {
-    //int _end = _j+4;
-    //if (_end > data.size()) _end = data.size();
-    //for (int j = _j; j < _end; j++) {
     losses[j] = 0.0;
-
 
     // Convolution 1.
     // aMatrix conv1_weights(26,1);
     aMatrix output(6,28*28);
-
-
     for (int a = 0; a < output.dimensions()[0]; a++) {
       for (int b = 0; b < output.dimensions()[1]; b++) {
         output(a,b) = 0.0;
       }
     }
 
-
     for (int x = 0; x < 28; x++) {
       for (int y = 0; y < 28; y++) {
         for (int k = 0; k < 6; k++) {
           output(k,x*28+y) += conv1_weights(k,25); // bias.
         }
-
         //for (int dx = -2; dx < 3; dx++) {
         //  for (int dy = -2; dy < 3; dy++) {
             for (int k = 0; k < 6; k++) {
@@ -655,7 +566,7 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
         }
       }
     }
-    aMatrix output2 = tfksig(_output2);
+    aMatrix output2 = activations::relu(_output2);
 
 
     aMatrix _output3 = lenet_conv2(output2, conv2_weights);
@@ -663,21 +574,21 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     //aMatrix output3 = tanh(_output3);
     //aMatrix _output4 = lenet_pool2(output3, pool2_weights);
     //aMatrix output5 = tanh(_output4);
-    aMatrix output5 = tfksig(lenet_pool2_maxpool(_output3));
+    aMatrix output5 = activations::relu(lenet_pool2_maxpool(_output3));
 
     output5(400,0) = 1.0; // bias.
 
     // weight 120*120
     // fully_connected_weights(120,120)
-    aMatrix output6 = tfksig(fully_connected_weights**output5);//(120,1);
+    aMatrix output6 = activations::relu(fully_connected_weights**output5);//(120,1);
 
     output6(120,0) = 1.0; // bias.
 
 
-    aMatrix output7 = tfksig(fully_connected_weights2**output6);
+    aMatrix output7 = activations::relu(fully_connected_weights2**output6);
     output7(84,0) = 1.0; //bias
 
-    aMatrix final_output = tfksoftmax(output_layer_weights**output7,1.0);
+    aMatrix final_output = activations::softmax(output_layer_weights**output7,1.0);
 
 
     //final_output[final_output.dimensions()[0]-1,0] = 1.0; // bias.
@@ -702,7 +613,7 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
     //std::cout << groundtruth << std::endl;
     //std::cout << mat_prediction << std::endl;
     //std::cout << std::endl;
-    losses[j] += crossEntropy(final_output, groundtruth);
+    losses[j] += activations::crossEntropy(final_output, groundtruth);
 
     correct[j] = false;
     if (argmax == labels[j]) {
@@ -735,29 +646,11 @@ aReal compute_mnist_lenet5_fast_maxpool(std::vector<aMatrix>& weights, std::vect
   return loss;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-aReal compute_mnist_lenet5_fast(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
-                    std::vector<uint8_t>& labels,
-                    int max_label, double* accuracy, double* test_set_loss) {
+aReal compute_mnist_lenet5_fast(std::vector<aMatrix>& weights, 
+                                std::vector<Matrix>& data,
+                                std::vector<uint8_t>& labels,
+                                int max_label, double* accuracy, 
+                                double* test_set_loss) {
   aMatrix& conv1_weights = weights[0];
   aMatrix& pool1_weights = weights[1];
   aMatrix& conv2_weights = weights[2];
@@ -875,7 +768,7 @@ aReal compute_mnist_lenet5_fast(std::vector<aMatrix>& weights, std::vector<Matri
     aMatrix output7 = tanh(fully_connected_weights2**output6);
     output7(84,0) = 1.0; //bias
 
-    aMatrix final_output = tfksoftmax(output_layer_weights**output7,1.0);
+    aMatrix final_output = activations::softmax(output_layer_weights**output7,1.0);
 
 
     //final_output[final_output.dimensions()[0]-1,0] = 1.0; // bias.
@@ -900,7 +793,7 @@ aReal compute_mnist_lenet5_fast(std::vector<aMatrix>& weights, std::vector<Matri
     //std::cout << groundtruth << std::endl;
     //std::cout << mat_prediction << std::endl;
     //std::cout << std::endl;
-    losses[j] += crossEntropy(final_output, groundtruth);
+    losses[j] += activations::crossEntropy(final_output, groundtruth);
 
     correct[j] = false;
     if (argmax == labels[j]) {
@@ -933,29 +826,11 @@ aReal compute_mnist_lenet5_fast(std::vector<aMatrix>& weights, std::vector<Matri
   return loss;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-aReal compute_mnist_lenet5(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
-                    std::vector<uint8_t>& labels,
-                    int max_label, double* accuracy, double* test_set_loss) {
+aReal compute_mnist_lenet5(std::vector<aMatrix>& weights,
+                           std::vector<Matrix>& data,
+                           std::vector<uint8_t>& labels,
+                           int max_label, double* accuracy, 
+                           double* test_set_loss) {
   aMatrix& conv1_weights = weights[0];
   aMatrix& pool1_weights = weights[1];
   aMatrix& conv2_weights = weights[2];
@@ -1152,7 +1027,7 @@ aReal compute_mnist_lenet5(std::vector<aMatrix>& weights, std::vector<Matrix>& d
 
     output6[120][0] = 1.0; // bias.
 
-    aMatrix final_output = tfksoftmax(output_layer_weights**output6,1.0);
+    aMatrix final_output = activations::softmax(output_layer_weights**output6,1.0);
 
     //final_output[final_output.dimensions()[0]-1][0] = 1.0; // bias.
 
@@ -1176,7 +1051,7 @@ aReal compute_mnist_lenet5(std::vector<aMatrix>& weights, std::vector<Matrix>& d
     //std::cout << groundtruth << std::endl;
     //std::cout << mat_prediction << std::endl;
     //std::cout << std::endl;
-    losses[j] += crossEntropy(final_output, groundtruth);
+    losses[j] += activations::crossEntropy(final_output, groundtruth);
 
     correct[j] = false;
     if (argmax == labels[j]) {
@@ -1209,12 +1084,9 @@ aReal compute_mnist_lenet5(std::vector<aMatrix>& weights, std::vector<Matrix>& d
   return loss/data.size();
 }
 
-
 aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
                     std::vector<uint8_t>& labels,
                     int max_label, double* accuracy, double* test_set_loss) {
-
-
   aReal loss = 0.0;
 
   bool* correct = new bool[data.size()];
@@ -1238,7 +1110,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
 
     //data[j][data[j].dimensions()[0]-1][0] = 1.0;
     //aMatrix& biases = weights[weights.size()-1];
-    results[0] = tfksig(weights[0]**data[j]);
+    results[0] = activations::relu(weights[0]**data[j]);
 
     //results[0] += biases(0,0);
 
@@ -1249,13 +1121,13 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     for (int k = 1; k < weights.size()-1; k++) {
       //results[k-1][results[k-1].dimensions()[0]-1][0] = 1.0;
       if (k != weights.size()-2) {
-      results[k] = tfksig(weights[k]**results[k-1]);
+      results[k] = activations::relu(weights[k]**results[k-1]);
       } else {
       results[k] = weights[k]**results[k-1];
       }
       results[k] += biases(k,0);
     }
-    aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 1.0);
+    aMatrix mat_prediction = activations::softmax(results[results.size()-1], 1.0);
     //printf("dimensions %d, %d\n", mat_prediction.dimensions()[0], mat_prediction.dimensions()[1]);
 
     //std::cout << mat_prediction <<std::endl;
@@ -1280,7 +1152,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
     //std::cout << groundtruth << std::endl;
     //std::cout << mat_prediction << std::endl;
     //std::cout << std::endl;
-    losses[j] += logitCrossEntropy(mat_prediction, groundtruth);
+    losses[j] += activations::logitCrossEntropy(mat_prediction, groundtruth);
 
     correct[j] = false;
     if (argmax == labels[j]) {
@@ -1314,8 +1186,7 @@ aReal compute_mnist(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
 
 aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
                       std::vector<Real>& labels, double* accuracy,
-  double* test_set_loss, bool recording) {
-
+                      double* test_set_loss, bool recording) {
   aReal loss = 0.0;
 
   aReal* losses = new aReal[data.size()];
@@ -1331,13 +1202,13 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
       losses[i] = 0.0;
 
       std::vector<aMatrix> results = std::vector<aMatrix>(weights.size()-1);
-      results[0] = tfksig(weights[0]**data[i]);
+      results[0] = activations::relu(weights[0]**data[i]);
       for (int k = 1; k < weights.size()-1; k++) {
         // bias term.
         results[k-1][results[k-1].dimensions()[0]-1][0] = 1.0;
-        results[k] = tfksig(weights[k]**results[k-1]);
+        results[k] = activations::relu(weights[k]**results[k-1]);
       }
-      aMatrix mat_prediction = tfksoftmax(results[results.size()-1], 1.0);
+      aMatrix mat_prediction = activations::softmax(results[results.size()-1], 1.0);
 
       int argmax = 0;
       double argmaxvalue = mat_prediction[0][0].value();
@@ -1356,7 +1227,7 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
       if (labels[i] < -0.5) groundtruth[1][0] = 1.0;
       if (fabs(labels[i]) < 0.5) groundtruth[2][0] = 1.0;
 
-      losses[i] += crossEntropy(mat_prediction, groundtruth);
+      losses[i] += activations::crossEntropy(mat_prediction, groundtruth);
 
       correct[i] = false;
       if ((argmax == 0 && labels[i] > 0.5) ||
@@ -1386,33 +1257,26 @@ aReal compute_connect(std::vector<aMatrix>& weights, std::vector<Matrix>& data,
   return loss;
 }
 
-
 void learn_connect4() {
   using adept::Stack;
+  Stack stack;
 
-  Stack stack;                           // Object to store differential statements
-
-  std::vector<Matrix > data;
+  std::vector<Matrix> data;
   std::vector<Real> labels;
   read_connect4("datasets/connect-4.data", data, labels);
+  std::default_random_engine generator(1000);
+  std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
-
+  // Initialize the weights.
   std::vector<aMatrix> weight_list;
-
   weight_list.push_back(aMatrix(43, 43));  // 43 x 1
   weight_list.push_back(aMatrix(43, 43));  // 43 x 1
   weight_list.push_back(aMatrix(3, 43));  // 3 x 1
-
-
-  // Initialize the weights.
-  std::default_random_engine generator(1000);
-  std::uniform_real_distribution<double> distribution(0.0, 1.0);
   for (int i = 0; i < weight_list.size(); i++) {
     for (int j = 0; j < weight_list[i].dimensions()[0]; j++) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; k++) {
-        weight_list[i](j,k) =
-            distribution(generator) /
-                (weight_list[i].dimensions()[0] * weight_list[i].dimensions()[1]);
+        weight_list[i](j,k) = distribution(generator) /
+              (weight_list[i].dimensions()[0] * weight_list[i].dimensions()[1]);
       }
     }
   }
@@ -1518,11 +1382,9 @@ void learn_connect4() {
   }
 }
 
-
-
-aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool* is_train,
-                         bool* is_val, int max_labels, double* accuracy, double* test_set_loss) {
-
+aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, 
+                         bool* is_train, bool* is_val, int max_labels, 
+                         double* accuracy, double* test_set_loss) {
   std::vector<std::vector<aMatrix> > embeddings;
   embeddings.resize(G.embedding_dim_list.size()-1);
   aReal loss = 0;
@@ -1542,7 +1404,7 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
       if (i == end) continue;
       for (int j = i; j < end; j++) {
         if (last) {
-          embeddings[l][j] = tfksoftmax(G.get_embedding(j,l, embeddings), 1.0);
+          embeddings[l][j] = activations::softmax(G.get_embedding(j,l, embeddings), 1.0);
         } else {
           embeddings[l][j] = G.get_embedding(j,l, embeddings);
         }
@@ -1565,7 +1427,7 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
 
   cilk_for (int i = 0; i < G.num_vertices; i++) {
     aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
-    //aMatrix yhat = tfksoftmax(yhat_, 0.5);
+    //aMatrix yhat = activations::softmax(yhat_, 0.5);
 
     Matrix y(max_labels,1);
     double max_label_val = 0.0;
@@ -1591,16 +1453,16 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
       }
       *red_total_predictions += 1;
       //total_predictions++;
-      //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
-      aReal tmp = crossEntropy(yhat, y);
+      //aReal tmp = sum((yhat-y)*(yhat-y));//activations::crossEntropy(yhat, y);
+      aReal tmp = activations::crossEntropy(yhat, y);
       //*test_set_loss += tmp.value();
       *red_test_set_loss += tmp.value();
       losses[i] = 0.0;
       loss_norms[i] = 0.0;
     } else if (is_train[i]) {
-      losses[i] = crossEntropy(yhat,y);
-      loss_norms[i] = 1.0;//crossEntropy(yhat,y);
-      //loss += crossEntropy(yhat,y);
+      losses[i] = activations::crossEntropy(yhat,y);
+      loss_norms[i] = 1.0;//activations::crossEntropy(yhat,y);
+      //loss += activations::crossEntropy(yhat,y);
       //loss_norm += 1.0;
       //num_train_items++;
     }
@@ -1618,7 +1480,7 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
 
   //for (int i = 0; i < G.num_vertices; i++) {
   //  aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
-  //  //aMatrix yhat = tfksoftmax(yhat_, 0.5);
+  //  //aMatrix yhat = activations::softmax(yhat_, 0.5);
 
   //  Matrix y(max_labels,1);
   //  double max_label_val = 0.0;
@@ -1642,15 +1504,15 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
   //  if (!is_train[i] && !is_val[i]) {
   //    if (max_label == gt_label) total_correct++;
   //    total_predictions++;
-  //    //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
-  //    aReal tmp = crossEntropy(yhat, y);
+  //    //aReal tmp = sum((yhat-y)*(yhat-y));//activations::crossEntropy(yhat, y);
+  //    aReal tmp = activations::crossEntropy(yhat, y);
   //    *test_set_loss += tmp.value();
   //    losses[i] = 0.0;
   //    loss_norms[i] = 0.0;
   //  } else if (is_train[i]) {
-  //    losses[i] = crossEntropy(yhat,y);
-  //    loss_norms[i] = 1.0;//crossEntropy(yhat,y);
-  //    //loss += crossEntropy(yhat,y);
+  //    losses[i] = activations::crossEntropy(yhat,y);
+  //    loss_norms[i] = 1.0;//activations::crossEntropy(yhat,y);
+  //    //loss += activations::crossEntropy(yhat,y);
   //    //loss_norm += 1.0;
   //    //num_train_items++;
   //  }
@@ -1673,12 +1535,8 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels, bool
   return loss;
 }
 
-
-
-
-aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_label,
-                  double* accuracy, double* test_set_loss) {
-
+aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, 
+                  int max_label, double* accuracy, double* test_set_loss) {
   std::vector<std::vector<aMatrix> > embeddings;
   embeddings.resize(G.embedding_dim_list.size()-1);
   aReal loss = 0;
@@ -1697,7 +1555,7 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_labe
       if (i == end) continue;
       for (int j = i; j < end; j++) {
         if (last) {
-          embeddings[l][j] = tfksoftmax(G.get_embedding(j,l, embeddings), 0.5);
+          embeddings[l][j] = activations::softmax(G.get_embedding(j,l, embeddings), 0.5);
         } else {
           embeddings[l][j] = G.get_embedding(j,l, embeddings);
         }
@@ -1710,7 +1568,7 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_labe
 
   for (int i = 0; i < G.num_vertices; i++) {
     aMatrix yhat = (embeddings[G.embedding_dim_list.size()-2][i]);
-    //aMatrix yhat = tfksoftmax(yhat_, 0.5);
+    //aMatrix yhat = activations::softmax(yhat_, 0.5);
 
     Matrix y(max_label,1);
     double max_label_val = 0.0;
@@ -1726,11 +1584,11 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels, int max_labe
     if (/*i%2==1*/!G.vertex_training[i]) {
       if (max_label == department_labels[i]) total_correct++;
       total_predictions++;
-      //aReal tmp = sum((yhat-y)*(yhat-y));//crossEntropy(yhat, y);
-      aReal tmp = crossEntropy(yhat, y);
+      //aReal tmp = sum((yhat-y)*(yhat-y));//activations::crossEntropy(yhat, y);
+      aReal tmp = activations::crossEntropy(yhat, y);
       *test_set_loss += tmp.value();
     } else if (G.vertex_training_active[i]) {
-      loss += crossEntropy(yhat,y);
+      loss += activations::crossEntropy(yhat,y);
     }
   }
 
@@ -1874,7 +1732,6 @@ void learn_gcn() {
     s2.reportTotal("Forward+Reverse pass");
 }
 
-
 void learn_gcn_pubmed() {
   timer s0,s1,s2,s3,s4;
   using adept::Stack;
@@ -2008,8 +1865,6 @@ void learn_gcn_pubmed() {
     s1.reportTotal("Reverse pass");
     s2.reportTotal("Forward+Reverse pass");
 }
-
-
 
 void learn_mnist_lenet5_tanh() {
   timer s0,s1,s2,s3,s4;
@@ -2167,11 +2022,7 @@ void learn_mnist_lenet5_tanh() {
     s0.reportTotal("Forward pass");
     s1.reportTotal("Reverse pass");
     s2.reportTotal("Forward+Reverse pass");
-
 }
-
-
-
 
 void learn_mnist_lenet5() {
   timer s0,s1,s2,s3,s4;
@@ -2329,13 +2180,9 @@ void learn_mnist_lenet5() {
     s0.reportTotal("Forward pass");
     s1.reportTotal("Reverse pass");
     s2.reportTotal("Forward+Reverse pass");
-
 }
 
-
-
 void learn_mnist(std::vector<int>& layer_sizes) {
-
   timer s0,s1,s2,s3,s4;
 
   using adept::Stack;
@@ -2504,37 +2351,9 @@ void learn_mnist(std::vector<int>& layer_sizes) {
     s0.reportTotal("Forward pass");
     s1.reportTotal("Reverse pass");
     s2.reportTotal("Forward+Reverse pass");
-
 }
 
 // =============================================================================
-
-std::vector<std::vector<Matrix>> parse_paul_graham(int N, int LEN, int NUM_CHARS) {
-  // Load Paul Graham dataset to a string
-  std::ifstream t("./datasets/paul_graham.txt");
-  string text((std::istreambuf_iterator<char>(t)),
-              std::istreambuf_iterator<char>());
-
-  // Split the dataset into 500 separate data entries of 100 characters each
-  // Transform each character to a 1-hot ASCII encoding of the characters
-  std::vector<std::vector<Matrix>> input;
-  for (int i = 0; i < N; ++i) {
-    string raw_datapoint = text.substr(i * LEN, LEN);
-    std::vector<Matrix> datapoint;
-    for (int j = 0; j < LEN; ++j) {
-      int value = int(raw_datapoint[j]);
-      Matrix char_encoding = Matrix(NUM_CHARS, 1);
-      for (int k = 0; k < NUM_CHARS; ++k) {
-        char_encoding[k] = 0.0;
-        if (k == value)
-          char_encoding[k] = 1.0;
-      }
-      datapoint.push_back(char_encoding);
-    }
-    input.push_back(datapoint);
-  }
-  return input;
-}
 
 std::vector<std::vector<aMatrix>> compute_lstm(
                                   std::vector<aMatrix>& weights,
@@ -2543,7 +2362,7 @@ std::vector<std::vector<aMatrix>> compute_lstm(
   std::vector<std::vector<aMatrix>> batch_output = 
                           std::vector<std::vector<aMatrix>>(batch_input.size());
 
-  cilk_for (int i = 0; i < batch_input.size(); ++i) {
+  for (int i = 0; i < batch_input.size(); ++i) {
     // NOTE: the hidden/cell matrices are offset to allow us to initialize the
     // first element in the vectors to a 0 matrix
     std::vector<Matrix> input = batch_input[i];
@@ -2552,11 +2371,11 @@ std::vector<std::vector<aMatrix>> compute_lstm(
     std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
     hidden[0] = aMatrix(HIDDEN_FEATURES, 1);
     for (int j = 0; j < HIDDEN_FEATURES; ++j) {
-      hidden[0][j][0] = 0.0;
+      hidden[0](j, 0) = 0.0;
     }
     cell[0] = aMatrix(HIDDEN_FEATURES, 1);
     for (int j = 0; j < HIDDEN_FEATURES; ++j) {
-      cell[0][j][0] = 0.0;
+      cell[0](j, 0) = 0.0;
     }
 
     // Weights are in the following order: 
@@ -2566,13 +2385,13 @@ std::vector<std::vector<aMatrix>> compute_lstm(
 
     // Compute the cell layer and the hidden layer
     for (int j = 0; j < input.size(); ++j) {
-      temp_f = tfksigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
-      temp_i = tfksigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
-      temp_c = tfktanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
-      temp_o = tfksigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
+      temp_f = activations::sigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
+      temp_i = activations::sigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
+      temp_c = tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
+      temp_o = activations::sigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
       cell[j+1] = cell[j] * temp_f + temp_i * temp_c;
-      hidden[j+1] = temp_o * tfktanh(cell[j+1]);
-      output[j] = tfksoftmax(weights[12] ** hidden[j+1], 1.0);
+      hidden[j+1] = temp_o * tanh(cell[j+1]);
+      output[j] = activations::softmax(weights[12] ** hidden[j+1], 1.0);
     }
     batch_output[i] = output;
   }
@@ -2586,7 +2405,7 @@ void learn_lstm() {
   int N = 500;
   int LEN = 100;
   int NUM_ASCII = 128;
-  int BATCH_SIZE = 10;
+  int BATCH_SIZE = 5;
   int NUM_ITER = 100;
   double LR = 0.01;
   int HIDDEN_FEATURES = 300; // Same number of hidden features as cell features
@@ -2626,7 +2445,7 @@ void learn_lstm() {
     std::uniform_real_distribution<double> distribution(-range, range);
     for (int j = 0; j < weight_list[i].dimensions()[0]; ++j) {
       for (int k = 0; k < weight_list[i].dimensions()[1]; ++k) {
-        weight_list[i][j][k] = distribution(generator);
+        weight_list[i](j, k) = distribution(generator);
       }
     }
   }
@@ -2641,8 +2460,8 @@ void learn_lstm() {
 
   // Train the LSTM over many iterations
   for (int iter = 0; iter < NUM_ITER; ++iter) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
-    stack.new_recording();
 
     // Randomly sample input to create the batch data
     std::vector<std::vector<Matrix>> batch_input;
@@ -2651,6 +2470,7 @@ void learn_lstm() {
     }
 
     // Run the LSTM on the batch data
+    stack.new_recording();
     aReal loss = 0.0;
     std::vector<std::vector<aMatrix>> output_softmax = compute_lstm(
             *weight_hyper_list[0], batch_input, NUM_ASCII, HIDDEN_FEATURES);
@@ -2658,14 +2478,26 @@ void learn_lstm() {
     // Compute the loss
     for (int i = 0; i < BATCH_SIZE; ++i) {
       for (int j = 0; j < LEN-1; ++j) {
-        loss += 1.0 * logitCrossEntropy(output_softmax[i][j], batch_input[i][j+1])
+        loss += 1.0 * activations::logitCrossEntropy(output_softmax[i][j], batch_input[i][j+1])
                     / (1.0 * BATCH_SIZE * (LEN - 1));
       }
     }
 
     // Compute and apply gradient update using ADAM optimizer
+    stack.pause_recording();
+    std::cout << "Before loss.set_gradient, weight_hyper_list[0] "
+              << "(type std::vector<aMatrix>*): " << weight_hyper_list[0] << std::endl;
+    stack.continue_recording();
     loss.set_gradient(1.0);
+    stack.pause_recording();
+    std::cout << "Before stack.reverse(), weight_hyper_list[0] "
+              << "(type std::vector<aMatrix>*): " << weight_hyper_list[0] << std::endl;
+    stack.continue_recording();
     stack.reverse();
+    stack.pause_recording();
+    std::cout << "Before read_gradients, weight_hyper_list[0] "
+              << "(type std::vector<aMatrix>*): " << weight_hyper_list[0] << std::endl;
+    stack.continue_recording();
     read_gradients(weight_hyper_list, gradients);
 
     // Compute the accuracy
@@ -2673,25 +2505,28 @@ void learn_lstm() {
     for (int i = 0; i < BATCH_SIZE; ++i) {
       for (int j = 0; j < LEN-1; ++j) {
         int argmax = 0;
-        double argmaxvalue = output_softmax[i][j][0][0].value();
+        double argmaxvalue = output_softmax[i][j](0, 0).value();
         for (int k = 0; k < NUM_ASCII; ++k) {
-          if (argmaxvalue < output_softmax[i][j][k][0].value()) {
-            argmaxvalue = output_softmax[i][j][k][0].value();
+          if (argmaxvalue < output_softmax[i][j](k, 0).value()) {
+            argmaxvalue = output_softmax[i][j](k, 0).value();
             argmax = k;
           }
         }
-        if (batch_input[i][j+1][argmax][0] == 1) {
+        if (batch_input[i][j+1](argmax, 0) == 1) {
           accuracy += 1.0 / BATCH_SIZE / LEN;
         }
       }
     }
 
-    std::cout.precision(5);
-    std::cout << "iter: " << iter << ", loss: " << loss.value() << ", accuracy: " << accuracy << "\n";
-
+    // Apply gradient descent and update weights
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old,
                                gradients, momentums, velocities, 1.0, LR, iter+1);
+
+    std::cout.precision(5);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter << ", loss: " << loss.value() << ", accuracy: " << accuracy 
+              << ", time (sec): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0 << std::endl;
   }
 
   // Now do some inference (generate text) =====================================
@@ -2703,42 +2538,42 @@ void learn_lstm() {
     aMatrix cell = aMatrix(HIDDEN_FEATURES, 1);
     aMatrix hidden = aMatrix(HIDDEN_FEATURES, 1);
     for (int i = 0; i < HIDDEN_FEATURES; ++i) {
-      cell[i][0] = 0.0;
-      hidden[i][0] = 0.0;
+      cell(i, 0) = 0.0;
+      hidden(i, 0) = 0.0;
     }
     aMatrix in = aMatrix(NUM_ASCII, 1);
     for (int i = 0; i < NUM_ASCII; ++i) {
-      in[i][0] = 0.0;
+      in(i, 0) = 0.0;
     }
-    in[int('T')][0] = 1.0;
+    in(int('T'), 0) = 1.0;
     aMatrix output = aMatrix(NUM_ASCII, 1);
 
     // Generate 1000 characters
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     for (int i = 0; i < 1000; ++i) {
       // Compute the cell, hidden, and output
-      aMatrix temp_f = tfksigmoid(weight_list[0] ** hidden + weight_list[1] ** in + weight_list[2]);
-      aMatrix temp_i = tfksigmoid(weight_list[3] ** hidden + weight_list[4] ** in + weight_list[5]);
+      aMatrix temp_f = activations::sigmoid(weight_list[0] ** hidden + weight_list[1] ** in + weight_list[2]);
+      aMatrix temp_i = activations::sigmoid(weight_list[3] ** hidden + weight_list[4] ** in + weight_list[5]);
       aMatrix temp_c = tanh(weight_list[6] ** hidden + weight_list[7] ** in + weight_list[8]);
-      aMatrix temp_o = tfksigmoid(weight_list[9] ** hidden + weight_list[10] ** in + weight_list[11]);
+      aMatrix temp_o = activations::sigmoid(weight_list[9] ** hidden + weight_list[10] ** in + weight_list[11]);
       cell = cell * temp_f + temp_i * temp_c;
       hidden = temp_o * tanh(cell);
-      output = tfksoftmax(weight_list[12] ** hidden, 1.0);
+      output = activations::softmax(weight_list[12] ** hidden, 1.0);
 
       // Generate a character the output distribution and a random distribution
       double val = distribution(generator);
       int j;
       for (j = 0; j < NUM_ASCII; ++j) {
-        val -= output[j][0].value();
+        val -= output(j, 0).value();
         if (val <= 0) break;
       }
       out_text += char(j);
 
       // Assign generated output character to next input
       for (int k = 0; k < NUM_ASCII; ++k) {
-        in[k][0] = 0.0;
+        in(k, 0) = 0.0;
       }
-      in[j][0] = 1.0;
+      in(j, 0) = 1.0;
     }
     std::cout << "\nGenerated output text:\n" << out_text << "\n";
   }
@@ -2753,6 +2588,8 @@ int main(int argc, char** argv) {
   options.parse(argc, argv);
 
   std::vector<int> layer_sizes;
+  learn_lstm();
+  /*
   switch(alg) {
     case 0:
       layer_sizes.push_back(800);
@@ -2782,6 +2619,7 @@ int main(int argc, char** argv) {
       printf("no algorithm specified\n");
       break;
   }
+  */
 
   //learn_connect4();
 

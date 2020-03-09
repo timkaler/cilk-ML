@@ -7,7 +7,7 @@ LD := $(CXX) #g++
 
 ADEPT_INCLUDE := -I./adept-serial/include
 
-#ADEPT_INCLUDE := -I./cilk-adept/include
+#ADEPT_INCLUDE := -I./adept-cilk/include
 
 
 # Use the first one for divide and conquer loops, use latter for multispawn representation of loops.
@@ -134,7 +134,10 @@ $(BUILD_DIR)/activations.o: activations.cpp activations.hpp
 #run: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(LLVM_BIN)/../lib/clang/6.0.0/lib/linux/libclang_rt.csi-x86_64.a
 #	$(LD) -v -o $@ $^ $(LDFLAGS)
 
-run_serial: $(BUILD_DIR)/main.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o
+$(BUILD_DIR)/io_helpers.o: io_helpers.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+run_serial: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o
 	$(LD) -v -o $@ $^ $(LDFLAGS)
 
 clean:

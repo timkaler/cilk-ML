@@ -13,19 +13,18 @@ using adept::aMatrix;
 using adept::Vector;
 using adept::aVector;
 
-aReal crossEntropy(aMatrix yHat, aMatrix y);
-aReal logitCrossEntropy(aMatrix yHat, aMatrix y);
+namespace activations {
+  aReal crossEntropy(aMatrix yHat, aMatrix y);
+  aReal logitCrossEntropy(aMatrix yHat, aMatrix y);
 
-aReal tfksig(aReal arg);
-aVector tfksig(aVector arg);
-aMatrix tfksig(aMatrix arg);
+  aReal relu(aReal arg);
+  aVector relu(aVector arg);
+  aMatrix relu(aMatrix arg);
 
-aMatrix tfksoftmax(aMatrix arg, aReal p);
+  aMatrix softmax(aMatrix arg, aReal p);
 
-aReal tfksigmoid(aReal arg);
-aMatrix tfksigmoid(aMatrix arg);
-aMatrix tfktanh(aMatrix arg);
-
-aMatrix mmul(aMatrix weights, aMatrix input);
+  aReal sigmoid(aReal arg);
+  aMatrix sigmoid(aMatrix arg);
+}
 
 #endif  // CILKML_ACTIVATIONS_H

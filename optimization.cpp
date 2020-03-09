@@ -10,9 +10,8 @@ double PARAM_ADAM_B2 = 0.999;
 double PARAM_ADAM_EPSILON = 1e-8;
 #include "./optimization.hpp"
 
-
-#define opt_par_for cilk_for
-
+// #define opt_par_for cilk_for
+#define opt_par_for for
 
 double* allocate_weights_zero(std::vector<aMatrix>& weights) {
   int _pcount = 0;
@@ -52,7 +51,6 @@ double* allocate_weights(std::vector<std::vector<aMatrix>*>& hyper_weights) {
   return (double*) malloc(_pcount*sizeof(double));
 }
 
-
 void read_values(std::vector<aMatrix>& weights, double* total_params) {
   std::vector<int> sums;
   sums.push_back(0);
@@ -85,8 +83,6 @@ void read_values(std::vector<std::vector<aMatrix>*>& hyper_weights, double* tota
     }
   }
 }
-
-
 
 void apply_gradient_update(std::vector<aMatrix>& weights, double* curr, double* old,
                            double* gradients, double mul) {
@@ -123,7 +119,6 @@ void apply_gradient_update(std::vector<std::vector<aMatrix>*>& hyper_weights, do
     }
   }
 }
-
 
 void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, double* old,
                                 double* gradients, double* momentums, double* velocities,
@@ -177,7 +172,6 @@ void apply_gradient_update_ADAM(std::vector<std::vector<aMatrix>*>& hyper_weight
     }
   }
 }
-
 
 void store_values_into_old(std::vector<aMatrix>& weights, double* current, double* old) {
   std::vector<int> sums;
@@ -251,7 +245,6 @@ double compute_gradient_norm(std::vector<std::vector<aMatrix>*>& hyper_weights,
   return norm;
 }
 
-
 void read_gradients(std::vector<aMatrix>& weights, double* total_params) {
   std::vector<int> sums;
   sums.push_back(0);
@@ -286,7 +279,6 @@ void read_gradients(std::vector<std::vector<aMatrix>*>& hyper_weights,
   }
 }
 
-
 void set_values(std::vector<aMatrix>& weights, double* total_params) {
   std::vector<int> sums;
   sums.push_back(0);
@@ -320,6 +312,3 @@ void set_values(std::vector<std::vector<aMatrix>*>& hyper_weights,
     }
   }
 }
-
-
-
