@@ -66,7 +66,6 @@ aReal activations::sigmoid(aReal arg) {
   }
 }
 
-// TODO: Include a branch for numerical stability
 aMatrix activations::sigmoid(aMatrix arg) {
-  return 1.0 / (1.0 + exp(-1.0 * arg));
+  return 0.5 * (tanh(0.5 * arg) + 1);
 }

@@ -2365,7 +2365,10 @@ std::vector<std::vector<aMatrix>> compute_lstm(
   for (int i = 0; i < batch_input.size(); ++i) {
     // NOTE: the hidden/cell matrices are offset to allow us to initialize the
     // first element in the vectors to a 0 matrix
-    std::vector<Matrix> input = batch_input[i];
+    std::vector<Matrix> input = std::vector<Matrix>(batch_input[i].size());
+    for (int j = 0; j < batch_input[i].size(); ++j) {
+      input[j] = batch_input[i][j];
+    }
     std::vector<aMatrix> hidden = std::vector<aMatrix>(input.size()+1);
     std::vector<aMatrix> cell = std::vector<aMatrix>(input.size()+1);
     std::vector<aMatrix> output = std::vector<aMatrix>(input.size());
