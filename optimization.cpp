@@ -10,8 +10,8 @@ double PARAM_ADAM_B2 = 0.999;
 double PARAM_ADAM_EPSILON = 1e-8;
 #include "./optimization.hpp"
 
-// #define opt_par_for cilk_for
-#define opt_par_for for
+#define opt_par_for cilk_for
+// #define opt_par_for for
 
 double* allocate_weights_zero(std::vector<aMatrix>& weights) {
   int _pcount = 0;
@@ -120,21 +120,20 @@ void apply_gradient_update(std::vector<std::vector<aMatrix>*>& hyper_weights, do
   }
 }
 
-void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, double* old,
-                                double* gradients, double* momentums, double* velocities,
+void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, 
+                                double* curr, double* old, double* gradients, 
+                                double* momentums, double* velocities,
                                 double mul, double lr, int t) {
   std::vector<int> sums;
   sums.push_back(0);
   for (int i = 0; i < weights.size()-1; i++) {
     sums.push_back(weights[i].dimensions()[0]*weights[i].dimensions()[1]);
   }
-
   for (int i = 1; i < weights.size(); i++) {
     sums[i] += sums[i-1];
   }
 
   double lr_t = lr * (sqrt(1.0-pow(PARAM_ADAM_B2, t)) / (1.0-pow(PARAM_ADAM_B1, t)));
-
 
   opt_par_for (int i = 0; i < weights.size(); i++) {
     int _pcount_outer = sums[i];
@@ -158,9 +157,10 @@ void apply_gradient_update_ADAM(std::vector<aMatrix>& weights, double* curr, dou
   }
 }
 
-void apply_gradient_update_ADAM(std::vector<std::vector<aMatrix>*>& hyper_weights, double* curr,
-                           double* old, double* gradients, double* momentums, double* velocities,
-                           double mul, double lr, int t) {
+void apply_gradient_update_ADAM(std::vector<std::vector<aMatrix>*>& hyper_weights, 
+                                double* curr, double* old, double* gradients, 
+                                double* momentums, double* velocities,
+                                double mul, double lr, int t) {
   int rolling_sum = 0;
   for (int i = 0; i < hyper_weights.size(); i++) {
     apply_gradient_update_ADAM(*hyper_weights[i], curr + rolling_sum, old + rolling_sum,

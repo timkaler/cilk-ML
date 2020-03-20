@@ -2379,11 +2379,10 @@ std::vector<aMatrix> compute_lstm(std::vector<aMatrix>& weights,
   // W_c, input_c, b_c, W_o, input_o, b_o, output matrix
   aMatrix temp_f, temp_i, temp_c, temp_o;
   for (int j = 0; j < input.size(); ++j) {
-    temp_f = cilk_spawn activations::sigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
-    temp_i = cilk_spawn activations::sigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
-    temp_c = cilk_spawn tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
+    temp_f = activations::sigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
+    temp_i = activations::sigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
+    temp_c = tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
     temp_o = activations::sigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
-    cilk_sync;
     cell[j+1] = cell[j] * temp_f + temp_i * temp_c;
     hidden[j+1] = temp_o * tanh(cell[j+1]);
     output[j] = activations::softmax(weights[12] ** hidden[j+1], 1.0);

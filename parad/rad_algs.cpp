@@ -342,7 +342,9 @@ void reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
   cilk_for (uint64_t i = 1; i < boundaries_size; i++) {
     blocks[i-1] = (std::make_pair(boundaries[i-1], boundaries[i]));
   }
-  blocks[boundaries_size-1] = std::make_pair(boundaries[boundaries_size-1], mapped_ops_size);
+  if (boundaries_size > 0) {
+    blocks[boundaries_size-1] = std::make_pair(boundaries[boundaries_size-1], mapped_ops_size);
+  }
   r11.stop();
 
   r12.start();

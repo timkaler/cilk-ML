@@ -49,6 +49,12 @@ $(BUILD_DIR)/rad_algs.o: parad/rad_algs.cpp parad/rad_algs.h
 $(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/tool.o
 	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -c -o $@ $<
 
+#$(BUILD_DIR)/main.ll: main.cpp $(BUILD_DIR)/tool.bc
+#	$(CC) $(CFLAGS) -gdwarf-3 -fcsi -S -emit-llvm -ftapir=none $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/main.ll: main.cpp
+	$(CC) $(CFLAGS) $(CSIFLAGS) $(DEFINES) -S -emit-llvm -c -o $@ $<
+
 $(BUILD_DIR)/Graph.o: Graph.cpp Graph.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -67,7 +73,7 @@ $(BUILD_DIR)/tool.o: tool.cpp $(BUILD_DIR)/tool.bc
 $(BUILD_DIR)/io_helpers.o: io_helpers.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-run: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/rad_algs.o $(CSI_RT_PATH)
+run: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/rad_algs.o $(CSI_RT_PATH) $(BUILD_DIR)/main.ll
 	$(LD) -v -o $@ $^ $(LDFLAGS)
 
 clean:
