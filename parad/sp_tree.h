@@ -1,5 +1,8 @@
 // Copyright (c) 2019, Tim Kaler - MIT License
 
+#ifndef SP_TREE_H
+#define SP_TREE_H
+
 #include "./triple_vector_wl.h"
 #include "./flat_hash_map.hpp"
 #include <cilk/cilk.h>
@@ -9,14 +12,7 @@
 #include <adept/base.h>
 //#include <adept_arrays.h>
 
-
 #include <vector>
-
-
-#ifndef SP_TREE_H
-#define SP_TREE_H
-
-
 
 struct OperationReference {
   // Allows indexing into a parallel array for the statement.
@@ -78,9 +74,6 @@ class worker_local_vector {
     }
 };
 
-
-
-
 static int64_t get_value_count = 0;
 static int64_t set_value_count = 0;
 
@@ -98,8 +91,6 @@ class sparse_array {
     K*__restrict dense_array;
 
   public:
-
-
    void allocate(int64_t capacity) {
      printf("allocate called with capacity %llu\n", capacity);
      log = (V*) malloc(sizeof(V) * capacity);
@@ -139,7 +130,6 @@ class sparse_array {
      }
    }
 
-
    void clear() {
      //printf("Get_value_Count: \t\t %llu \nSet_Value_Count: \t\t %llu\n", get_value_count, set_value_count);
      log_start = log_end;
@@ -160,15 +150,11 @@ class sparse_array {
 };
 
 
-
-
 class tfk_gradient_table {
   public:
     tfk_gradient_table* gradient_table;
 
     ska::flat_hash_map<adept::uIndex, adept::Real> gradient_table_local;
-
-
     //adept::Real* gradient_table_local_dense;
     //int64_t local_dense_start;
     //int64_t local_dense_end;
@@ -194,8 +180,6 @@ class tfk_gradient_table {
     adept::uIndex* get_active_entries();
     void merge_into_me(tfk_gradient_table* other);
 };
-
-
 
 
 class SP_Node {
@@ -261,16 +245,12 @@ class SP_Tree {
 
       if (right->type != 0) printf("right type is not 0 error! %d\n", (right)->type);
 
-
-
       //right->type = 1;
       //(*left)->children->push_back(right);
 
       for (int i = 0; i < (right)->children->size(); i++) {
         (*left)->children->push_back((*(right->children))[i]);
       }
-
-
 
       //if ((right)->sync_id == NULL) return;
 

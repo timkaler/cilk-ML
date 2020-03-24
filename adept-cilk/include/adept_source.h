@@ -40,6 +40,8 @@
   required.
 
 */
+#ifndef AdeptSource_H
+#define AdeptSource_H 1
 #include "../../common/gettime.h"
 // #define TFK_DEBUG_PRINTS
 
@@ -70,8 +72,6 @@
 
 #include <parad/parad.h>
 #include <parad/tfkparallel.cpp>
-#ifndef AdeptSource_H
-#define AdeptSource_H 1
 
 
 
