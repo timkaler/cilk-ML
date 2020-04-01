@@ -37,14 +37,14 @@ namespace adept {
 
     ExpressionSize(Index j) {
       if (j >= 0) {
-	// Set all dimensions to the same value - usually 0 (empty
-	// array) or 1 (scalar)
-	set_all(j);
+        // Set all dimensions to the same value - usually 0 (empty
+        // array) or 1 (scalar)
+        set_all(j);
       }
       else {
-	// Set just the first dimension to j; usually this would be
-	// less than 0 to indicate an invalid expression
-	dim[0] = j;
+        // Set just the first dimension to j; usually this would be
+        // less than 0 to indicate an invalid expression
+        dim[0] = j;
       }
     }
 
@@ -70,20 +70,20 @@ namespace adept {
     // Set all to specified value
     void set_all(Index j) {
       for (int i = 0; i < Rank; ++i) {
-	dim[i] = j;
+        dim[i] = j;
       }
     }
 
     // Copy from an ExpressionSize object of the same rank
     void copy(const ExpressionSize& d) {
       for (int i = 0; i < Rank; ++i) {
-	dim[i] = d[i];
+        dim[i] = d[i];
       }
     }
     // ...or pointer to raw data
     void copy(const Index* d) {
       for (int i = 0; i < Rank; ++i) {
-	dim[i] = d[i];
+        dim[i] = d[i];
       }
     }
 
@@ -93,10 +93,10 @@ namespace adept {
     void copy_dissimilar(const ExpressionSize<MyRank>& d) {
       int rank = MyRank > Rank ? Rank : MyRank;
       for (int i = 0; i < rank; ++i) {
-	dim[i] = d[i];
+        dim[i] = d[i];
       }
       for (int i = rank; i < Rank; ++i) {
-	dim[i] = 1;
+        dim[i] = 1;
       }
     }
 
@@ -105,7 +105,7 @@ namespace adept {
       std::stringstream s;
       s << "[" << dim[0];
       for (int i = 1; i < Rank; ++i) {
-	s << "," << dim[i];
+        s << "," << dim[i];
       }
       s << "]";
       return s.str();
@@ -115,26 +115,26 @@ namespace adept {
     Index size() const {
       Index prod;
       if (Rank == 0) {
-	prod = 1;
+        prod = 1;
       }
       else {
-	prod = dim[0];
-	for (int i = 1; i < Rank; ++i) {
-	  prod *= dim[i];
-	}
+        prod = dim[0];
+        for (int i = 1; i < Rank; ++i) {
+          prod *= dim[i];
+        }
       }
       return prod;
     }
 
     ExpressionSize& operator++() {
       for (int i = 0; i < Rank; ++i) {
-	++dim[i];
+        ++dim[i];
       }
       return *this;
     }
     ExpressionSize& operator+=(Index inc) {
       for (int i = 0; i < Rank; ++i) {
-	dim[i] += inc;
+        dim[i] += inc;
       }
       return *this;
     }
@@ -142,9 +142,9 @@ namespace adept {
 
     bool operator==(const ExpressionSize<Rank>& rhs) const {
       for (int i = 0; i < Rank; i++) {
-	if (dim[i] != rhs[i]) {
-	  return false;
-	}
+        if (dim[i] != rhs[i]) {
+          return false;
+        }
       }
       return true;
     }
@@ -154,11 +154,11 @@ namespace adept {
 
 #ifdef ADEPT_MOVE_SEMANTICS
     friend void swap(ExpressionSize<Rank>& l, 
-		     ExpressionSize<Rank>& r) noexcept {
+                     ExpressionSize<Rank>& r) noexcept {
       for (int i = 0; i < Rank; ++i) {
-	Index tmp = l.dim[i];
-	l.dim[i] = r.dim[i];
-	r.dim[i] = tmp;
+        Index tmp = l.dim[i];
+        l.dim[i] = r.dim[i];
+        r.dim[i] = tmp;
       }
     }
 #endif
@@ -194,7 +194,7 @@ namespace adept {
     if (Rank > 0) {
       os << "(" << s[0];
       for (int i = 1; i < Rank; i++) {
-	os << "," << s[i];
+        os << "," << s[i];
       }
       return os << ")";
     }
@@ -215,7 +215,7 @@ namespace adept {
     compatible(const ExpressionSize<LRank>& l, const ExpressionSize<RRank>& r) {
       bool result = (l[0] == r[0]);
       for (int i = 1; i < RRank; ++i) {
-	result = result && (l[i] == r[i]);
+        result = result && (l[i] == r[i]);
       }
       return result;
     }
@@ -258,16 +258,16 @@ namespace adept {
   inline ExpressionSize<3> dimensions(Index j0, Index j1, Index j2)
   { return ExpressionSize<3>(j0, j1, j2); }
   inline ExpressionSize<4> dimensions(Index j0, Index j1, Index j2,
-				      Index j3)
+                                      Index j3)
   { return ExpressionSize<4>(j0, j1, j2, j3); }
   inline ExpressionSize<5> dimensions(Index j0, Index j1, Index j2,
-				      Index j3, Index j4)
+                                      Index j3, Index j4)
   { return ExpressionSize<5>(j0, j1, j2, j3, j4); }
   inline ExpressionSize<6> dimensions(Index j0, Index j1, Index j2,
-				      Index j3, Index j4, Index j5)
+                                      Index j3, Index j4, Index j5)
   { return ExpressionSize<6>(j0, j1, j2, j3, j4, j5); }
   inline ExpressionSize<7> dimensions(Index j0, Index j1, Index j2,
-				      Index j3, Index j4, Index j5, Index j6)
+                                      Index j3, Index j4, Index j5, Index j6)
   { return ExpressionSize<7>(j0, j1, j2, j3, j4, j5, j6); }
 
 

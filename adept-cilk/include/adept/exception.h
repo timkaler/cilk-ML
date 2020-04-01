@@ -55,42 +55,42 @@ namespace adept {
   class gradient_out_of_range : public autodiff_exception {
   public:
     gradient_out_of_range(const std::string& message 
-	  = "Gradient index out of range: probably aReal objects have been created after a set_gradient(s) call")
+          = "Gradient index out of range: probably aReal objects have been created after a set_gradient(s) call")
     { message_ = message; }
   };
 
   class gradients_not_initialized : public autodiff_exception {
   public:
     gradients_not_initialized(const std::string& message 
-	      = "Gradients not initialized: at least one call to set_gradient(s) is needed before a forward or reverse pass")
+              = "Gradients not initialized: at least one call to set_gradient(s) is needed before a forward or reverse pass")
     { message_ = message; }
   };
 
   class stack_already_active : public autodiff_exception {
   public:
     stack_already_active(const std::string& message 
-	 = "Attempt to activate an adept::Stack when one is already active in this thread")
+         = "Attempt to activate an adept::Stack when one is already active in this thread")
     { message_ = message; }
   };
 
   class dependents_or_independents_not_identified : public autodiff_exception {
   public:
     dependents_or_independents_not_identified(const std::string& message 
-	 = "Dependent or independent variables not identified before a Jacobian computation")
+         = "Dependent or independent variables not identified before a Jacobian computation")
     { message_ = message; }
   };
 
   class wrong_gradient : public autodiff_exception {
   public:
     wrong_gradient(const std::string& message
-	  = "Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call")
+          = "Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call")
     { message_ = message; }
   };
 
   class non_finite_gradient : public autodiff_exception {
   public:
     non_finite_gradient(const std::string& message
-	= "A non-finite gradient has been computed")
+        = "A non-finite gradient has been computed")
     { message_ = message; }
   };
 
@@ -103,42 +103,42 @@ namespace adept {
   class array_exception : public adept::exception { 
   public:
     array_exception(const std::string& message
-		    = "A misuse of arrays occurred")
+                    = "A misuse of arrays occurred")
     { message_ = message; }
   };
 
   class size_mismatch : public array_exception {
   public:
     size_mismatch(const std::string& message
-		  = "Array sizes do not match in array expression")
+                  = "Array sizes do not match in array expression")
     { message_ = message; }
   };
 
   class inner_dimension_mismatch : public array_exception {
   public:
     inner_dimension_mismatch(const std::string& message
-	  = "Inner dimensions don't agree in matrix multiplication")
+          = "Inner dimensions don't agree in matrix multiplication")
     { message_ = message; }
   };
 
   class empty_array : public array_exception {
   public:
     empty_array(const std::string& message
-	= "Use of empty array where non-empty array required")
+        = "Use of empty array where non-empty array required")
     { message_ = message; }
   };
 
   class invalid_dimension : public array_exception {
   public:
     invalid_dimension(const std::string& message
-	= "Attempt to create array with invalid dimension")
+        = "Attempt to create array with invalid dimension")
     { message_ = message; }
   };
 
   class index_out_of_bounds : public array_exception {
   public:
     index_out_of_bounds(const std::string& message
-	= "Array index is out of bounds")
+        = "Array index is out of bounds")
     { message_ = message; }
   };
 

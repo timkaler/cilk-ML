@@ -7,16 +7,13 @@
 
     This file is part of the Adept library.
 
-
    The Stack class is where all the derivative information of an
    algorithm, from which the Jacobian matrix can be constructed, as
    well as tangent-linear and adjoint operations being carried out for
    suitable input derivatives.  When a Stack object is created it puts
    a pointer to itself in a global but thread-local variable that is
    then accessed whenever an active expression is evaluated.
-
 */
-
 
 #define TFK_WLSTACK_DEBUG
 
@@ -52,20 +49,18 @@ namespace adept {
   // Access to Stack object via global pointer
   // ---------------------------------------------------------------------
 
-  // Declare a thread-safe and a thread-unsafe global pointer to the
-  // current stack
+  // Declare a thread-safe and a thread-unsafe global pointer to current stack
   class Stack;
   extern ADEPT_THREAD_LOCAL Stack* _stack_current_thread;
   extern Stack* _stack_current_thread_unsafe;
 
-
   // Define ADEPT_ACTIVE_STACK to be the currently active version
   // regardless of whether we are in thread safe or unsafe mode
-#ifdef ADEPT_STACK_THREAD_UNSAFE
-#define ADEPT_ACTIVE_STACK adept::_stack_current_thread_unsafe
-#else
-#define ADEPT_ACTIVE_STACK adept::_stack_current_thread
-#endif
+  #ifdef ADEPT_STACK_THREAD_UNSAFE
+  #define ADEPT_ACTIVE_STACK adept::_stack_current_thread_unsafe
+  #else
+  #define ADEPT_ACTIVE_STACK adept::_stack_current_thread
+  #endif
 
   // ---------------------------------------------------------------------
   // Helper classes
@@ -73,8 +68,7 @@ namespace adept {
 
   // Structure holding a fixed-size array of objects (intended for
   // double or float)
-  template<int Size, class Type>
-  struct Block {
+  template<int Size, class Type> struct Block {
     Block() { zero(); }
     const Type& operator[](uIndex i) const { return data[i]; }
     Type& operator[](uIndex i) { return data[i]; }
@@ -89,7 +83,6 @@ namespace adept {
     uIndex start;
     uIndex end;
   };
-
 
   // ---------------------------------------------------------------------
   // Definition of Stack class
@@ -147,7 +140,7 @@ namespace adept {
       initialize(ADEPT_INITIAL_STACK_LENGTH);
       new_recording();
       if (activate_immediately) {
-	activate();
+        activate();
       }
     }
   
@@ -161,7 +154,7 @@ namespace adept {
     // This function is no longer available
     void start(uIndex n = ADEPT_INITIAL_STACK_LENGTH) {
       throw feature_not_available("The Stack::start() function has been removed since Adept version 1.0: see the documentation about how to use Stack::new_recording()"
-				  ADEPT_EXCEPTION_LOCATION);
+                                  ADEPT_EXCEPTION_LOCATION);
     }
 
     // After a sequence of operation pushes, we may append these to
@@ -173,11 +166,11 @@ namespace adept {
     bool update_lhs(const uIndex& gradient_index) {
       printf("update lhs attempt\n");
       if (statement_[n_statements_-1].index != gradient_index) {
-	return false;
+        return false;
       }
       else {
-	statement_[n_statements_-1].end_plus_one = n_operations_;
-	return true;
+        statement_[n_statements_-1].end_plus_one = n_operations_;
+        return true;
       }
     }
 
@@ -185,15 +178,12 @@ namespace adept {
     // and keeps a copy of its location, which is returned from this
     // function
     uIndex register_gradient() {
-
-
-// TFK I ADDED
+      // TFK I ADDED
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (!is_recording()) {
         return 0;
       }
 #endif
-
       #ifdef CILKSAN
       __cilksan_disable_checking();
       #endif
@@ -202,16 +192,13 @@ namespace adept {
       //max_gradient_++;
       //return 0;//n_gradients_registered_++;
       uIndex ret = __sync_fetch_and_add(&n_gradients_registered_, 1);
-
-
 #ifdef TFK_WLSTACK_DEBUG
-if (thread_local_worker_id == __cilkrts_get_worker_number()) {
-} else {
-  printf("ERROR!\n");
-  assert(false);
-}
+      if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+      } else {
+        printf("ERROR!\n");
+        assert(false);
+      }
 #endif
-
       worker_local_stacks[thread_local_worker_id].add_register_gradient(ret);
 
       #ifdef CILKSAN
@@ -225,34 +212,34 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (is_recording()) {
 #endif
-	n_gradients_registered_++;
-	if (gap_list_.empty()) {
-	  // Add to end of gradient vector
-	  i_gradient_++;
-	  if (i_gradient_ > max_gradient_) {
-	    max_gradient_ = i_gradient_;
-	  }
-	  return_val = i_gradient_-1;
-	}
-	else {
-	  // Insert in a gap
-	  Gap& first_gap = gap_list_.front();
-	  return_val = first_gap.start;
-	  first_gap.start++;
-	  if (first_gap.start > first_gap.end) {
-	    // Gap has closed: remove it from the list, after checking
-	    // if it had been stored as the gap that had most recently
-	    // grown
-	    if (most_recent_gap_ == gap_list_.begin()) {
-	      most_recent_gap_ = gap_list_.end();
-	    }
-	    gap_list_.pop_front();
-	  }
-	}
+        n_gradients_registered_++;
+        if (gap_list_.empty()) {
+          // Add to end of gradient vector
+          i_gradient_++;
+          if (i_gradient_ > max_gradient_) {
+            max_gradient_ = i_gradient_;
+          }
+          return_val = i_gradient_-1;
+        }
+        else {
+          // Insert in a gap
+          Gap& first_gap = gap_list_.front();
+          return_val = first_gap.start;
+          first_gap.start++;
+          if (first_gap.start > first_gap.end) {
+            // Gap has closed: remove it from the list, after checking
+            // if it had been stored as the gap that had most recently
+            // grown
+            if (most_recent_gap_ == gap_list_.begin()) {
+              most_recent_gap_ = gap_list_.end();
+            }
+            gap_list_.pop_front();
+          }
+        }
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
       else {
-	return_val = 0;
+        return_val = 0;
       }
 #endif
        
@@ -265,21 +252,19 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
 
     // Register n gradients and return the index of the first one
     uIndex register_gradients(const uIndex& n)  {
-      //printf("register gradients\n");
       uIndex return_val;
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (is_recording()) {
 #endif
-	return_val = do_register_gradients(n);
+        return_val = do_register_gradients(n);
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
       else {
-	return_val = 0;
+        return_val = 0;
       }
 #endif
       return return_val;
     }
-
 
     // When an aReal object is destroyed it is unregistered from the
     // stack. If it is at the top of the stack then the stack pointer
@@ -293,15 +278,13 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     void unregister_gradient(const uIndex& gradient_index) {
       //printf("unregistered %d\n", gradient_index);
       //__sync_fetch_and_sub(&max_gradient_, 1);
-
 #ifdef TFK_WLSTACK_DEBUG
-if (thread_local_worker_id == __cilkrts_get_worker_number()) {
-} else {
-  printf("ERROR!\n");
-  assert(false);
-}
+      if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+      } else {
+        printf("ERROR!\n");
+        assert(false);
+      }
 #endif
-
       worker_local_stacks[thread_local_worker_id].add_unregister_gradient(gradient_index);
 
       #ifndef TFK_ALLOW_UNREGISTER
@@ -315,106 +298,96 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
       if (gradient_index+1 == i_gradient_) {
         // Gradient to be unregistered is at the top of the stack
         i_gradient_--;
-	if (!gap_list_.empty()) {
-	  Gap& last_gap = gap_list_.back();
-	  if (i_gradient_ == last_gap.end+1) {
-	    // We have unregistered the elements between the "gap" of
-	    // unregistered element and the top of the stack, so can
-	    // set the variables indicating the presence of the gap to
-	    // zero
-	    i_gradient_ = last_gap.start;
-	    GapListIterator it = gap_list_.end();
-	    it--;
-	    if (most_recent_gap_ == it) {
-	      most_recent_gap_ = gap_list_.end();
-	    }
-	    gap_list_.pop_back();
-	  }
-	}
+        if (!gap_list_.empty()) {
+          Gap& last_gap = gap_list_.back();
+          if (i_gradient_ == last_gap.end+1) {
+            // We have unregistered the elements between the "gap" of
+            // unregistered element and the top of the stack, so can
+            // set the variables indicating the presence of the gap to
+            // zero
+            i_gradient_ = last_gap.start;
+            GapListIterator it = gap_list_.end();
+            it--;
+            if (most_recent_gap_ == it) {
+              most_recent_gap_ = gap_list_.end();
+            }
+            gap_list_.pop_back();
+          }
+        }
       }
       else { // Gradient to be unregistered not at top of stack.
-	// In the less common situation that the gradient is not at
-	// the top of the stack, the task of unregistering is a bit
-	// more involved, so we carry it out in a non-inline function
-	// to avoid code bloat
-	unregister_gradient_not_top(gradient_index);
+        // In the less common situation that the gradient is not at
+        // the top of the stack, the task of unregistering is a bit
+        // more involved, so we carry it out in a non-inline function
+        // to avoid code bloat
+        unregister_gradient_not_top(gradient_index);
       }
       stack_mutex.unlock();
       #ifdef CILKSAN
       __cilksan_enable_checking();
-      #endif
+#endif
     }
 
     // Unregister n gradients starting at gradient_index
-    void unregister_gradients(const uIndex& gradient_index,
-			      const uIndex& n);
-
+    void unregister_gradients(const uIndex& gradient_index, const uIndex& n);
 
   protected:
     uIndex do_register_gradients(const uIndex& n);
 
     // Unregister a gradient that is not at the top of the stack
     void unregister_gradient_not_top(const uIndex& gradient_index);
-  public:
 
+  public:
     // Set the gradients in the list with indexs between start and
     // end_plus_one-1 to the values pointed to by "gradient"
     template <typename MyReal>
-    typename internal::enable_if<internal::is_floating_point<MyReal>::value,
-		       void>::type
-    set_gradients(uIndex start, uIndex end_plus_one,
-		  const MyReal* gradient) {
-      //printf("set the gradients \n");
+    typename internal::enable_if<internal::is_floating_point<MyReal>::value, void>::type
+    set_gradients(uIndex start, uIndex end_plus_one, const MyReal* gradient) {
       // Need to initialize the gradient list if not already done
       if (!gradients_are_initialized()) {
-	initialize_gradients();
+        initialize_gradients();
       }
       if (end_plus_one > max_gradient_) {
-	throw gradient_out_of_range();
+        throw gradient_out_of_range();
       }
       for (uIndex i = start, j = 0; i < end_plus_one; i++, j++) {
-	gradient_[i] = gradient[j];
+        gradient_[i] = gradient[j];
       }
     }
 
-    // Get the gradients in the list with indexs between start and
-    // end_plus_one-1 and put them in the location pointed to by
-    // "gradient"
+    // Get the gradients in the list with indices between start and
+    // end_plus_one-1 and put them in the location pointed to by "gradient"
     template <typename MyReal>
-    typename internal::enable_if<internal::is_floating_point<MyReal>::value,
-		       void>::type
-    get_gradients(uIndex start, uIndex end_plus_one,
-		  MyReal* gradient) const {
+    typename internal::enable_if<internal::is_floating_point<MyReal>::value, void>::type
+    get_gradients(uIndex start, uIndex end_plus_one, MyReal* gradient) const {
       if (!gradients_are_initialized()) {
-	throw gradients_not_initialized();
+        throw gradients_not_initialized();
       }
       if (end_plus_one > max_gradient_) {
-	throw gradient_out_of_range();
+        throw gradient_out_of_range();
       }
       for (uIndex i = start, j = 0; i < end_plus_one; i++, j++) {
-	gradient[j] = gradient_[i];
+        gradient[j] = gradient_[i];
       }
     }
     template <typename MyReal>
-    typename internal::enable_if<internal::is_floating_point<MyReal>::value,
-		       void>::type
-    get_gradients(uIndex start, uIndex end_plus_one,
-		  MyReal* gradient, Index src_stride, Index target_stride) const {
+    typename internal::enable_if<internal::is_floating_point<MyReal>::value, void>::type
+    get_gradients(uIndex start, uIndex end_plus_one, MyReal* gradient, 
+                  Index src_stride, Index target_stride) const {
       if (!gradients_are_initialized()) {
-	throw gradients_not_initialized();
+        throw gradients_not_initialized();
       }
       if (end_plus_one > max_gradient_) {
-	throw gradient_out_of_range();
+        throw gradient_out_of_range();
       }
       for (uIndex i = start, j = 0; i < end_plus_one; i+=src_stride, j+=target_stride) {
-	gradient[j] = gradient_[i];
+        gradient[j] = gradient_[i];
       }
     }
 
     // Run the tangent-linear algorithm on the gradient list; normally
     // this call is preceded calls to set_gradient to load input
-    // gradients and followed by calls to get_gradient to extract
-    // gradients
+    // gradients and followed by calls to get_gradient to extract gradients
     void compute_tangent_linear();
     void forward() { return compute_tangent_linear(); }
 
@@ -471,37 +444,36 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // active variable and an array of active variables to be
     // independent. Note that we use templates here because aReal has
     // not been defined.
-    template <class A>
+    template <class A> 
     void independent(const A& x) {
-      //      independent_index_.push_back(x.gradient_index());
+      // independent_index_.push_back(x.gradient_index());
       x.push_gradient_indices(independent_index_);
     }
-    template <class A>
+    template <class A> 
     void independent(const A* x, uIndex n) {
       for (uIndex i = 0; i < n; i++) {
-	//	independent_index_.push_back(x[i].gradient_index());
-	x[i].push_gradient_indices(independent_index_);
+        // independent_index_.push_back(x[i].gradient_index());
+        x[i].push_gradient_indices(independent_index_);
       }
     }
 
     // Likewise, delcare the dependent variables
     template <class A>
     void dependent(const A& x) {
-      //      dependent_index_.push_back(x.gradient_index());
+      // dependent_index_.push_back(x.gradient_index());
       x.push_gradient_indices(dependent_index_);
     }
     template <class A>
     void dependent(const A* x, uIndex n) {
       for (uIndex i = 0; i < n; i++) {
-	//	dependent_index_.push_back(x[i].gradient_index());
-	x[i].push_gradient_indices(dependent_index_);
+        // dependent_index_.push_back(x[i].gradient_index());
+        x[i].push_gradient_indices(dependent_index_);
       }
     }
 
     // Print various bits of information about the Stack to the
     // specified stream (or standard output if not specified). The
-    // same behaviour can be obtained by "<<"-ing the Stack to a
-    // stream.
+    // same behaviour can be obtained by "<<"-ing the Stack to a stream.
     void print_status(std::ostream& os = std::cout) const;
 
     // Print each derivative statement to the specified stream (or
@@ -517,8 +489,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     void print_gaps(std::ostream& os = std::cout) const;
 
     // Clear the gradient list enabling a new adjoint or
-    // tangent-linear computation to be performed with the same
-    // recording
+    // tangent-linear computation to be performed with the same recording
     void clear_gradients() {
       gradients_initialized_ = false;
     }
@@ -538,12 +509,12 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // Function now removed
     void clear() {
       throw feature_not_available("The Stack::clear() function has been removed since Adept version 1.0: see the documentation about how to use Stack::new_recording()"
-				  ADEPT_EXCEPTION_LOCATION);
+                                  ADEPT_EXCEPTION_LOCATION);
     }
     // Function now removed
     void clear_statements() {
       throw feature_not_available("The Stack::clear_statements() function has been removed since Adept version 1.0: see the documentation about how to use Stack::new_recording()"
-				  ADEPT_EXCEPTION_LOCATION);
+                                  ADEPT_EXCEPTION_LOCATION);
     }
 
     // Make this stack "active" by copying its "this" pointer to a
@@ -557,7 +528,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // object for the next algorithm
     void deactivate() {
       if (is_active()) {
-	ADEPT_ACTIVE_STACK = 0;
+        ADEPT_ACTIVE_STACK = 0;
       }
     }
 
@@ -569,7 +540,6 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // Clear the contents of the various lists ready for a new
     // recording
     void new_recording() {
-
       //if (!tfk_reducer.max_gradient_set) {
         tfk_reducer.max_gradient_set = true;
         tfk_reducer.max_gradient = max_gradient_;
@@ -603,8 +573,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     }
 
     // Are gradients to be computed?  The default is "true", but if
-    // ADEPT_RECORDING_PAUSABLE is defined then this may
-    // be false
+    // ADEPT_RECORDING_PAUSABLE is defined then this may be false
     bool is_recording() const {
 #ifdef ADEPT_RECORDING_PAUSABLE
       return is_recording_;
@@ -644,41 +613,41 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // of the same name in the Active, ActiveReference and
     // ActiveConstReference classes.
     void add_derivative_dependence(uIndex lhs_index, uIndex rhs_index,
-				   Real multiplier) {
+                                   Real multiplier) {
       printf("add derivative dependence\n");
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
 #ifndef ADEPT_MANUAL_MEMORY_ALLOCATION
-	// Check there is space in the operation stack for 1 entry
-	ADEPT_ACTIVE_STACK->check_space(1);
+        // Check there is space in the operation stack for 1 entry
+        ADEPT_ACTIVE_STACK->check_space(1);
 #endif
-	if (multiplier != 0.0) {
-	  push_rhs(multiplier, rhs_index);
-	}
-	push_lhs(lhs_index);
+        if (multiplier != 0.0) {
+          push_rhs(multiplier, rhs_index);
+        }
+        push_lhs(lhs_index);
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
     }
 
     void append_derivative_dependence(uIndex lhs_index, uIndex rhs_index,
-				      Real multiplier) {
+                                      Real multiplier) {
       printf("append derivative dependence\n");
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
 #ifndef ADEPT_MANUAL_MEMORY_ALLOCATION
-	// Check there is space in the operation stack for 1 entry
-	ADEPT_ACTIVE_STACK->check_space(1);
+        // Check there is space in the operation stack for 1 entry
+        ADEPT_ACTIVE_STACK->check_space(1);
 #endif
-	if (multiplier != 0.0) {
-	  push_rhs(multiplier, rhs_index);
-	}
-	if (!update_lhs(lhs_index)) {
-	  throw wrong_gradient("Wrong gradient: append_derivative_dependence called on a different active number from the most recent add_derivative_dependence call"
-			       ADEPT_EXCEPTION_LOCATION);
-	}
+        if (multiplier != 0.0) {
+          push_rhs(multiplier, rhs_index);
+        }
+        if (!update_lhs(lhs_index)) {
+          throw wrong_gradient("Wrong gradient: append_derivative_dependence called on a different active number from the most recent add_derivative_dependence call"
+                               ADEPT_EXCEPTION_LOCATION);
+        }
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
@@ -695,60 +664,58 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // statement.
     template <typename Type>
     void push_derivative_dependence(uIndex rhs_index,
-				    const Type* multiplier,
-				    int n = 1,
-				    int index_stride = 1,
-				    int multiplier_stride = 1) {
+                                    const Type* multiplier,
+                                    int n = 1,
+                                    int index_stride = 1,
+                                    int multiplier_stride = 1) {
       //printf("push derivative dependence\n");
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (is_recording()) {
 #endif
 #ifndef ADEPT_MANUAL_MEMORY_ALLOCATION
-	// Check there is space in the operation stack for n entries
-	check_space(n);
+        // Check there is space in the operation stack for n entries
+        check_space(n);
 #endif
-        //if (index_stride != 1 || multiplier_stride != 1) {
-        //printf("index stride is %d\n", index_stride);
-        //printf("multiplier stride is %d\n", multiplier_stride);
-        //}
+        // if (index_stride != 1 || multiplier_stride != 1) {
+        //   printf("index stride is %d\n", index_stride);
+        //   printf("multiplier stride is %d\n", multiplier_stride);
+        // }
 
-  //#ifndef TFK_ONE_THREAD
-  //{
-  //triple_vector stacks = tfk_reducer.get_tls_references();
-  //thread_local_multiplier = stacks.multiplier_stack;
-  //thread_local_index = stacks.operation_stack;
-  //thread_local_statement = stacks.statement_stack;
-  //}
-  //#endif
+        // #ifndef TFK_ONE_THREAD
+        // {
+        // triple_vector stacks = tfk_reducer.get_tls_references();
+        // thread_local_multiplier = stacks.multiplier_stack;
+        // thread_local_index = stacks.operation_stack;
+        // thread_local_statement = stacks.statement_stack;
+        // }
+        // #endif
 
-  //      int start = thread_local_multiplier->size();
-  //      thread_local_multiplier->reserve(thread_local_multiplier->size() + n);
-  //      thread_local_index->reserve(thread_local_index->size() + n);
-
+        // int start = thread_local_multiplier->size();
+        // thread_local_multiplier->reserve(thread_local_multiplier->size() + n);
+        // thread_local_index->reserve(thread_local_index->size() + n);
 
         int wid = thread_local_worker_id;
 
 #ifdef TFK_WLSTACK_DEBUG
-if (thread_local_worker_id == __cilkrts_get_worker_number()) {
-} else {
-  printf("ERROR!\n");
-  assert(false);
-}
+        if (thread_local_worker_id == __cilkrts_get_worker_number()) {
+        } else {
+          printf("ERROR!\n");
+          assert(false);
+        }
 #endif
-
 
         worker_local_stacks[wid].ensure_multiplier_space(worker_local_stacks[wid].multiplier_stack_arr_len+n);
         worker_local_stacks[wid].ensure_operation_space(worker_local_stacks[wid].operation_stack_arr_len+n);
-	for (int i = 0; i < n; i++, rhs_index += index_stride, 
-	       multiplier += multiplier_stride) {
-	  //std::cout << "Multiplier is " << *multiplier << std::endl;
+        for (int i = 0; i < n; i++, rhs_index += index_stride, 
+                                    multiplier += multiplier_stride) {
+          //std::cout << "Multiplier is " << *multiplier << std::endl;
           //thread_local_multiplier->emplace_back(*multiplier);
           //thread_local_index->emplace_back(rhs_index);
           worker_local_stacks[wid].add_multiplier_fast(*multiplier);
           worker_local_stacks[wid].add_operation_fast(rhs_index);
 
-	  //push_rhs(*multiplier, rhs_index);
-	}
+          //push_rhs(*multiplier, rhs_index);
+        }
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
@@ -781,9 +748,9 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // Return the number of bytes used
     std::size_t memory() const {
       std::size_t mem = n_statements()*sizeof(uIndex)*2
-	+ n_operations()*(sizeof(Real)+sizeof(uIndex));
+        + n_operations()*(sizeof(Real)+sizeof(uIndex));
       if (gradients_are_initialized()) {
-	mem += max_gradients()*sizeof(Real);
+        mem += max_gradients()*sizeof(Real);
       }
       return mem;
     }
@@ -796,13 +763,12 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     Real fraction_multipliers_equal_to(Real val) {
       uIndex sum = 0;
       for (uIndex i = 0; i < n_operations_; i++) {
-	if (multiplier_[i] == val) {
-	  sum++;
-	}
+        if (multiplier_[i] == val) {
+          sum++;
+        }
       }
       return static_cast<Real>(sum)/static_cast<Real>(n_operations_);
     }
-
 
     bool is_thread_unsafe() const { return is_thread_unsafe_; }
 
@@ -814,13 +780,13 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     // statements and operations you will need
     void preallocate_statements(uIndex n) {
       if (n_statements_+n+1 >= n_allocated_statements_) {
-	grow_statement_stack(n);
+        grow_statement_stack(n);
       }
     }
     void preallocate_operations(uIndex n) {
       printf("preallocate operations\n");
       if (n_allocated_operations_ < n_operations_+n+1) {
-	grow_operation_stack(n);
+        grow_operation_stack(n);
       }      
     }
 
@@ -836,7 +802,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     /*
     void zero_gradient_multipass() {
       for (std::size_t i = 0; i < gradient_multipass_.size(); i++) {
-	gradient_multipass_[i].zero();
+        gradient_multipass_[i].zero();
       }
     }
     */
@@ -863,7 +829,7 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
 
 #ifdef ADEPT_STACK_STORAGE_STL
     // Data are stored using standard template library containers
-    //    std::valarray<Real> gradient_;
+    //     std::valarray<Real> gradient_;
     std::vector<Real> gradient_;
 #else
     // Data are stored as dynamically allocated arrays
@@ -873,14 +839,14 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
 #endif
     // For Jacobians we process multiple rows/columns at once so need
     // what is essentially a 2D array
-    //    std::vector<Block<ADEPT_MULTIPASS_SIZE,Real> > gradient_multipass_;
+    //     std::vector<Block<ADEPT_MULTIPASS_SIZE,Real> > gradient_multipass_;
     // uIndexs of the independent and dependent variables
     std::vector<uIndex> independent_index_;
     std::vector<uIndex> dependent_index_;
     // Keep a record of gaps in the gradient array to ensure that gaps
     // are filled
     GapList gap_list_;
-    //    Gap* most_recent_gap_;
+    // Gap* most_recent_gap_;
     GapListIterator most_recent_gap_;
 
     uIndex i_gradient_;             // Current number of gradients
@@ -889,25 +855,22 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
     public:
     uIndex n_gradients_registered_; // Number of gradients registered
     bool gradients_initialized_;    // Have the gradients been
-				    // initialized?
+                                    // initialized?
     protected:
     bool is_thread_unsafe_;
     bool is_recording_;
     bool have_openmp_;              // true if this header file
-				    // compiled with -fopenmp
+                                    // compiled with -fopenmp
     bool openmp_manually_disabled_; // true if user called
-				    // set_max_jacobian_threads(1)
+                                    // set_max_jacobian_threads(1)
   }; // End of Stack class
-
 
   // -------------------------------------------------------------------
   // Helper functions
   // -------------------------------------------------------------------
 
-  // Sending a Stack object to a stream reports information about the
-  // stack
-  inline
-  std::ostream& operator<<(std::ostream& os, const adept::Stack& stack) {
+  // Sending a Stack object to a stream reports information about the stack
+  inline std::ostream& operator<<(std::ostream& os, const adept::Stack& stack) {
     stack.print_status(os);
     return os;
   }
@@ -918,20 +881,17 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
   // statements and operations you will need. This version is useful
   // in functions that don't have visible access to the currently
   // active Adept stack. 
-  inline
-  void preallocate_statements(uIndex n) {
-      printf("preallocate statements\n");
+  inline void preallocate_statements(uIndex n) {
+    printf("preallocate statements\n");
     ADEPT_ACTIVE_STACK->preallocate_statements(n);
   }
-  inline
-  void preallocate_operations(uIndex n) {
-      printf("preallocate operations inline \n");
+  inline void preallocate_operations(uIndex n) {
+    printf("preallocate operations inline \n");
     ADEPT_ACTIVE_STACK->preallocate_operations(n);
   }
 
   // Returns a pointer to the currently active stack (or 0 if there is none)
-  inline
-  Stack* active_stack() { return ADEPT_ACTIVE_STACK; }
+  inline Stack* active_stack() { return ADEPT_ACTIVE_STACK; }
 
   // Return whether the active stack is stored in a global variable
   // (thread unsafe) rather than a thread-local global variable
@@ -947,6 +907,5 @@ if (thread_local_worker_id == __cilkrts_get_worker_number()) {
   //#undef ADEPT_ACTIVE_STACK
 
 } // End of namespace adept
-
 
 #endif

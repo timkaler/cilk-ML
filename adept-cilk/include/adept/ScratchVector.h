@@ -41,45 +41,45 @@ namespace adept {
 
       // Set all dimensions to the same value
       ScratchVector(Type x) {
-	set_all(x);
+        set_all(x);
       }
 
       // Specify the values of all elements
       ScratchVector(Type x[Size]) {
-	for (int i = 0; i < Size; ++i) {
-	  val[i] = x[i];
-	}
+        for (int i = 0; i < Size; ++i) {
+          val[i] = x[i];
+        }
       }
 
       // Assume copy constructor will copy elements of val
     
       // Set all to specified value
       void set_all(Type x) {
-	for (int i = 0; i < Size; ++i) {
-	  val[i] = x;
-	}
+        for (int i = 0; i < Size; ++i) {
+          val[i] = x;
+        }
       }
 
       // Copy from a ScratchVector object of the same rank
       void copy(const ScratchVector& d) {
-	for (int i = 0; i < Size; ++i) {
-	  val[i] = d[i];
-	}
+        for (int i = 0; i < Size; ++i) {
+          val[i] = d[i];
+        }
       }
       // ...or pointer to raw data
       void copy(const Type* d) {
-	for (int i = 0; i < Size; ++i) {
-	  val[i] = d[i];
-	}
+        for (int i = 0; i < Size; ++i) {
+          val[i] = d[i];
+        }
       }
 
       // Write out contents for debugging
       std::ostream& write(std::ostream& os) const {
-	os << "{" << val[0];
-	for (int i = 1; i < Size; i++) {
-	  os << "," << val[i];
-	}
-	return os << "}\n";
+        os << "{" << val[0];
+        for (int i = 1; i < Size; i++) {
+          os << "," << val[i];
+        }
+        return os << "}\n";
       }
 
       // Const and non-const access to elements
@@ -101,7 +101,7 @@ namespace adept {
       template <typename T>
       ScratchVector(T x) { }
       std::ostream& write(std::ostream& os) const {
-	return os << "{}\n";
+        return os << "{}\n";
       }
     };
 

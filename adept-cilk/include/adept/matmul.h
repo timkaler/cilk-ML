@@ -28,12 +28,12 @@ namespace adept {
     void
     check_inner_dimensions(const L& left, const R& right) {
       if (left.empty() || right.empty()) {
-	throw empty_array("Attempt to perform matrix multiplication with empty array(s)"
-			  ADEPT_EXCEPTION_LOCATION);
+        throw empty_array("Attempt to perform matrix multiplication with empty array(s)"
+                          ADEPT_EXCEPTION_LOCATION);
       }
       if (left.dimension(1) != right.dimension(0)) {
-	throw inner_dimension_mismatch("Inner dimension mismatch in array multiplication"
-				       ADEPT_EXCEPTION_LOCATION);
+        throw inner_dimension_mismatch("Inner dimension mismatch in array multiplication"
+                                       ADEPT_EXCEPTION_LOCATION);
       }
     }
 
@@ -42,12 +42,12 @@ namespace adept {
     void
     check_inner_dimensions_sqr(Index left_dim, const R& right) {
       if (left_dim == 0 || right.empty()) {
-	throw empty_array("Attempt to perform matrix multiplication with empty array(s)"
-			  ADEPT_EXCEPTION_LOCATION);
+        throw empty_array("Attempt to perform matrix multiplication with empty array(s)"
+                          ADEPT_EXCEPTION_LOCATION);
       }
       if (left_dim != right.dimension(0)) {
-	throw inner_dimension_mismatch("Inner dimension mismatch in array multiplication"
-				       ADEPT_EXCEPTION_LOCATION);
+        throw inner_dimension_mismatch("Inner dimension mismatch in array multiplication"
+                                       ADEPT_EXCEPTION_LOCATION);
       }
     }
 
@@ -69,49 +69,49 @@ namespace adept {
       Index stride;
       BLAS_ORDER order;
       if (!left.is_row_contiguous() && !left.is_column_contiguous()) {
-	// Matrix is strided in both directions so needs to be copied
-	// first
-	Array<2,T,LIsActive> left_;
-	left_ = left;
-	return matmul_(left_, right);
+        // Matrix is strided in both directions so needs to be copied
+        // first
+        Array<2,T,LIsActive> left_;
+        left_ = left;
+        return matmul_(left_, right);
       }
       else if (left.is_row_contiguous()) {
-	order = BlasRowMajor;
-	stride = left.offset(0);
+        order = BlasRowMajor;
+        stride = left.offset(0);
       }
       else {
-	order = BlasColMajor;
-	stride = left.offset(1);
+        order = BlasColMajor;
+        stride = left.offset(1);
       }
       cppblas_gemv(order, BlasNoTrans, left.dimension(0), left.dimension(1), 
-		   1.0, left.const_data(), stride, 
-		   right.const_data(), right.offset(0), 
-		   0.0, ans.data(), ans.offset(0));
+                   1.0, left.const_data(), stride, 
+                   right.const_data(), right.offset(0), 
+                   0.0, ans.data(), ans.offset(0));
       if (is_active
 #ifdef ADEPT_RECORDING_PAUSABLE
-	  && ADEPT_ACTIVE_STACK->is_recording()
+          && ADEPT_ACTIVE_STACK->is_recording()
 #endif
-	  ) {
+          ) {
 
-	uIndex left_index = left.gradient_index();
-	uIndex right_index = right.gradient_index();
-	uIndex ans_index = ans.gradient_index();
-	Index n = right.dimension(0);
-	const ExpressionSize<2>& left_offset = left.offset();
-	const ExpressionSize<1>& right_offset = right.offset();
+        uIndex left_index = left.gradient_index();
+        uIndex right_index = right.gradient_index();
+        uIndex ans_index = ans.gradient_index();
+        Index n = right.dimension(0);
+        const ExpressionSize<2>& left_offset = left.offset();
+        const ExpressionSize<1>& right_offset = right.offset();
         //printf("inside a matmul\n");
-	for (Index i = 0; i < ans.dimension(0); ++i) {
-	  if (LIsActive) {
-	    active_stack()->push_derivative_dependence(left_index+i*left_offset[0], 
-						       right.const_data(), n, left_offset[1], right_offset[0]);
-	  }
-	  if (RIsActive) {
-	    active_stack()->push_derivative_dependence(right_index, 
-						       left.const_data()+i*left_offset[0], 
-						       n, right_offset[0], left_offset[1]);
-	  }
-	  active_stack()->push_lhs(ans_index + i*ans.offset(0));
-	}
+        for (Index i = 0; i < ans.dimension(0); ++i) {
+          if (LIsActive) {
+            active_stack()->push_derivative_dependence(left_index+i*left_offset[0], 
+                                                       right.const_data(), n, left_offset[1], right_offset[0]);
+          }
+          if (RIsActive) {
+            active_stack()->push_derivative_dependence(right_index, 
+                                                       left.const_data()+i*left_offset[0], 
+                                                       n, right_offset[0], left_offset[1]);
+          }
+          active_stack()->push_lhs(ans_index + i*ans.offset(0));
+        }
       }
 
       return ans;
@@ -128,74 +128,74 @@ namespace adept {
       check_inner_dimensions(left, right);
 
       if (!left.is_row_contiguous() && !left.is_column_contiguous()) {
-	Array<2,T,LIsActive> left_;
-	left_ = left;
-	if (!right.is_row_contiguous() && !right.is_column_contiguous()) {
-	  Array<2,T,RIsActive> right_;
-	  right_ = right;
-	  return matmul_(left_, right_);
-	}
-	else {
-	  return matmul_(left_, right);
-	}
+        Array<2,T,LIsActive> left_;
+        left_ = left;
+        if (!right.is_row_contiguous() && !right.is_column_contiguous()) {
+          Array<2,T,RIsActive> right_;
+          right_ = right;
+          return matmul_(left_, right_);
+        }
+        else {
+          return matmul_(left_, right);
+        }
       }
       else if (!right.is_row_contiguous() && !right.is_column_contiguous()) {
-	Array<2,T,RIsActive> right_;
-	right_ = right;
-	return matmul_(left, right_);
+        Array<2,T,RIsActive> right_;
+        right_ = right;
+        return matmul_(left, right_);
       }
       else {
-	Index left_stride, right_stride, ans_stride;
-	BLAS_TRANSPOSE left_trans, right_trans;
-	BLAS_ORDER order;
-	Array<2,T,is_active> ans(left.dimension(0),right.dimension(1));
+        Index left_stride, right_stride, ans_stride;
+        BLAS_TRANSPOSE left_trans, right_trans;
+        BLAS_ORDER order;
+        Array<2,T,is_active> ans(left.dimension(0),right.dimension(1));
 
-	if (ans.is_row_contiguous()) {
-	  order = BlasRowMajor;
-	  ans_stride = ans.offset(0);
-	}
-	else {
-	  order = BlasColMajor;
-	  ans_stride = ans.offset(1);
-	}
-	if (left.is_row_contiguous()) {
-	  left_trans = order == BlasRowMajor ? BlasNoTrans : BlasTrans;
-	  left_stride = left.offset(0);
-	}
-	else {
-	  left_trans = order == BlasColMajor ? BlasNoTrans : BlasTrans;
-	  left_stride = left.offset(1);
-	}
-	if (right.is_row_contiguous()) {
-	  right_trans = order == BlasRowMajor ? BlasNoTrans : BlasTrans;
-	  right_stride = right.offset(0);
-	}
-	else {
-	  right_trans = order == BlasColMajor ? BlasNoTrans : BlasTrans;
-	  right_stride = right.offset(1);
-	}
-	cppblas_gemm(order, left_trans, right_trans,
-		    left.dimension(0), right.dimension(1), left.dimension(1),
-		    1.0, left.const_data(), left_stride,
-		    right.const_data(), right_stride,
-		    0.0, ans.data(), ans_stride);
-	if ( (LIsActive || RIsActive)
+        if (ans.is_row_contiguous()) {
+          order = BlasRowMajor;
+          ans_stride = ans.offset(0);
+        }
+        else {
+          order = BlasColMajor;
+          ans_stride = ans.offset(1);
+        }
+        if (left.is_row_contiguous()) {
+          left_trans = order == BlasRowMajor ? BlasNoTrans : BlasTrans;
+          left_stride = left.offset(0);
+        }
+        else {
+          left_trans = order == BlasColMajor ? BlasNoTrans : BlasTrans;
+          left_stride = left.offset(1);
+        }
+        if (right.is_row_contiguous()) {
+          right_trans = order == BlasRowMajor ? BlasNoTrans : BlasTrans;
+          right_stride = right.offset(0);
+        }
+        else {
+          right_trans = order == BlasColMajor ? BlasNoTrans : BlasTrans;
+          right_stride = right.offset(1);
+        }
+        cppblas_gemm(order, left_trans, right_trans,
+                    left.dimension(0), right.dimension(1), left.dimension(1),
+                    1.0, left.const_data(), left_stride,
+                    right.const_data(), right_stride,
+                    0.0, ans.data(), ans_stride);
+        if ( (LIsActive || RIsActive)
 #ifdef ADEPT_RECORDING_PAUSABLE
-	    && ADEPT_ACTIVE_STACK->is_recording()
+            && ADEPT_ACTIVE_STACK->is_recording()
 #endif
-	    ) {
-	  uIndex left_index = left.gradient_index();
-	  uIndex right_index = right.gradient_index();
-	  uIndex ans_index = ans.gradient_index();
-	  Index n = right.dimension(0);
-	  const ExpressionSize<2>& left_offset = left.offset();
-	  const ExpressionSize<2>& right_offset = right.offset();
+            ) {
+          uIndex left_index = left.gradient_index();
+          uIndex right_index = right.gradient_index();
+          uIndex ans_index = ans.gradient_index();
+          Index n = right.dimension(0);
+          const ExpressionSize<2>& left_offset = left.offset();
+          const ExpressionSize<2>& right_offset = right.offset();
 
           //if (right.dimensions()[1] == 1 && ans.dimensions()[1] == 1) {
           //  printf("inside a matmul left dims %d,%d; right dims %d,%d; ans dims %d,%d\n",
           //         left.dimensions()[0], left.dimensions()[1], right.dimensions()[0],
           //         right.dimensions()[1], ans.dimensions()[0], ans.dimensions()[1]);
-	  //  if (LIsActive) {
+          //  if (LIsActive) {
           //    printf("left active\n");
           //  }
           //  if (RIsActive) {
@@ -207,24 +207,24 @@ namespace adept {
           //  //sp_tree.tfk_reducer.add_vmvD_node(left, right, ans);
           //  //return ans;
           //}
-	  for (Index i = 0; i < ans.dimension(0); ++i) {
-	    for (Index j = 0; j < ans.dimension(1); ++j) {
-	      if (LIsActive) {
-		active_stack()->push_derivative_dependence(left_index+i*left_offset[0], 
-			   right.const_data()+j*right_offset[1], n, 
-			   left_offset[1], right_offset[0]);
-	      }
-	      if (RIsActive) {
-		active_stack()->push_derivative_dependence(right_index+j*right_offset[1], 
-			   left.const_data()+i*left_offset[0], n, 
-			   right_offset[0], left_offset[1]);
-	      }
-	      active_stack()->push_lhs(ans_index + i*ans.offset(0) + j*ans.offset(1));
-	    }
-	  }
+          for (Index i = 0; i < ans.dimension(0); ++i) {
+            for (Index j = 0; j < ans.dimension(1); ++j) {
+              if (LIsActive) {
+                active_stack()->push_derivative_dependence(left_index+i*left_offset[0], 
+                           right.const_data()+j*right_offset[1], n, 
+                           left_offset[1], right_offset[0]);
+              }
+              if (RIsActive) {
+                active_stack()->push_derivative_dependence(right_index+j*right_offset[1], 
+                           left.const_data()+i*left_offset[0], n, 
+                           right_offset[0], left_offset[1]);
+              }
+              active_stack()->push_lhs(ans_index + i*ans.offset(0) + j*ans.offset(1));
+            }
+          }
 
-	}
-	return ans;
+        }
+        return ans;
       }
     }
 
@@ -233,26 +233,26 @@ namespace adept {
     inline
     Array<1,T,(LIsActive||RIsActive)>
     matmul_symmetric(const T* left_ptr, SymmMatrixOrientation left_orient, Index left_dim,
-		     Index left_offset, uIndex left_gradient_index,
-		     const Array<1,T,RIsActive>& right) {
+                     Index left_offset, uIndex left_gradient_index,
+                     const Array<1,T,RIsActive>& right) {
 
       check_inner_dimensions_sqr(left_dim, right);
 
       if (LIsActive || RIsActive) {
-	throw(invalid_operation("Cannot yet do matmul(SymmMatrix,Vector) when either are active"));
+        throw(invalid_operation("Cannot yet do matmul(SymmMatrix,Vector) when either are active"));
       }
       BLAS_UPLO uplo;
       if (left_orient == ROW_LOWER_COL_UPPER) {
-	uplo = BlasLower;
+        uplo = BlasLower;
       }
       else {
-	uplo = BlasUpper;
+        uplo = BlasUpper;
       }
       Array<1,T,LIsActive||RIsActive> ans(right.dimension(0));
       cppblas_symv(BlasRowMajor, uplo, right.dimension(0), 
-		   1.0, left_ptr, left_offset, 
-		   right.const_data(), right.offset(0), 
-		   0.0, ans.data(), ans.offset(0));
+                   1.0, left_ptr, left_offset, 
+                   right.const_data(), right.offset(0), 
+                   0.0, ans.data(), ans.offset(0));
       return ans;
     }
 
@@ -261,46 +261,46 @@ namespace adept {
     inline
     Array<2,T,(LIsActive||RIsActive)>
     matmul_symmetric(const T* left_ptr, SymmMatrixOrientation left_orient, Index left_dim,
-		     Index left_offset, uIndex left_gradient_index,
-		     const Array<2,T,RIsActive>& right) {
+                     Index left_offset, uIndex left_gradient_index,
+                     const Array<2,T,RIsActive>& right) {
 
       check_inner_dimensions_sqr(left_dim, right);
 
       if (LIsActive || RIsActive) {
-	throw(invalid_operation("Cannot yet do matmul(SymmMatrix,Matrix) when either are active"));
+        throw(invalid_operation("Cannot yet do matmul(SymmMatrix,Matrix) when either are active"));
       }
       if (!right.is_row_contiguous() && !right.is_column_contiguous()) {
-	Array<2,T,RIsActive> right_;
-	right_ = right;
-	return matmul_symmetric<LIsActive>(left_ptr, left_orient, left_dim, left_offset,
-					   left_gradient_index, right_);
+        Array<2,T,RIsActive> right_;
+        right_ = right;
+        return matmul_symmetric<LIsActive>(left_ptr, left_orient, left_dim, left_offset,
+                                           left_gradient_index, right_);
       }
       else {
-	BLAS_ORDER order;
-	BLAS_UPLO uplo;
-	Index right_stride, ans_stride;
-	Array<2,T,LIsActive||RIsActive> ans;
+        BLAS_ORDER order;
+        BLAS_UPLO uplo;
+        Index right_stride, ans_stride;
+        Array<2,T,LIsActive||RIsActive> ans;
 
-	if (right.is_row_contiguous()) {
-	  order = BlasRowMajor;
-	  uplo = left_orient == ROW_LOWER_COL_UPPER ? BlasLower : BlasUpper;
-	  right_stride = right.offset(0);
-	  ans.resize_row_major(right.dimensions());
-	  ans_stride = ans.offset(0);
-	}
-	else {
-	  order = BlasColMajor;
-	  uplo = left_orient == ROW_LOWER_COL_UPPER ? BlasUpper : BlasLower;
-	  right_stride = right.offset(1);
-	  ans.resize_column_major(right.dimensions());
-	  ans_stride = ans.offset(1);
-	}
+        if (right.is_row_contiguous()) {
+          order = BlasRowMajor;
+          uplo = left_orient == ROW_LOWER_COL_UPPER ? BlasLower : BlasUpper;
+          right_stride = right.offset(0);
+          ans.resize_row_major(right.dimensions());
+          ans_stride = ans.offset(0);
+        }
+        else {
+          order = BlasColMajor;
+          uplo = left_orient == ROW_LOWER_COL_UPPER ? BlasUpper : BlasLower;
+          right_stride = right.offset(1);
+          ans.resize_column_major(right.dimensions());
+          ans_stride = ans.offset(1);
+        }
 
-	cppblas_symm(order, BlasLeft, uplo,  right.dimension(0), right.dimension(1),
-		     1.0, left_ptr, left_offset, 
-		     right.const_data(), right_stride, 0.0,
-		     ans.data(), ans_stride);
-	return ans;
+        cppblas_symm(order, BlasLeft, uplo,  right.dimension(0), right.dimension(1),
+                     1.0, left_ptr, left_offset, 
+                     right.const_data(), right_stride, 0.0,
+                     ans.data(), ans_stride);
+        return ans;
       }
     }
 
@@ -310,12 +310,12 @@ namespace adept {
     inline
     Array<1,T,(LIsActive||RIsActive)>
     matmul_band(const T* left_ptr, MatrixStorageOrder left_order, 
-		Index LDiags, Index UDiags, Index left_dim, Index left_offset,
-		uIndex left_gradient_index, const Array<1,T,RIsActive>& right) {
+                Index LDiags, Index UDiags, Index left_dim, Index left_offset,
+                uIndex left_gradient_index, const Array<1,T,RIsActive>& right) {
       check_inner_dimensions_sqr(left_dim, right);
 
       if (LIsActive) {
-	throw(invalid_operation("Cannot yet do matmul(BandMatrix,Vector) for active BandMatrix"));
+        throw(invalid_operation("Cannot yet do matmul(BandMatrix,Vector) for active BandMatrix"));
       }
 
       BLAS_ORDER order;
@@ -324,52 +324,52 @@ namespace adept {
       // corner of the matrix
       const T* left_start;
       if (left_order == ROW_MAJOR) {
-	order = BlasRowMajor;
-	left_start = left_ptr-UDiags;
+        order = BlasRowMajor;
+        left_start = left_ptr-UDiags;
       }
       else {
-	order = BlasColMajor;
-	left_start = left_ptr-LDiags;
+        order = BlasColMajor;
+        left_start = left_ptr-LDiags;
       }
       Array<1,T,(LIsActive||RIsActive)> ans(right.dimension(0));
       cppblas_gbmv(order, BlasNoTrans, left_dim, left_dim, LDiags, UDiags,
-		   1.0, left_start, left_offset+1,
-		   right.const_data(), right.offset(0), 
-		   0.0, ans.data(), ans.offset(0));
+                   1.0, left_start, left_offset+1,
+                   right.const_data(), right.offset(0), 
+                   0.0, ans.data(), ans.offset(0));
       if (RIsActive) {
-	uIndex right_index = right.gradient_index();
-	uIndex ans_index = ans.gradient_index();
+        uIndex right_index = right.gradient_index();
+        uIndex ans_index = ans.gradient_index();
 
-	if (left_order == ROW_MAJOR) {
-	  for (Index i = 0; i < ans.dimension(0); ++i) {
-	    // Using info from BandEngine<ROW_MAJOR>::get_row_range in
-	    // SpecialMatrix.h
-	    Index j_start = i<LDiags ? 0 : i-LDiags;
-	    Index j_end_plus_1 = i+UDiags+1>left_dim ? left_dim : i+UDiags+1;
-	    Index n = j_end_plus_1 - j_start;
-	    Index index_start = i*left_offset + j_start;
-	    Index index_stride = 1;
-	    active_stack()->push_derivative_dependence(right_index + j_start, 
-						       left_ptr+index_start,
-						       n, right.offset(0), index_stride);
-	    active_stack()->push_lhs(ans_index + i*ans.offset(0));
-	  }
-	}
-	else {
-	  for (Index i = 0; i < ans.dimension(0); ++i) {
-	    // Using info from BandEngine<COL_MAJOR>::get_row_range in
-	    // SpecialMatrix.h
-	    Index j_start = i<LDiags ? 0 : i-LDiags;
-	    Index j_end_plus_1 = i+UDiags+1>left_dim ? left_dim : i+UDiags+1;
-	    Index n = j_end_plus_1 - j_start;
-	    Index index_start = i + j_start*left_offset;
-	    Index index_stride = left_offset;
-	    active_stack()->push_derivative_dependence(right_index + j_start, 
-						       left_ptr+index_start,
-						       n, right.offset(0), index_stride);
-	    active_stack()->push_lhs(ans_index + i*ans.offset(0));
-	  }
-	}
+        if (left_order == ROW_MAJOR) {
+          for (Index i = 0; i < ans.dimension(0); ++i) {
+            // Using info from BandEngine<ROW_MAJOR>::get_row_range in
+            // SpecialMatrix.h
+            Index j_start = i<LDiags ? 0 : i-LDiags;
+            Index j_end_plus_1 = i+UDiags+1>left_dim ? left_dim : i+UDiags+1;
+            Index n = j_end_plus_1 - j_start;
+            Index index_start = i*left_offset + j_start;
+            Index index_stride = 1;
+            active_stack()->push_derivative_dependence(right_index + j_start, 
+                                                       left_ptr+index_start,
+                                                       n, right.offset(0), index_stride);
+            active_stack()->push_lhs(ans_index + i*ans.offset(0));
+          }
+        }
+        else {
+          for (Index i = 0; i < ans.dimension(0); ++i) {
+            // Using info from BandEngine<COL_MAJOR>::get_row_range in
+            // SpecialMatrix.h
+            Index j_start = i<LDiags ? 0 : i-LDiags;
+            Index j_end_plus_1 = i+UDiags+1>left_dim ? left_dim : i+UDiags+1;
+            Index n = j_end_plus_1 - j_start;
+            Index index_start = i + j_start*left_offset;
+            Index index_stride = left_offset;
+            active_stack()->push_derivative_dependence(right_index + j_start, 
+                                                       left_ptr+index_start,
+                                                       n, right.offset(0), index_stride);
+            active_stack()->push_lhs(ans_index + i*ans.offset(0));
+          }
+        }
       }
       return ans;
     }
@@ -381,11 +381,11 @@ namespace adept {
     inline
     Array<2,T,(LIsActive||RIsActive)>
     matmul_band(const T* left_ptr, MatrixStorageOrder left_order, 
-		Index LDiags, Index UDiags, Index left_dim, Index left_offset,
-		uIndex left_gradient_index, const Array<2,T,RIsActive>& right) {
+                Index LDiags, Index UDiags, Index left_dim, Index left_offset,
+                uIndex left_gradient_index, const Array<2,T,RIsActive>& right) {
       check_inner_dimensions_sqr(left_dim, right);
       if (LIsActive || RIsActive) {
-	throw(invalid_operation("Cannot yet do matmul(BandMatrix,Matrix) when either are active"));
+        throw(invalid_operation("Cannot yet do matmul(BandMatrix,Matrix) when either are active"));
       }
       BLAS_ORDER order;
       // BLAS declares the start pointer to be in the "missing data"
@@ -393,19 +393,19 @@ namespace adept {
       // corner of the matrix
       const T* left_start;
       if (left_order == ROW_MAJOR) {
-	order = BlasRowMajor;
-	left_start = left_ptr-UDiags;
+        order = BlasRowMajor;
+        left_start = left_ptr-UDiags;
       }
       else {
-	order = BlasColMajor;
-	left_start = left_ptr-LDiags;
+        order = BlasColMajor;
+        left_start = left_ptr-LDiags;
       }
       Array<2,T,(LIsActive||RIsActive)> ans(right.dimension(0),right.dimension(1));
       for (Index i = 0; i < right.dimension(1); ++i) {
-	cppblas_gbmv(order, BlasNoTrans, left_dim, left_dim, LDiags, UDiags,
-		     1.0, left_start, left_offset+1,
-		     right.const_data()+i*right.offset(1), right.offset(0), 
-		     0.0, ans.data()+i*ans.offset(1), ans.offset(0));
+        cppblas_gbmv(order, BlasNoTrans, left_dim, left_dim, LDiags, UDiags,
+                     1.0, left_start, left_offset+1,
+                     right.const_data()+i*right.offset(1), right.offset(0), 
+                     0.0, ans.data()+i*ans.offset(1), ans.offset(0));
       }
       return ans;
     }
@@ -421,7 +421,7 @@ namespace adept {
     inline
     Array<1,T,(LIsActive||RIsActive)>
     matmul_(const Array<1,T,LIsActive>& left,
-	    const Array<2,T,RIsActive>& right) {
+            const Array<2,T,RIsActive>& right) {
       return matmul_(right.T(), left);
     }
 
@@ -430,9 +430,9 @@ namespace adept {
     inline
     Array<RRank,T,(LIsActive||RIsActive)>
     matmul_(const SpecialMatrix<T,internal::SymmEngine<LOrient>,LIsActive>& left,
-	    const Array<RRank,T,RIsActive>& right) {
+            const Array<RRank,T,RIsActive>& right) {
       return matmul_symmetric<LIsActive>(left.const_data(), LOrient, left.dimension(0),
-					 left.offset(), left.gradient_index(), right);
+                                         left.offset(), left.gradient_index(), right);
     }
 
     // Vector multiplied by symmetric matrix: swap and transpose the arguments
@@ -440,10 +440,10 @@ namespace adept {
     inline
     Array<1,T,(LIsActive||RIsActive)>
     matmul_(const Array<1,T,LIsActive>& left,
-	    const SpecialMatrix<T,internal::SymmEngine<ROrient>,RIsActive>& right) {
+            const SpecialMatrix<T,internal::SymmEngine<ROrient>,RIsActive>& right) {
       return matmul_symmetric<RIsActive>(right.const_data(), ROrient, 
-					 right.dimension(0), right.offset(),
-					 right.gradient_index(), left);
+                                         right.dimension(0), right.offset(),
+                                         right.gradient_index(), left);
     }
 
     // Dense matrix multiplied by symmetric matrix: swap and transpose
@@ -452,46 +452,46 @@ namespace adept {
     inline
     Array<2,T,(LIsActive||RIsActive)>
     matmul_(const Array<2,T,LIsActive>& left,
-	    const SpecialMatrix<T,internal::SymmEngine<ROrient>,RIsActive>& right) {
+            const SpecialMatrix<T,internal::SymmEngine<ROrient>,RIsActive>& right) {
       return matmul_symmetric<RIsActive>(right.const_data(), ROrient,
-					 right.dimension(0), right.offset(),
-					 right.gradient_index(), left.T()).T();
+                                         right.dimension(0), right.offset(),
+                                         right.gradient_index(), left.T()).T();
     }
 
     // Band matrix-vector and matrix-matrix multiplication
     template <typename T, MatrixStorageOrder LOrder, Index LDiags, Index UDiags, 
-	      bool LIsActive, bool RIsActive, int RRank>
+              bool LIsActive, bool RIsActive, int RRank>
     inline
     Array<RRank,T,(LIsActive||RIsActive)>
     matmul_(const SpecialMatrix<T,internal::BandEngine<LOrder,LDiags,UDiags>,LIsActive>& left,
-	    const Array<RRank,T,RIsActive>& right) {
+            const Array<RRank,T,RIsActive>& right) {
       return matmul_band<LIsActive>(left.const_data(), LOrder, LDiags, UDiags,
-				    left.dimension(0), left.offset(), left.gradient_index(), right);
+                                    left.dimension(0), left.offset(), left.gradient_index(), right);
     }
 
     // Vector multiplied by band matrix: swap and transpose the arguments
     template <typename T, bool LIsActive, MatrixStorageOrder ROrder, Index LDiags, Index UDiags,
-	      bool RIsActive>
+              bool RIsActive>
     inline
     Array<1,T,(LIsActive||RIsActive)>
     matmul_(const Array<1,T,LIsActive>& left,
-	    const SpecialMatrix<T,internal::BandEngine<ROrder,LDiags,UDiags>,RIsActive>& right) {
+            const SpecialMatrix<T,internal::BandEngine<ROrder,LDiags,UDiags>,RIsActive>& right) {
       static const MatrixStorageOrder new_r_order = ROrder == ROW_MAJOR ? COL_MAJOR : ROW_MAJOR;
       return matmul_band<RIsActive>(right.const_data(), new_r_order, UDiags, LDiags,
-				    right.dimension(0), right.offset(), right.gradient_index(), left);
+                                    right.dimension(0), right.offset(), right.gradient_index(), left);
     }
 
     // Dense matrix multiplied by band matrix: swap and transpose the
     // arguments, then transpose the result
     template <typename T, bool LIsActive, MatrixStorageOrder ROrder, Index LDiags, Index UDiags,
-	      bool RIsActive>
+              bool RIsActive>
     inline
     Array<2,T,(LIsActive||RIsActive)>
     matmul_(const Array<2,T,LIsActive>& left,
-	    const SpecialMatrix<T,internal::BandEngine<ROrder,LDiags,UDiags>,RIsActive>& right) {
+            const SpecialMatrix<T,internal::BandEngine<ROrder,LDiags,UDiags>,RIsActive>& right) {
       static const MatrixStorageOrder new_r_order = ROrder == ROW_MAJOR ? COL_MAJOR : ROW_MAJOR;
       return matmul_band<RIsActive>(right.const_data(), new_r_order, UDiags, LDiags,
-				    right.dimension(0), right.offset(), right.gradient_index(), left.T()).T();
+                                    right.dimension(0), right.offset(), right.gradient_index(), left.T()).T();
     }
 
 
@@ -530,7 +530,7 @@ namespace adept {
     Array<2,NewType,true>
     promote_array(const SpecialMatrix<OldType,Engine,true>& arg) {
       return Array<2,NewType,true>(
-	   const_cast<SpecialMatrix<OldType,Engine,true>&>(arg));
+           const_cast<SpecialMatrix<OldType,Engine,true>&>(arg));
     }
 
     // If the argument is an inactive symmetric or band matrix then
@@ -542,7 +542,7 @@ namespace adept {
     SpecialMatrix<NewType,internal::SymmEngine<Orient>,false>
     promote_array(const SpecialMatrix<OldType,internal::SymmEngine<Orient>,false>& arg) {
       return SpecialMatrix<NewType,internal::SymmEngine<Orient>,false>(
-	 const_cast<SpecialMatrix<OldType,internal::SymmEngine<Orient>,false>&>(arg));
+         const_cast<SpecialMatrix<OldType,internal::SymmEngine<Orient>,false>&>(arg));
     }
     template <typename NewType, typename OldType, 
       MatrixStorageOrder Order, Index LDiags, Index UDiags>
@@ -550,7 +550,7 @@ namespace adept {
     SpecialMatrix<NewType,internal::BandEngine<Order,LDiags,UDiags>,false>
     promote_array(const SpecialMatrix<OldType,internal::BandEngine<Order,LDiags,UDiags>,false>& arg) {
       return SpecialMatrix<NewType,internal::BandEngine<Order,LDiags,UDiags>,false>(
-	 const_cast<SpecialMatrix<OldType,internal::BandEngine<Order,LDiags,UDiags>,false>&>(arg));
+         const_cast<SpecialMatrix<OldType,internal::BandEngine<Order,LDiags,UDiags>,false>&>(arg));
     } 
 
     // For other special matrices (square and triangular), specific
@@ -561,7 +561,7 @@ namespace adept {
     Array<2,NewType,false>
     promote_array(const SpecialMatrix<OldType,Engine,false>& arg) {
       return Array<2,NewType,false>(
-	 const_cast<SpecialMatrix<OldType,Engine,false>&>(arg));
+         const_cast<SpecialMatrix<OldType,Engine,false>&>(arg));
     } 
 
 #else
@@ -573,33 +573,33 @@ namespace adept {
     SpecialMatrix<NewType,Engine,IsActive>
     promote_array(const SpecialMatrix<OldType,Engine,IsActive>& arg) {
       return SpecialMatrix<NewType,Engine,IsActive>(
-		     const_cast<SpecialMatrix<OldType,Engine,IsActive>&>(arg));
+                     const_cast<SpecialMatrix<OldType,Engine,IsActive>&>(arg));
     }
 #endif
 
     // If the argument is a fixed array of a different type then copy it
     template <typename NewType, typename OldType, bool IsActive, Index J0,
-	      Index J1, Index J2, Index J3, Index J4, Index J5, Index J6>
+              Index J1, Index J2, Index J3, Index J4, Index J5, Index J6>
     inline
     typename enable_if<!is_same<NewType,OldType>::value,
-		       Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank,
-			     NewType,IsActive> >::type
+                       Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank,
+                             NewType,IsActive> >::type
     promote_array(const FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>& arg) {
       return Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank, 
-	NewType,IsActive>(const_cast<FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>&>(arg));
+        NewType,IsActive>(const_cast<FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>&>(arg));
     }
 
     // If the argument is a fixed array of the same type then link to it
     template <typename NewType, typename OldType, bool IsActive, Index J0, 
-	      Index J1, Index J2, Index J3, Index J4, Index J5, Index J6>
+              Index J1, Index J2, Index J3, Index J4, Index J5, Index J6>
     inline
     typename enable_if<is_same<NewType,OldType>::value,
-		       Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank,
-			     NewType,IsActive> >::type
+                       Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank,
+                             NewType,IsActive> >::type
     promote_array(const FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>& arg) {
       return Array<fixed_array<J0,J1,J2,J3,J4,J5,J6>::rank,NewType,IsActive>
-	(const_cast<FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>&>(arg).data(), 0,
-	 arg.dimensions(), arg.offset(), arg.gradient_index());
+        (const_cast<FixedArray<OldType,IsActive,J0,J1,J2,J3,J4,J5,J6>&>(arg).data(), 0,
+         arg.dimensions(), arg.offset(), arg.gradient_index());
     }
 
   } // End namespace internal
@@ -619,7 +619,7 @@ namespace adept {
   matmul(const Expression<LType,L>& left, const Expression<RType,R>& right) {
     typedef typename promote<typename L::type,typename R::type>::type type;
     return internal::matmul_(internal::promote_array<type>(left.cast()),
-			     internal::promote_array<type>(right.cast()));
+                             internal::promote_array<type>(right.cast()));
   }
   
 
@@ -661,7 +661,7 @@ namespace adept {
   template <typename Type, class A>
   inline
   typename internal::enable_if<(A::rank == 1 || A::rank == 2),
-			       internal::MatmulRHS<A> >::type
+                               internal::MatmulRHS<A> >::type
   operator*(const Expression<Type,A>& a) {
     return internal::MatmulRHS<A>(a.cast());
   }
@@ -671,7 +671,7 @@ namespace adept {
   template <typename LType, class L, class R>
   inline
   Array<L::rank+R::rank-2,typename promote<LType,typename R::type>::type,
-	(L::is_active||R::is_active)>
+        (L::is_active||R::is_active)>
   operator*(const Expression<LType,L>& left, const internal::MatmulRHS<R>& right) {
     return matmul(left.cast(),right.array.cast());
   }

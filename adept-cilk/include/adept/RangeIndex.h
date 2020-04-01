@@ -82,7 +82,7 @@ namespace adept {
       template <int Rank>
       Index value_at_location_(const ExpressionSize<Rank>&) const
       { throw array_exception("Cannot determine to which object the \"end\" index refers to"
-			      ADEPT_EXCEPTION_LOCATION); }
+                              ADEPT_EXCEPTION_LOCATION); }
     };
     
     // ---------------------------------------------------------------------
@@ -102,7 +102,7 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 0, Index>::type
+                       && E::rank == 0, Index>::type
     get_index_with_len(const Expression<T,E>& j, Index len) {
       return j.value_with_len(0, len);
     }
@@ -110,25 +110,25 @@ namespace adept {
     // Bounds-checking versions
     inline Index get_index_with_len(Index j, Index len) {
       if (j < 0 || j >= len) {
-	throw index_out_of_bounds();
+         throw index_out_of_bounds();
       }
       else {
-	return j; 
+         return j; 
       }
     }
 
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 0, Index>::type
+                         && E::rank == 0, Index>::type
     get_index_with_len(const Expression<T,E>& j, Index len) {
       Index ind = j.value_with_len(0, len);
       if (ind < 0 || ind >= len) {
-	throw index_out_of_bounds("Array index (probably generated from a scalar expression containing \"end\") is out of bounds"
-				  ADEPT_EXCEPTION_LOCATION);
+         throw index_out_of_bounds("Array index (probably generated from a scalar expression containing \"end\") is out of bounds"
+                                      ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	return ind;
+         return ind;
       }
     }
 #endif
@@ -140,7 +140,7 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 0, Index>::type
+                         && E::rank == 0, Index>::type
     get_stride_with_len(const Expression<T,E>& j, Index len) {
       return j.value_with_len(0, len);
     }
@@ -157,7 +157,7 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 0, Index>::type
+                         && E::rank == 0, Index>::type
     get_value(const Expression<T,E>& j) {
       return j.scalar_value();
     }
@@ -180,13 +180,13 @@ namespace adept {
       
       // Construct with a specified stride
       RangeIndex(const BeginType& begin, const EndType& end, 
-		 const StrideType& stride)
-	: begin_(begin), end_(end), stride_(stride)
+                 const StrideType& stride)
+        : begin_(begin), end_(end), stride_(stride)
       { };
 
       // Construct without a specified stride: defaults to 1
       RangeIndex(const BeginType& begin, const EndType& end)
-	: begin_(begin), end_(end), stride_(1)
+        : begin_(begin), end_(end), stride_(1)
       { };
 
       Index size() const 
@@ -196,22 +196,22 @@ namespace adept {
       { return (end(len) - begin(len) + stride(len)) / stride(len); }
 
       bool get_dimensions_(ExpressionSize<1>& dim) const {
-	dim[0] = size();
-	return true;
+        dim[0] = size();
+        return true;
       }
       std::string expression_string_() const {
-	std::stringstream s;
-	s << "(" << begin() << ":" << end();
-	Index str = stride();
-	if (str != 1) {
-	  s << ":" << str;
-	}
-	s << ")";
-	return s.str();
+        std::stringstream s;
+        s << "(" << begin() << ":" << end();
+        Index str = stride();
+        if (str != 1) {
+          s << ":" << str;
+        }
+        s << ")";
+        return s.str();
       }
 
       bool is_aliased_(const Index* mem1, const Index* mem2) const {
-	return false;
+        return false;
       }
 
       bool all_arrays_contiguous_() const { return true; }
@@ -226,12 +226,12 @@ namespace adept {
       // Advance the location of each array in the expression
       template <int MyArrayNum, int NArrays>
       void advance_location_(ExpressionSize<NArrays>& loc) const {
-	++loc[MyArrayNum];
+        ++loc[MyArrayNum];
       }
 
       template <int MyArrayNum, int NArrays>
       void set_location_(const ExpressionSize<1>& i, 
-			 ExpressionSize<NArrays>& index) const { }
+                         ExpressionSize<NArrays>& index) const { }
 
       // Give the value at a particular offset
       template <int MyArrayNum, int NArrays>
@@ -245,7 +245,7 @@ namespace adept {
       Index end()    const { return get_value(end_);    }
       Index stride() const { return get_value(stride_); }
       Index begin(Index len) const
-      {	return get_index_with_len(begin_, len); }
+      {        return get_index_with_len(begin_, len); }
       Index end(Index len) const 
       { return get_index_with_len(end_, len); }
       Index stride(Index len) const
@@ -324,32 +324,32 @@ namespace adept {
     template <typename T>
     struct is_regular_index {
       static const bool value = (is_scalar_int<T>::value
-				 || is_null_type<T>::value
-				 || is_range<T>::value);
+                                 || is_null_type<T>::value
+                                 || is_range<T>::value);
     };
 
     // is_ranged<>::value is true if at least one of the template
     // arguments I0 to I[Rank-1] is of type RangeIndex, and all others
     // are of integer type
     template <int Rank, typename I0, typename I1 = null_type, 
-	      typename I2 = null_type, typename I3 = null_type,
-	      typename I4 = null_type, typename I5 = null_type,
-	      typename I6 = null_type>
+              typename I2 = null_type, typename I3 = null_type,
+              typename I4 = null_type, typename I5 = null_type,
+              typename I6 = null_type>
     struct is_ranged {
       static const bool value = (is_range<I0>::value || is_range<I1>::value
-			      || is_range<I2>::value || is_range<I3>::value
-			      || is_range<I4>::value || is_range<I5>::value
-			      || is_range<I6>::value)
-	&& Rank == 7 - (  is_null_type<I1>::count + is_null_type<I2>::count
-			+ is_null_type<I3>::count + is_null_type<I4>::count
-			+ is_null_type<I5>::count + is_null_type<I6>::count)
-	&& (   is_regular_index<I0>::value && is_regular_index<I1>::value
-	    && is_regular_index<I2>::value && is_regular_index<I3>::value
-	    && is_regular_index<I4>::value && is_regular_index<I5>::value
-	    && is_regular_index<I6>::value);
+                              || is_range<I2>::value || is_range<I3>::value
+                              || is_range<I4>::value || is_range<I5>::value
+                              || is_range<I6>::value)
+        && Rank == 7 - (  is_null_type<I1>::count + is_null_type<I2>::count
+                        + is_null_type<I3>::count + is_null_type<I4>::count
+                        + is_null_type<I5>::count + is_null_type<I6>::count)
+        && (   is_regular_index<I0>::value && is_regular_index<I1>::value
+            && is_regular_index<I2>::value && is_regular_index<I3>::value
+            && is_regular_index<I4>::value && is_regular_index<I5>::value
+            && is_regular_index<I6>::value);
       static const int count = is_range<I0>::count + is_range<I1>::count
-	+ is_range<I2>::count + is_range<I3>::count + is_range<I4>::count
-	+ is_range<I5>::count + is_range<I6>::count;
+        + is_range<I2>::count + is_range<I3>::count + is_range<I4>::count
+        + is_range<I5>::count + is_range<I6>::count;
     };
 
 
@@ -381,10 +381,10 @@ namespace adept {
   inline
   adept::internal::RangeIndex<BeginType, EndType, StrideType>
   stride(const BeginType& begin, const EndType& end,
-	 const StrideType& stride)
+         const StrideType& stride)
   {
     return adept::internal::RangeIndex<BeginType, EndType, 
-				       StrideType>(begin, end, stride);
+                                       StrideType>(begin, end, stride);
   }
 
 

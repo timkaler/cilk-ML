@@ -37,7 +37,7 @@ namespace adept {
   template <typename T, SymmMatrixOrientation Orient>
   Array<1,T,false>
   solve(const SpecialMatrix<T,SymmEngine<Orient>,false>& A,
-	const Array<1,T,false>& b);
+        const Array<1,T,false>& b);
 
   // -------------------------------------------------------------------
   // Solve AX = B for symmetric square matrix A
@@ -45,7 +45,7 @@ namespace adept {
   template <typename T, SymmMatrixOrientation Orient>
   Array<2,T,false>
   solve(const SpecialMatrix<T,SymmEngine<Orient>,false>& A,
-	const Array<2,T,false>& B);
+        const Array<2,T,false>& B);
 
   // -------------------------------------------------------------------
   // Solve AX = B for symmetric square matrices A and B
@@ -56,7 +56,7 @@ namespace adept {
   inline
   Array<2,T,false>
   solve(const SpecialMatrix<T,SymmEngine<LOrient>,false>& A,
-	const SpecialMatrix<T,SymmEngine<ROrient>,false>& B) {
+        const SpecialMatrix<T,SymmEngine<ROrient>,false>& B) {
     Array<2,T,false> B_array = B;
     return solve(A,B_array);
   }
@@ -66,10 +66,10 @@ namespace adept {
   // -------------------------------------------------------------------
   template <typename LType, class L, typename RType, class R>
   typename internal::enable_if<L::rank==2 && R::rank==1
-			       && !L::is_active && !R::is_active
-			       && internal::matrix_op_defined<LType>::value
-			       && internal::matrix_op_defined<RType>::value,
-			       Array<1,typename internal::promote<LType,RType>::type,false> >::type
+                               && !L::is_active && !R::is_active
+                               && internal::matrix_op_defined<LType>::value
+                               && internal::matrix_op_defined<RType>::value,
+                               Array<1,typename internal::promote<LType,RType>::type,false> >::type
   solve(const Expression<LType,L>& l, const Expression<RType,R>& r) {
     typedef typename internal::promote<LType,RType>::type PType;
     Array<2,PType,false> left = l.cast();
@@ -82,10 +82,10 @@ namespace adept {
   // -------------------------------------------------------------------
   template <typename LType, class L, typename RType, class R>
   typename internal::enable_if<L::rank==2 && R::rank==2
-			       && !L::is_active && !R::is_active
-			       && internal::matrix_op_defined<LType>::value
-			       && internal::matrix_op_defined<RType>::value,
-			       Array<2,typename internal::promote<LType,RType>::type,false> >::type
+                               && !L::is_active && !R::is_active
+                               && internal::matrix_op_defined<LType>::value
+                               && internal::matrix_op_defined<RType>::value,
+                               Array<2,typename internal::promote<LType,RType>::type,false> >::type
   solve(const Expression<LType,L>& l, const Expression<RType,R>& r) {
     typedef typename internal::promote<LType,RType>::type PType;
     Array<2,PType,false> left = l.cast();

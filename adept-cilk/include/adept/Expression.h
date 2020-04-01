@@ -87,7 +87,7 @@ namespace adept {
     
     Type value_with_len(Index j, Index len) const {
       ADEPT_STATIC_ASSERT(A::rank<=1,
-		  VALUE_WITH_LEN_ONLY_APPLICABLE_TO_ARRAYS_OF_RANK_0_OR_1);
+                  VALUE_WITH_LEN_ONLY_APPLICABLE_TO_ARRAYS_OF_RANK_0_OR_1);
       return cast().value_with_len_(j, len);
     }
 
@@ -131,10 +131,10 @@ namespace adept {
     int alignment_offset() const {
       int val = cast().template alignment_offset_<Packet<Type>::size>();
       if (val < Packet<Type>::size) {
-	return val;
+        return val;
       }
       else {
-	return 0;
+        return 0;
       }
     }
     
@@ -165,7 +165,7 @@ namespace adept {
     template <int Rank, int NArrays>
     void
     set_location(const ExpressionSize<Rank>& i, 
-		 ExpressionSize<NArrays>& index) const {
+                 ExpressionSize<NArrays>& index) const {
       cast().template set_location_<0>(i, index);
     }
 
@@ -190,7 +190,7 @@ namespace adept {
     template <int NArrays>
     Packet<Type> next_packet(ExpressionSize<NArrays>& index) const {
       Packet<Type> val
-      	= cast().template packet_at_location_<0>(index);
+              = cast().template packet_at_location_<0>(index);
       index += Packet<Type>::size;
       return val;
     }
@@ -208,7 +208,7 @@ namespace adept {
     // and move to the next location
     template <int NArrays>
     Type next_value_and_gradient(Stack& stack,
-				 ExpressionSize<NArrays>& index) const {
+                                 ExpressionSize<NArrays>& index) const {
       internal::ScratchVector<A::n_scratch> scratch;
       Type val = cast().template value_at_location_store_<0,0>(index, scratch);
       cast().template calc_gradient_<0,0>(stack, index, scratch);
@@ -218,7 +218,7 @@ namespace adept {
     }
     template <int NArrays>
     Type next_value_and_gradient_contiguous(Stack& stack,
-				 ExpressionSize<NArrays>& index) const {
+                                 ExpressionSize<NArrays>& index) const {
       internal::ScratchVector<A::n_scratch> scratch;
       Type val = cast().template value_at_location_store_<0,0>(index, scratch);
       cast().template calc_gradient_<0,0>(stack, index, scratch);
@@ -230,8 +230,8 @@ namespace adept {
     // This is used in norm2()
     template <int NArrays, typename MyType>
     Type next_value_and_gradient_special(Stack& stack,
-				 ExpressionSize<NArrays>& index,
-				 const MyType& multiplier) const {
+                                 ExpressionSize<NArrays>& index,
+                                 const MyType& multiplier) const {
       internal::ScratchVector<A::n_scratch> scratch;
       Type val = cast().template value_at_location_store_<0,0>(index, scratch);
       cast().template calc_gradient_<0,0>(stack, index, scratch, multiplier*val);
@@ -269,9 +269,9 @@ namespace adept {
       bool get_dimensions_(ExpressionSize<0>& dim) const { return true; }
 
       std::string expression_string_() const {
-	std::stringstream s;
-	s << val_;
-	return s.str();
+        std::stringstream s;
+        s << val_;
+        return s.str();
       }
 
       bool is_aliased_(const Type* mem1, const Type* mem2) const { return false; }
@@ -293,57 +293,57 @@ namespace adept {
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				    ScratchVector<NScratch>& scratch) const
+                                    ScratchVector<NScratch>& scratch) const
       { return val_; }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_stored_(const ExpressionSize<NArrays>& loc,
-			 const ScratchVector<NScratch>& scratch) const
+                         const ScratchVector<NScratch>& scratch) const
       { return val_; }
 
-      template <bool IsAligned,	int MyArrayNum, typename PacketType,
-	int NArrays>
+      template <bool IsAligned,        int MyArrayNum, typename PacketType,
+        int NArrays>
       PacketType values_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return PacketType(val_);
+        return PacketType(val_);
       }
 
-      template <bool UseStored, bool IsAligned,	int MyArrayNum, int MyScratchNum,
-		typename PacketType, int NArrays, int NScratch>
+      template <bool UseStored, bool IsAligned,        int MyArrayNum, int MyScratchNum,
+                typename PacketType, int NArrays, int NScratch>
       PacketType values_at_location_store_(const ExpressionSize<NArrays>& loc,
-		   ScratchVector<NScratch,PacketType>& scratch) const {
-	return PacketType(val_);
+                   ScratchVector<NScratch,PacketType>& scratch) const {
+        return PacketType(val_);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch) const {}
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch) const {}
 
       template <int MyArrayNum, int MyScratchNum, 
-		int NArrays, int NScratch, typename MyType>
+                int NArrays, int NScratch, typename MyType>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch,
-			  const MyType& multiplier) const {}
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch,
+                          const MyType& multiplier) const {}
 
       template <bool IsAligned, int MyArrayNum, int MyScratchNum, int MyActiveNum,
-		int NArrays, int NScratch, int NActive>
+                int NArrays, int NScratch, int NActive>
       void calc_gradient_packet_(Stack& stack, 
-				 const ExpressionSize<NArrays>& loc,
-				 const ScratchVector<NScratch,Packet<Real> >& scratch,
-				 ScratchVector<NActive,Packet<Real> >& gradients) const {}
+                                 const ExpressionSize<NArrays>& loc,
+                                 const ScratchVector<NScratch,Packet<Real> >& scratch,
+                                 ScratchVector<NActive,Packet<Real> >& gradients) const {}
 
       template <bool IsAligned, int MyArrayNum, int MyScratchNum, int MyActiveNum,
-		int NArrays, int NScratch, int NActive, typename MyType>
+                int NArrays, int NScratch, int NActive, typename MyType>
       void calc_gradient_packet_(Stack& stack, 
-				 const ExpressionSize<NArrays>& loc,
-				 const ScratchVector<NScratch,Packet<Real> >& scratch,
-				 ScratchVector<NActive,Packet<Real> >& gradients,
-				 const MyType& multiplier) const {}
+                                 const ExpressionSize<NArrays>& loc,
+                                 const ScratchVector<NScratch,Packet<Real> >& scratch,
+                                 ScratchVector<NActive,Packet<Real> >& gradients,
+                                 const MyType& multiplier) const {}
 
       template <int MyArrayNum, int Rank, int NArrays>
       void set_location_(const ExpressionSize<Rank>& i, 
-			 ExpressionSize<NArrays>& index) const {}
+                         ExpressionSize<NArrays>& index) const {}
 
     protected:
       Type val_;

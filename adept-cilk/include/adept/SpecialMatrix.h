@@ -68,13 +68,13 @@ namespace adept {
       Index pack_offset(Index dim) const { return dim; }
       // Provide the memory index to the element at row i, column j
       Index index(Index i, Index j, Index offset) const {
-	return i*offset + j;
+        return i*offset + j;
       }
       // When traversing along a row, this is the separation in memory
       // of each element
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return 1; 
+        return 1; 
       }
       // This function is used when a SpecialMatrix is used on the
       // left-hand-side of an expression. For row i, return the range
@@ -83,43 +83,43 @@ namespace adept {
       // corresponding to j_start in index_start, and the separation
       // in memory of consecutive elements in this range
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = 0;
-	j_end_plus_1 = dim;
-	index_start = i*offset;
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = 0;
+        j_end_plus_1 = dim;
+        index_start = i*offset;
+        index_stride = 1;
       }
       // Return value at row i, column j as an rvalue, first in the
       // case of an inactive array...
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	return data[index(i,j,offset)]; 
+                 Index gradient_index, const Type* data) const {
+        return data[index(i,j,offset)]; 
       }
       // ...now in the case of an active array.
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	return Active<Type>(data[index(i,j,offset)]);
+                    Index gradient_index, const Type* data) const {
+        return Active<Type>(data[index(i,j,offset)]);
       }
       // Return value at row i, column j as an lvalue, first in the
       // case of an inactive array...
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	return data[index(i,j,offset)]; 
+                    Index gradient_index, Type* data) {
+        return data[index(i,j,offset)]; 
       }
       // ...now in the case of an active array.
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index ind = index(i,j,offset);
-	return ActiveReference<Type>(data[ind], gradient_index+ind);
+                    Index gradient_index, Type* data) {
+        Index ind = index(i,j,offset);
+        return ActiveReference<Type>(data[ind], gradient_index+ind);
       }
       // Return the number of elements stored for a SpecialMatrix of
       // size dim x dim.  This is used both by SpecialMatrix::resize
@@ -127,15 +127,15 @@ namespace adept {
       // SpecialMatrix::is_aliased to know the memory range spanned by
       // the object.
       Index data_size(Index dim, Index offset) const {
-	return (dim-1)*offset+dim;
+        return (dim-1)*offset+dim;
       }
       // Memory offset of start of a superdiagonal (offdiag > 0)
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	return offdiag;
+        return offdiag;
       }
       // Memory offset of start of a subdiagonal (offdiag < 0)
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	return -offdiag*offset;
+        return -offdiag*offset;
       }
       // Check super- and sub-diagonals are in range, otherwise throw
       // an exception (errors only thrown for band matrices)
@@ -147,18 +147,18 @@ namespace adept {
       // right-hand-side of an expression
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const { }
+                      ExpressionSize<NArrays>& index) const { }
       // Return the value at the specified location in memory
       template <int MyArrayNum, int NArrays, typename Type>
       Type value_at_location(const Type* data, 
-			     const ExpressionSize<NArrays>& loc) const {
-	return data[loc[MyArrayNum]];
+                             const ExpressionSize<NArrays>& loc) const {
+        return data[loc[MyArrayNum]];
       }
       // Push an element of an active SpecialMatrix onto the stack
       template <int MyArrayNum, int NArrays, typename Type>
       void push_rhs(Stack& stack, Type multiplier, Index gradient_index,
-		    const ExpressionSize<NArrays>& loc) const {
-	stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
+                    const ExpressionSize<NArrays>& loc) const {
+        stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
       }
     };
 
@@ -173,51 +173,51 @@ namespace adept {
       std::string long_name() const { return "SquareMatrix<COL_MAJOR>"; }
       Index pack_offset(Index dim) const { return dim; }
       Index index(Index i, Index j, Index offset) const {
-	return i + j*offset;
+        return i + j*offset;
       }
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return offset; 
+        return offset; 
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = 0;
-	j_end_plus_1 = dim;
-	index_start = i;
-	index_stride = offset;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = 0;
+        j_end_plus_1 = dim;
+        index_start = i;
+        index_stride = offset;
       }
 
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	return data[index(i,j,offset)]; 
+                 Index gradient_index, const Type* data) const {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	return Active<Type>(data[index(i,j,offset)]);
+                    Index gradient_index, const Type* data) const {
+        return Active<Type>(data[index(i,j,offset)]);
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	return data[index(i,j,offset)]; 
+                    Index gradient_index, Type* data) {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index ind = index(i,j,offset);
-	return ActiveReference<Type>(data[ind], gradient_index+ind);
+                    Index gradient_index, Type* data) {
+        Index ind = index(i,j,offset);
+        return ActiveReference<Type>(data[ind], gradient_index+ind);
       }
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	return offdiag*offset;
+        return offdiag*offset;
       }
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	return -offdiag;
+        return -offdiag;
       }
       typedef SquareEngine<ROW_MAJOR> transpose_engine;
       using SquareEngine<ROW_MAJOR>::data_size;
@@ -258,128 +258,128 @@ namespace adept {
       static const Index diagonals = 1+LDiags+UDiags;
       const char* name() const { return BandEngineHelper<LDiags,UDiags>().name(); }
       std::string long_name() const { 
-	std::stringstream s;
-	s << "BandMatrix<ROW_MAJOR,LDiags=" << LDiags
-	  << ",UDiags=" << UDiags << ">";
-	return s.str();
+        std::stringstream s;
+        s << "BandMatrix<ROW_MAJOR,LDiags=" << LDiags
+          << ",UDiags=" << UDiags << ">";
+        return s.str();
       }
       Index pack_offset(Index dim) const { return diagonals-1; }
       Index index(Index i, Index j, Index offset) const {
-	//	return LDiags + i*offset + j;
-	return i*offset + j;
+        //        return LDiags + i*offset + j;
+        return i*offset + j;
       }
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return 1; 
+        return 1; 
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = i<LDiags ? 0 : i-LDiags;
-	j_end_plus_1 = i+UDiags+1>dim ? dim : i+UDiags+1;
-	index_start = i*offset + j_start;
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = i<LDiags ? 0 : i-LDiags;
+        j_end_plus_1 = i+UDiags+1>dim ? dim : i+UDiags+1;
+        index_start = i*offset + j_start;
+        index_stride = 1;
       }
       typedef BandEngine<COL_MAJOR,UDiags,LDiags> transpose_engine;
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	Index off = j-i;
-	Type val;
-	if (off > UDiags || off < (-LDiags)) {
-	  val = 0;
-	}
-	else {
-	  val = data[index(i,j,offset)]; 
-	}
-	return val;
+                 Index gradient_index, const Type* data) const {
+        Index off = j-i;
+        Type val;
+        if (off > UDiags || off < (-LDiags)) {
+          val = 0;
+        }
+        else {
+          val = data[index(i,j,offset)]; 
+        }
+        return val;
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  return Active<Type>(0.0);
-	}
-	else {
-	  return Active<Type>(data[index(i,j,offset)]);
-	}
+                    Index gradient_index, const Type* data) const {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          return Active<Type>(0.0);
+        }
+        else {
+          return Active<Type>(data[index(i,j,offset)]);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
-	else {
-	  return data[index(i,j,offset)]; 
-	}
+                    Index gradient_index, Type* data) {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
+        else {
+          return data[index(i,j,offset)]; 
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
-	else {
-	  Index ind = index(i,j,offset);
-	  return ActiveReference<Type>(data[ind], gradient_index+ind);
-	}
+                    Index gradient_index, Type* data) {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
+        else {
+          Index ind = index(i,j,offset);
+          return ActiveReference<Type>(data[ind], gradient_index+ind);
+        }
       }
       Index data_size(Index dim, Index offset) const {
-	return (dim-1)*(offset+1) + 1;// + dim; // - UDiags;
+        return (dim-1)*(offset+1) + 1;// + dim; // - UDiags;
       }
 
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	return offdiag;
+        return offdiag;
       }
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	return -offdiag*offset;
+        return -offdiag*offset;
       }
       void check_upper_diag(Index offdiag) const {
-	if (offdiag > UDiags) {
-	  throw index_out_of_bounds("Attempt to get lvalue diagonal to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);	  
-	}
+        if (offdiag > UDiags) {
+          throw index_out_of_bounds("Attempt to get lvalue diagonal to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);          
+        }
       }
       void check_lower_diag(Index offdiag) const { 
-	if (-offdiag > LDiags) {
-	  throw index_out_of_bounds("Attempt to get lvalue diagonal to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
+        if (-offdiag > LDiags) {
+          throw index_out_of_bounds("Attempt to get lvalue diagonal to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
       }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = i*(offset+1) - LDiags;
-	index[MyArrayNum+2] = index[MyArrayNum+1] + diagonals;
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = i*(offset+1) - LDiags;
+        index[MyArrayNum+2] = index[MyArrayNum+1] + diagonals;
       }
       template <int MyArrayNum, int NArrays, typename Type>
       Type value_at_location(const Type* data, 
-			     const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] >= loc[MyArrayNum+1]
-	    && loc[MyArrayNum] < loc[MyArrayNum+2]) {
-	  return data[loc[MyArrayNum]];
-	}
-	else {
-	  return 0;
-	}
+                             const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] >= loc[MyArrayNum+1]
+            && loc[MyArrayNum] < loc[MyArrayNum+2]) {
+          return data[loc[MyArrayNum]];
+        }
+        else {
+          return 0;
+        }
       }
       template <int MyArrayNum, int NArrays, typename Type>
       void push_rhs(Stack& stack, Type multiplier, Index gradient_index,
-		    const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] >= loc[MyArrayNum+1]
-	    && loc[MyArrayNum] < loc[MyArrayNum+2]) {
-	  stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
-	}
+                    const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] >= loc[MyArrayNum+1]
+            && loc[MyArrayNum] < loc[MyArrayNum+2]) {
+          stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
+        }
       }
     };
 
@@ -392,97 +392,97 @@ namespace adept {
       static const Index diagonals = 1+LDiags+UDiags;
       const char* name() const { return BandEngineHelper<LDiags,UDiags>().name(); }
       std::string long_name() const { 
-	std::stringstream s;
-	s << "BandMatrix<COL_MAJOR,LDiags=" << LDiags
-	  << ",UDiags=" << UDiags << ">";
-	return s.str();
+        std::stringstream s;
+        s << "BandMatrix<COL_MAJOR,LDiags=" << LDiags
+          << ",UDiags=" << UDiags << ">";
+        return s.str();
       }
       using BandEngine<ROW_MAJOR,LDiags,UDiags>::pack_offset;
       Index index(Index i, Index j, Index offset) const {
-	//	return UDiags + i + j*offset;
-	return i + j*offset;
+        //        return UDiags + i + j*offset;
+        return i + j*offset;
       }
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return offset;
+        return offset;
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = i<LDiags ? 0 : i-LDiags;
-	j_end_plus_1 = i+UDiags+1>dim ? dim : i+UDiags+1;
-	index_start = i + j_start*offset;
-	index_stride = offset;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = i<LDiags ? 0 : i-LDiags;
+        j_end_plus_1 = i+UDiags+1>dim ? dim : i+UDiags+1;
+        index_start = i + j_start*offset;
+        index_stride = offset;
       }
       typedef BandEngine<ROW_MAJOR,UDiags,LDiags> transpose_engine;
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	Index off = j-i;
-	Type val;
-	if (off > UDiags || off < (-LDiags)) {
-	  val = 0;
-	}
-	else {
-	  val = data[index(i,j,offset)]; 
-	}
-	return val;
+                 Index gradient_index, const Type* data) const {
+        Index off = j-i;
+        Type val;
+        if (off > UDiags || off < (-LDiags)) {
+          val = 0;
+        }
+        else {
+          val = data[index(i,j,offset)]; 
+        }
+        return val;
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  return Active<Type>(0.0);
-	}
-	else {
-	  return Active<Type>(data[index(i,j,offset)]);
-	}
+                    Index gradient_index, const Type* data) const {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          return Active<Type>(0.0);
+        }
+        else {
+          return Active<Type>(data[index(i,j,offset)]);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
-	else {
-	  return data[index(i,j,offset)]; 
-	}
+                    Index gradient_index, Type* data) {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
+        else {
+          return data[index(i,j,offset)]; 
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index off = j-i;
-	if (off > UDiags || off < (-LDiags)) {
-	  throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
-	else {
-	  Index ind = index(i,j,offset);
-	  return ActiveReference<Type>(data[ind], gradient_index+ind);
-	}
+                    Index gradient_index, Type* data) {
+        Index off = j-i;
+        if (off > UDiags || off < (-LDiags)) {
+          throw index_out_of_bounds("Attempt to get lvalue to off-diagonal in BandMatrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
+        else {
+          Index ind = index(i,j,offset);
+          return ActiveReference<Type>(data[ind], gradient_index+ind);
+        }
       }
       using BandEngine<ROW_MAJOR,LDiags,UDiags>::data_size;
 
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	//	return LDiags + offdiag*offset;
-	return offdiag*offset;
+        //        return LDiags + offdiag*offset;
+        return offdiag*offset;
       }
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	//	return LDiags - offdiag;
-	return -offdiag;
+        //        return LDiags - offdiag;
+        return -offdiag;
       }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = (i-LDiags)*(offset+1) + LDiags;
-	index[MyArrayNum+2] = index[MyArrayNum+1] + (diagonals-1)*offset+1;
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = (i-LDiags)*(offset+1) + LDiags;
+        index[MyArrayNum+2] = index[MyArrayNum+1] + (diagonals-1)*offset+1;
       }
       using BandEngine<ROW_MAJOR,LDiags,UDiags>::check_upper_diag;
       using BandEngine<ROW_MAJOR,LDiags,UDiags>::check_lower_diag;
@@ -507,59 +507,59 @@ namespace adept {
       static const int my_n_arrays = 2;
       const char* name() const { return "SymmMatrix"; }
       std::string long_name() const {
-	return "SymmMatrix<ROW_LOWER_COL_UPPER>";
+        return "SymmMatrix<ROW_LOWER_COL_UPPER>";
       }
       Index index(Index i, Index j, Index offset) const {
-	return i >= j ? i*offset + j : i + j*offset;
+        return i >= j ? i*offset + j : i + j*offset;
       }
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return loc[MyArrayNum] < loc[MyArrayNum+1] ? 1 : offset; 
+        return loc[MyArrayNum] < loc[MyArrayNum+1] ? 1 : offset; 
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = 0;
-	j_end_plus_1 = i+1;
-	index_start = i*offset;
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = 0;
+        j_end_plus_1 = i+1;
+        index_start = i*offset;
+        index_stride = 1;
       }
       typedef SymmEngine<ROW_LOWER_COL_UPPER> transpose_engine;
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	return data[index(i,j,offset)]; 
+                 Index gradient_index, const Type* data) const {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	return Active<Type>(data[index(i,j,offset)]);
+                    Index gradient_index, const Type* data) const {
+        return Active<Type>(data[index(i,j,offset)]);
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	return data[index(i,j,offset)]; 
+                    Index gradient_index, Type* data) {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index ind = index(i,j,offset);
-	return ActiveReference<Type>(data[ind], gradient_index+ind);
+                    Index gradient_index, Type* data) {
+        Index ind = index(i,j,offset);
+        return ActiveReference<Type>(data[ind], gradient_index+ind);
       }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = i*(offset+1);
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = i*(offset+1);
       }
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	return offdiag*offset;
+        return offdiag*offset;
       }
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	return -offdiag*offset;
+        return -offdiag*offset;
       }
 
       using SquareEngine<ROW_MAJOR>::pack_offset;
@@ -581,60 +581,60 @@ namespace adept {
       static const int my_n_arrays = 2;
       const char* name() const { return "SymmMatrix"; }
       std::string long_name() const { 
-	return "SymmMatrix<ROW_UPPER_COL_LOWER>";
+        return "SymmMatrix<ROW_UPPER_COL_LOWER>";
       }
       Index pack_offset(Index dim) const { return dim; }
       Index index(Index i, Index j, Index offset) const {
-	return i <= j ? i*offset + j : i + j*offset;
+        return i <= j ? i*offset + j : i + j*offset;
       }
       template <int MyArrayNum, int NArrays>
       Index row_offset(Index offset, const ExpressionSize<NArrays>& loc) const {
-	return loc[MyArrayNum] < loc[MyArrayNum+1] ? offset : 1; 
+        return loc[MyArrayNum] < loc[MyArrayNum+1] ? offset : 1; 
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = i;
-	j_end_plus_1 = dim;
-	index_start = i*(1+offset);
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = i;
+        j_end_plus_1 = dim;
+        index_start = i*(1+offset);
+        index_stride = 1;
       }
       typedef SymmEngine<ROW_UPPER_COL_LOWER> transpose_engine;
       Index upper_offset(Index dim, Index offset, Index offdiag) const {
-	return offdiag;
+        return offdiag;
       }
       Index lower_offset(Index dim, Index offset, Index offdiag) const {
-	return -offdiag;
+        return -offdiag;
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	return data[index(i,j,offset)]; 
+                 Index gradient_index, const Type* data) const {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	return Active<Type>(data[index(i,j,offset)]);
+                    Index gradient_index, const Type* data) const {
+        return Active<Type>(data[index(i,j,offset)]);
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	return data[index(i,j,offset)]; 
+                    Index gradient_index, Type* data) {
+        return data[index(i,j,offset)]; 
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	Index ind = index(i,j,offset);
-	return ActiveReference<Type>(data[ind], gradient_index+ind);
+                    Index gradient_index, Type* data) {
+        Index ind = index(i,j,offset);
+        return ActiveReference<Type>(data[ind], gradient_index+ind);
       }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = i*(offset+1);
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = i*(offset+1);
       }
 
       using SquareEngine<ROW_MAJOR>::data_size;
@@ -674,79 +674,79 @@ namespace adept {
       const char* name() const { return "LowerMatrix"; }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = i*(offset+1);
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = i*(offset+1);
       }
       void check_upper_diag(Index offdiag) const {
-	if (offdiag > 0) {
-	  throw index_out_of_bounds("Attempt to get lvalue to an upper diagonal of a lower-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);	  
-	}
+        if (offdiag > 0) {
+          throw index_out_of_bounds("Attempt to get lvalue to an upper diagonal of a lower-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);          
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	if (i >= j) {
-	  return data[index(i,j,offset)]; 
-	}
-	else {
-	  return 0;
-	}
+                 Index gradient_index, const Type* data) const {
+        if (i >= j) {
+          return data[index(i,j,offset)]; 
+        }
+        else {
+          return 0;
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	if (i >= j) {
-	  return Active<Type>(data[index(i,j,offset)]);
-	}
-	else {
-	  return Active<Type>(0.0);
-	}
+                    Index gradient_index, const Type* data) const {
+        if (i >= j) {
+          return Active<Type>(data[index(i,j,offset)]);
+        }
+        else {
+          return Active<Type>(0.0);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	if (i >= j) {
-	  return data[index(i,j,offset)]; 
-	}
-	else {
-	  throw index_out_of_bounds("Attempt to get lvalue to upper part of lower-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
+                    Index gradient_index, Type* data) {
+        if (i >= j) {
+          return data[index(i,j,offset)]; 
+        }
+        else {
+          throw index_out_of_bounds("Attempt to get lvalue to upper part of lower-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	if (i >= j) {
-	  Index ind = index(i,j,offset);
-	  return ActiveReference<Type>(data[ind], gradient_index+ind);
-	}
-	else {
-	  throw index_out_of_bounds("Attempt to get lvalue to upper part of lower-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	  
-	}
+                    Index gradient_index, Type* data) {
+        if (i >= j) {
+          Index ind = index(i,j,offset);
+          return ActiveReference<Type>(data[ind], gradient_index+ind);
+        }
+        else {
+          throw index_out_of_bounds("Attempt to get lvalue to upper part of lower-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+          
+        }
       }
       template <int MyArrayNum, int NArrays, typename Type>
       Type value_at_location(const Type* data, 
-			     const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] <= loc[MyArrayNum+1]) {
-	  return data[loc[MyArrayNum]];
-	}
-	else {
-	  return 0;
-	}
+                             const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] <= loc[MyArrayNum+1]) {
+          return data[loc[MyArrayNum]];
+        }
+        else {
+          return 0;
+        }
       }
       template <int MyArrayNum, int NArrays, typename Type>
       void push_rhs(Stack& stack, Type multiplier, Index gradient_index,
-		    const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] <= loc[MyArrayNum+1]) {
-	  stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
-	}
+                    const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] <= loc[MyArrayNum+1]) {
+          stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
+        }
       }
     };
 
@@ -754,16 +754,16 @@ namespace adept {
     template <MatrixStorageOrder Order>
     struct LowerEngine : public LowerBase<ROW_MAJOR> {
       std::string long_name() const {
-	return "LowerMatrix<ROW_MAJOR>";
+        return "LowerMatrix<ROW_MAJOR>";
       }
       typedef UpperEngine<COL_MAJOR> transpose_engine;
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = 0;
-	j_end_plus_1 = i+1;
-	index_start = i*offset;
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = 0;
+        j_end_plus_1 = i+1;
+        index_start = i*offset;
+        index_stride = 1;
       }
     };
 
@@ -771,16 +771,16 @@ namespace adept {
     template <>
     struct LowerEngine<COL_MAJOR> : public LowerBase<COL_MAJOR> {
       std::string long_name() const {
-	return "LowerMatrix<COL_MAJOR>";
+        return "LowerMatrix<COL_MAJOR>";
       }
       typedef UpperEngine<ROW_MAJOR> transpose_engine;
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = 0;
-	j_end_plus_1 = i+1;
-	index_start = i;
-	index_stride = offset;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = 0;
+        j_end_plus_1 = i+1;
+        index_start = i;
+        index_stride = offset;
       }
     };
 
@@ -801,80 +801,80 @@ namespace adept {
       const char* name() const { return "UpperMatrix"; }
       template <int MyArrayNum, int NArrays>
       void set_extras(Index i, Index offset,
-		      ExpressionSize<NArrays>& index) const {
-	index[MyArrayNum+1] = i*(offset+1);
+                      ExpressionSize<NArrays>& index) const {
+        index[MyArrayNum+1] = i*(offset+1);
       }
       void check_lower_diag(Index offdiag) const {
-	if (offdiag < 0) {
-	  throw index_out_of_bounds("Attempt to get lvalue to a lower diagonal of an upper-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);	  
-	}
+        if (offdiag < 0) {
+          throw index_out_of_bounds("Attempt to get lvalue to a lower diagonal of an upper-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);          
+        }
       }
 
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type>::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		 Index gradient_index, const Type* data) const {
-	if (i <= j) {
-	  return data[index(i,j,offset)]; 
-	}
-	else {
-	  return 0;
-	}
+                 Index gradient_index, const Type* data) const {
+        if (i <= j) {
+          return data[index(i,j,offset)]; 
+        }
+        else {
+          return 0;
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,Active<Type> >::type
       get_scalar(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, const Type* data) const {
-	if (i <= j) {
-	  return Active<Type>(data[index(i,j,offset)]);
-	}
-	else {
-	  return Active<Type>(0.0);
-	}
+                    Index gradient_index, const Type* data) const {
+        if (i <= j) {
+          return Active<Type>(data[index(i,j,offset)]);
+        }
+        else {
+          return Active<Type>(0.0);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<!IsActive,Type&>::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	if (i <= j) {
-	  return data[index(i,j,offset)]; 
-	}
-	else {
-	  throw index_out_of_bounds("Attempt to get lvalue to lower part of upper-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	}
+                    Index gradient_index, Type* data) {
+        if (i <= j) {
+          return data[index(i,j,offset)]; 
+        }
+        else {
+          throw index_out_of_bounds("Attempt to get lvalue to lower part of upper-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+        }
       }
       template <bool IsActive, typename Type>
       typename enable_if<IsActive,ActiveReference<Type> >::type
       get_reference(Index i, Index j, Index dim, Index offset, 
-		    Index gradient_index, Type* data) {
-	if (i <= j) {
-	  Index ind = index(i,j,offset);
-	  return ActiveReference<Type>(data[ind], gradient_index+ind);
-	}
-	else {
-	  throw index_out_of_bounds("Attempt to get lvalue to lower part of upper-triangular matrix"
-				    ADEPT_EXCEPTION_LOCATION);
-	  
-	}
+                    Index gradient_index, Type* data) {
+        if (i <= j) {
+          Index ind = index(i,j,offset);
+          return ActiveReference<Type>(data[ind], gradient_index+ind);
+        }
+        else {
+          throw index_out_of_bounds("Attempt to get lvalue to lower part of upper-triangular matrix"
+                                    ADEPT_EXCEPTION_LOCATION);
+          
+        }
       }
       template <int MyArrayNum, int NArrays, typename Type>
       Type value_at_location(const Type* data, 
-			     const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] >= loc[MyArrayNum+1]) {
-	  return data[loc[MyArrayNum]];
-	}
-	else {
-	  return 0;
-	}
+                             const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] >= loc[MyArrayNum+1]) {
+          return data[loc[MyArrayNum]];
+        }
+        else {
+          return 0;
+        }
       }
       template <int MyArrayNum, int NArrays, typename Type>
       void push_rhs(Stack& stack, Type multiplier, Index gradient_index,
-		    const ExpressionSize<NArrays>& loc) const {
-	if (loc[MyArrayNum] >= loc[MyArrayNum+1]) {
-	  stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
-	}
+                    const ExpressionSize<NArrays>& loc) const {
+        if (loc[MyArrayNum] >= loc[MyArrayNum+1]) {
+          stack.push_rhs(multiplier, gradient_index + loc[MyArrayNum]);
+        }
       }
     };
 
@@ -884,15 +884,15 @@ namespace adept {
       typedef LowerEngine<COL_MAJOR> transpose_engine;
 
       std::string long_name() const {
-	return "UpperMatrix<ROW_MAJOR>";
+        return "UpperMatrix<ROW_MAJOR>";
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = i;
-	j_end_plus_1 = dim;
-	index_start = i*(offset+1);
-	index_stride = 1;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = i;
+        j_end_plus_1 = dim;
+        index_start = i*(offset+1);
+        index_stride = 1;
       }
     };
 
@@ -901,15 +901,15 @@ namespace adept {
     struct UpperEngine<COL_MAJOR> : public UpperBase<COL_MAJOR> {
       typedef LowerEngine<ROW_MAJOR> transpose_engine;
       std::string long_name() const {
-	return "UpperMatrix<COL_MAJOR>";
+        return "UpperMatrix<COL_MAJOR>";
       }
       void get_row_range(Index i, Index dim, Index offset,
-			 Index& j_start, Index& j_end_plus_1,
-			 Index& index_start, Index& index_stride) const {
-	j_start = i;
-	j_end_plus_1 = dim;
-	index_start = i*(offset+1);
-	index_stride = offset;
+                         Index& j_start, Index& j_end_plus_1,
+                         Index& index_start, Index& index_stride) const {
+        j_start = i;
+        j_end_plus_1 = dim;
+        index_start = i*(offset+1);
+        index_stride = offset;
       }
     };
 
@@ -946,7 +946,7 @@ namespace adept {
     // Initialize an empty array
     SpecialMatrix() : data_(0), storage_(0), dimension_(0)
     { ADEPT_STATIC_ASSERT(!(std::numeric_limits<Type>::is_integer
-			    && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS); }
+                            && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS); }
 
     // Initialize an array with specified size
     SpecialMatrix(const ExpressionSize<2>& dims) : storage_(0)
@@ -959,21 +959,21 @@ namespace adept {
     SpecialMatrix(Type* data, Storage<Type>* s, Index dim, Index offset)
       : data_(data), storage_(s), dimension_(dim), offset_(offset) {
       if (storage_) {
-	storage_->add_link(); 
-	GradientIndex<IsActive>::set(data_, storage_);
+        storage_->add_link(); 
+        GradientIndex<IsActive>::set(data_, storage_);
       }
       else {
-	// It is an error if an active object gets here since it will
-	// not have a valid gradient index
-	GradientIndex<IsActive>::assert_inactive();
+        // It is an error if an active object gets here since it will
+        // not have a valid gradient index
+        GradientIndex<IsActive>::assert_inactive();
       }
     }
     // Similar to the above, but with the gradient index supplied explicitly,
     // needed when an active FixedArray is being sliced
     SpecialMatrix(const Type* data0, Index data_offset, Index dim, Index offset,
-		  Index gradient_index0)
+                  Index gradient_index0)
       : GradientIndex<IsActive>(gradient_index0, data_offset),
-	data_(const_cast<Type*>(data0)+data_offset), storage_(0), dimension_(dim), offset_(offset) { }
+        data_(const_cast<Type*>(data0)+data_offset), storage_(0), dimension_(dim), offset_(offset) { }
 
 
     // Initialize an array pointing at existing data: the fact that
@@ -982,7 +982,7 @@ namespace adept {
     // is destructed
     SpecialMatrix(Type* data, Index dim)
       : data_(data), storage_(0), dimension_(dim), 
-	offset_(Engine::pack_offset(dim)) {
+        offset_(Engine::pack_offset(dim)) {
       ADEPT_STATIC_ASSERT(!IsActive, CANNOT_CONSTRUCT_ACTIVE_SQUARE_ARRAY_WITHOUT_GRADIENT_INDEX);
     }
 
@@ -996,7 +996,7 @@ namespace adept {
     SpecialMatrix(SpecialMatrix& rhs) 
       : GradientIndex<IsActive>(rhs.gradient_index()),
         data_(rhs.data()), storage_(rhs.storage()), 
-	dimension_(rhs.dimension()), offset_(rhs.offset()) 
+        dimension_(rhs.dimension()), offset_(rhs.offset()) 
     { if (storage_) storage_->add_link(); }
 
     // Copy constructor with const argument does exactly the same
@@ -1021,7 +1021,7 @@ namespace adept {
     template<typename EType, class E>
     explicit
     SpecialMatrix(const Expression<EType, E>& rhs,
-	  typename enable_if<E::rank == 2,int>::type = 0)
+          typename enable_if<E::rank == 2,int>::type = 0)
       : data_(0), storage_(0), dimension_(0)
     { *this = rhs; }
 
@@ -1052,52 +1052,52 @@ namespace adept {
 #ifndef ADEPT_NO_DIMENSION_CHECKING
       ExpressionSize<2> dims;
       if (!rhs.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + rhs.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + rhs.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (empty()) {
-	resize(dims[0], dims[1]);
+        resize(dims[0], dims[1]);
       }
       else if (!compatible(dims, dimensions())) {
-	std::string str = "Expr";
-	str += dims.str() + " object assigned to " + expression_string_();
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Expr";
+        str += dims.str() + " object assigned to " + expression_string_();
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
 #else
       if (empty()) {
-	ExpressionSize<2> dims;
-	if (!rhs.get_dimensions(dims)) {
-	  std::string str = "Array size mismatch in "
-	    + rhs.expression_string() + ".";
-	  throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
-	}
-	resize(dims[0], dims[1]);
+        ExpressionSize<2> dims;
+        if (!rhs.get_dimensions(dims)) {
+          std::string str = "Array size mismatch in "
+            + rhs.expression_string() + ".";
+          throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        }
+        resize(dims[0], dims[1]);
       }
 #endif
       if (!empty()) {
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	// Check for aliasing first
-	Type const * ptr_begin;
-	Type const * ptr_end;
-	data_range(ptr_begin, ptr_end);
-	if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	  SpecialMatrix copy;
-	  // It would be nice to wrap noalias around rhs, but then
-	  // this leads to infinite template recursion since the "="
-	  // operator calls the current function but with a modified
-	  // expression type. perhaps a better way would be to make
-	  // copy.assign_no_alias(rhs) work.
-	  copy = rhs;
-	  assign_expression_<IsActive, E::is_active>(copy);
-	}
-	else {
+        // Check for aliasing first
+        Type const * ptr_begin;
+        Type const * ptr_end;
+        data_range(ptr_begin, ptr_end);
+        if (rhs.is_aliased(ptr_begin, ptr_end)) {
+          SpecialMatrix copy;
+          // It would be nice to wrap noalias around rhs, but then
+          // this leads to infinite template recursion since the "="
+          // operator calls the current function but with a modified
+          // expression type. perhaps a better way would be to make
+          // copy.assign_no_alias(rhs) work.
+          copy = rhs;
+          assign_expression_<IsActive, E::is_active>(copy);
+        }
+        else {
 #endif
-	  // Select active/passive version by delegating to a
-	  // protected function
-	  assign_expression_<IsActive, E::is_active>(rhs);
+          // Select active/passive version by delegating to a
+          // protected function
+          assign_expression_<IsActive, E::is_active>(rhs);
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	}
+        }
 #endif
       }
       return *this;
@@ -1110,34 +1110,34 @@ namespace adept {
     assign_inactive(const Expression<EType,E>& rhs) {
       ExpressionSize<2> dims;
       if (!rhs.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + rhs.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + rhs.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (empty()) {
-	resize(dims[0], dims[1]);
+        resize(dims[0], dims[1]);
       }
       else if (!compatible(dims, dimensions())) {
-	std::string str = "Expr";
-	str += dims.str() + " object assigned to " + expression_string_();
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Expr";
+        str += dims.str() + " object assigned to " + expression_string_();
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
 
       if (!empty()) {
-	// Check for aliasing first
-	Type const * ptr_begin;
-	Type const * ptr_end;
-	data_range(ptr_begin, ptr_end);
-	if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	  std::cout << "ALIASED!\n";
-	  SpecialMatrix copy;
-	  copy.assign_inactive(rhs);
-	  //	  *this = copy;
-	  assign_expression_<IsActive, false>(copy);
-	}
-	else {
-	  assign_expression_<IsActive, false>(rhs);
-	}
+        // Check for aliasing first
+        Type const * ptr_begin;
+        Type const * ptr_end;
+        data_range(ptr_begin, ptr_end);
+        if (rhs.is_aliased(ptr_begin, ptr_end)) {
+          std::cout << "ALIASED!\n";
+          SpecialMatrix copy;
+          copy.assign_inactive(rhs);
+          //          *this = copy;
+          assign_expression_<IsActive, false>(copy);
+        }
+        else {
+          assign_expression_<IsActive, false>(rhs);
+        }
       }
       return *this;
     }
@@ -1147,7 +1147,7 @@ namespace adept {
     typename enable_if<is_not_expression<RType>::value, SpecialMatrix&>::type
     operator=(RType rhs) {
       if (!empty()) {
-	assign_inactive_scalar<IsActive>(rhs);
+        assign_inactive_scalar<IsActive>(rhs);
       }
       return *this;
     }
@@ -1171,20 +1171,20 @@ namespace adept {
       // If not recording we call the inactive version instead
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (! ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_inactive_scalar<false>(rhs.scalar_value());
-	return *this;
+        assign_inactive_scalar<false>(rhs.scalar_value());
+        return *this;
       }
 #endif
       Type val = rhs.scalar_value();
       Index j_start, j_end_plus_1, index, index_stride;
       for (Index i = 0 ; i < dimension_; ++i) {
-	Engine::get_row_range(i, dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
-	  data_[index] = val;
-	  ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
-	  ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);	  
-	}
+        Engine::get_row_range(i, dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
+          data_[index] = val;
+          ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
+          ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);          
+        }
       }
       return *this;
     }
@@ -1267,22 +1267,22 @@ namespace adept {
     // object.
     template <typename I0, typename I1>
     typename enable_if<all_scalar_ints<2,I0,I1>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1) {
       return Engine::template 
-	get_reference<IsActive>(get_index_with_len(i0,dimension_),
-				get_index_with_len(i1,dimension_),
-				dimension_, offset_, 
-				gradient_index(), data_);
+        get_reference<IsActive>(get_index_with_len(i0,dimension_),
+                                get_index_with_len(i1,dimension_),
+                                dimension_, offset_, 
+                                gradient_index(), data_);
     }
     template <typename I0, typename I1>
     typename enable_if<all_scalar_ints<2,I0,I1>::value,
-		       typename active_scalar<Type,IsActive>::type>::type
+                       typename active_scalar<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1) const {
       return Engine::template get_scalar<IsActive>(get_index_with_len(i0,dimension_),
-						   get_index_with_len(i1,dimension_),
-						   dimension_, offset_, 
-						   gradient_index(), data_);
+                                                   get_index_with_len(i1,dimension_),
+                                                   dimension_, offset_, 
+                                                   gradient_index(), data_);
     }
     
     /*
@@ -1293,8 +1293,8 @@ namespace adept {
     template <typename I0, typename I1>
     typename enable_if<is_indexed<Rank,I0,I1>::value
                        && !is_ranged<Rank,I0,I1>::value,
-		       IndexedSpecialMatrix<is_indexed<Rank,I0,I1>::count,
-				    Type,IsActive,SpecialMatrix,I0,I1> >::type
+                       IndexedSpecialMatrix<is_indexed<Rank,I0,I1>::count,
+                                    Type,IsActive,SpecialMatrix,I0,I1> >::type
     operator()(const I0& i0, const I1& i1) {
       static const int new_rank = is_indexed<Rank,I0,I1>::count;
       return IndexedSpecialMatrix<new_rank,Type,IsActive,SpecialMatrix,I0,I1>(*this, i0, i1);
@@ -1308,20 +1308,20 @@ namespace adept {
     Array<1,Type,IsActive>
     diag_vector(Index offdiag = 0) {
       if (offdiag >= 0) {
-	Engine::check_upper_diag(offdiag);
-	ExpressionSize<1> dim(dimension_ - offdiag);
-	ExpressionSize<1> offset(offset_+1);
-	return Array<1,Type,IsActive>(data_
-	      +Engine::upper_offset(dimension_,offset_,offdiag),
-				    storage_, dim, offset);
+        Engine::check_upper_diag(offdiag);
+        ExpressionSize<1> dim(dimension_ - offdiag);
+        ExpressionSize<1> offset(offset_+1);
+        return Array<1,Type,IsActive>(data_
+              +Engine::upper_offset(dimension_,offset_,offdiag),
+                                    storage_, dim, offset);
       }
       else {
-	Engine::check_lower_diag(offdiag);
-	ExpressionSize<1> dim(dimension_ + offdiag);
-	ExpressionSize<1> offset(offset_+1);
-	return Array<1,Type,IsActive>(data_
-	      +Engine::lower_offset(dimension_,offset_,offdiag),
-				      storage_, dim, offset);
+        Engine::check_lower_diag(offdiag);
+        ExpressionSize<1> dim(dimension_ + offdiag);
+        ExpressionSize<1> offset(offset_+1);
+        return Array<1,Type,IsActive>(data_
+              +Engine::lower_offset(dimension_,offset_,offdiag),
+                                      storage_, dim, offset);
       }
     }
 
@@ -1329,11 +1329,11 @@ namespace adept {
     SpecialMatrix
     submatrix_on_diagonal(Index istart, Index iend) {
       if (istart < 0 || istart > iend || iend >= dimension_) {
-	throw index_out_of_bounds("Dimensions out of range in submatrix_on_diagonal"
-				  ADEPT_EXCEPTION_LOCATION);
+        throw index_out_of_bounds("Dimensions out of range in submatrix_on_diagonal"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       return SpecialMatrix(data_+(offset_+1)*istart, 
-			  storage_, iend-istart+1, offset_);
+                          storage_, iend-istart+1, offset_);
     }
 
     // FIX - add an rvalue version returning const Array (?)
@@ -1342,7 +1342,7 @@ namespace adept {
     SpecialMatrix<Type, typename Engine::transpose_engine, IsActive>
     T() {
       return SpecialMatrix<Type, typename Engine::transpose_engine, 
-	IsActive>(data_, storage_, dimension_, offset_);
+        IsActive>(data_, storage_, dimension_, offset_);
     }
 
     // Return a SpecialMatrix that is a "soft" link to the data in the
@@ -1365,18 +1365,18 @@ namespace adept {
     // Link to an existing array of the same rank, type and activeness
     SpecialMatrix& link(SpecialMatrix& rhs) {
       if (!rhs.data()) {
-	throw empty_array("Attempt to link to empty array"
-			  ADEPT_EXCEPTION_LOCATION);
+        throw empty_array("Attempt to link to empty array"
+                          ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	clear();
-	data_ = rhs.data();
-	storage_ = rhs.storage();
-	dimension_ = rhs.dimension();
-	offset_ = rhs.offset();
-	if (storage_) {
-	  storage_->add_link();
-	}
+        clear();
+        data_ = rhs.data();
+        storage_ = rhs.storage();
+        dimension_ = rhs.dimension();
+        offset_ = rhs.offset();
+        if (storage_) {
+          storage_->add_link();
+        }
       }
       return *this;
     }
@@ -1462,7 +1462,7 @@ namespace adept {
     std::string info_string() const {
       std::stringstream str;
       str << Engine::long_name() << ", dim=" << dimension_ 
-	  << ", offset=" << offset_ << ", data_location=" << data_;
+          << ", offset=" << offset_ << ", data_location=" << data_;
       return str.str();
     }
 
@@ -1484,8 +1484,8 @@ namespace adept {
     // link) and set the dimensions to zero
     void clear() {
       if (storage_) {
-	storage_->remove_link();
-	storage_ = 0;
+        storage_->remove_link();
+        storage_ = 0;
       }
       data_ = 0;
       dimension_ = 0;
@@ -1497,34 +1497,34 @@ namespace adept {
     void resize(Index dim) {
 
       ADEPT_STATIC_ASSERT(!(std::numeric_limits<Type>::is_integer
-	    && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS);
+            && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS);
 
       if (storage_) {
-	storage_->remove_link();
-	storage_ = 0;
+        storage_->remove_link();
+        storage_ = 0;
       }
       // Check requested dimensions
       if (dim < 0) {
-	throw invalid_dimension("Negative array dimension requested"
-				ADEPT_EXCEPTION_LOCATION);
+        throw invalid_dimension("Negative array dimension requested"
+                                ADEPT_EXCEPTION_LOCATION);
       }
       else if (dim == 0) {
-	clear();
+        clear();
       }
       else {
-	dimension_ = dim;
-	offset_ = Engine::pack_offset(dim);
-	storage_ = new Storage<Type>(Engine::data_size(dimension_,offset_), IsActive);
-	data_ = storage_->data();
-	GradientIndex<IsActive>::set(data_, storage_);
+        dimension_ = dim;
+        offset_ = Engine::pack_offset(dim);
+        storage_ = new Storage<Type>(Engine::data_size(dimension_,offset_), IsActive);
+        data_ = storage_->data();
+        GradientIndex<IsActive>::set(data_, storage_);
       }
     }
 
     // Resize with an ExpressionSize object
     void resize(Index dim0, Index dim1) {
       if (dim0 != dim1) {
-	throw invalid_dimension("Square matrix must have the same x and y dimensions"
-				ADEPT_EXCEPTION_LOCATION);
+        throw invalid_dimension("Square matrix must have the same x and y dimensions"
+                                ADEPT_EXCEPTION_LOCATION);
       }
       resize(dim0);
     }
@@ -1534,10 +1534,10 @@ namespace adept {
       Type const * ptr_end;
       data_range(ptr_begin, ptr_end);
       if (ptr_begin <= mem2 && ptr_end >= mem1) {
-	return true;
+        return true;
       }
       else {
-	return false;
+        return false;
       }
     }
   
@@ -1552,7 +1552,7 @@ namespace adept {
     std::string expression_string_() const {
       std::stringstream a;
       a << Engine::name()
-	<< "[" << dimension_ << "," << dimension_ << "]";
+        << "[" << dimension_ << "," << dimension_ << "]";
       return a.str();
     }
 
@@ -1562,7 +1562,7 @@ namespace adept {
     typename enable_if<is_not_expression<RType>::value, SpecialMatrix&>::type
     set_value(RType x) {
       if (!empty()) {
-	assign_inactive_scalar<false>(x);
+        assign_inactive_scalar<false>(x);
       }
       return *this;
     }
@@ -1581,39 +1581,39 @@ namespace adept {
     /*
     std::ostream& print(std::ostream& os) const {
       if (empty()) {
-	os << "(empty " << Engine::name() << ")";
+        os << "(empty " << Engine::name() << ")";
       }
       else if (adept::internal::array_print_curly_brackets) {
-	os << "\n";
-	for (int i = 0; i < dimension_; ++i) {
-	  if (i == 0) {
-	    os << "{{";
-	  }
-	  else {
-	    os << " {";
-	  }
-	  for (int j = 0; j < dimension_; ++j) {
-	    os << (*this)(i,j);
-	    if (j < dimension_-1) { os << ", "; }
-	  }
-	  os << "}";
-	  if (i < dimension_-1) { 
-	    os << ",\n"; 
-	  }
-	  else {
-	    //	    os << "}\n"; 
-	    os << "}"; 
-	  }
-	}
+        os << "\n";
+        for (int i = 0; i < dimension_; ++i) {
+          if (i == 0) {
+            os << "{{";
+          }
+          else {
+            os << " {";
+          }
+          for (int j = 0; j < dimension_; ++j) {
+            os << (*this)(i,j);
+            if (j < dimension_-1) { os << ", "; }
+          }
+          os << "}";
+          if (i < dimension_-1) { 
+            os << ",\n"; 
+          }
+          else {
+            //            os << "}\n"; 
+            os << "}"; 
+          }
+        }
       }
       else {
-	for (int i = 0; i < dimension_; ++i) {
-	  for (int j = 0; j < dimension_; ++j) {
-	    os << (*this)(i,j);
-	    if (j < dimension_-1) { os << " "; }
-	  }
-	  os << "\n"; 
-	}
+        for (int i = 0; i < dimension_; ++i) {
+          for (int j = 0; j < dimension_; ++j) {
+            os << (*this)(i,j);
+            if (j < dimension_-1) { os << " "; }
+          }
+          os << "\n"; 
+        }
       }
       return os;
     }
@@ -1627,13 +1627,13 @@ namespace adept {
 
     std::ostream& print_raw(std::ostream& os) const {
       if (empty()) {
-	os << "(empty " << Engine::name() << ")\n";
+        os << "(empty " << Engine::name() << ")\n";
       }
       else {
-	for (Index i = 0; i < Engine::data_size(dimension_,offset_); ++i) {
-	  os << " " << data_[i];
-	}
-	os << "\n";
+        for (Index i = 0; i < Engine::data_size(dimension_,offset_); ++i) {
+          os << " " << data_[i];
+        }
+        os << "\n";
       }
       return os;
     }
@@ -1651,16 +1651,16 @@ namespace adept {
     template <typename IndexType>
     void push_gradient_indices(std::vector<IndexType>& vec) {
       ADEPT_STATIC_ASSERT(IsActive,
-	  CANNOT_PUSH_GRADIENT_INDICES_FOR_INACTIVE_SPECIAL_MATRIX); 
+          CANNOT_PUSH_GRADIENT_INDICES_FOR_INACTIVE_SPECIAL_MATRIX); 
       Index j_start, j_end_plus_1, index, index_stride;
       Index gradient_ind = gradient_index();
       vec.reserve(vec.size() + Engine::data_size(dimension_, offset_));
       for (Index i; i < dimension_; ++i) {
-	Engine::get_row_range(i, dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
-	  vec.push_back(gradient_ind + index);
-	}
+        Engine::get_row_range(i, dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
+          vec.push_back(gradient_ind + index);
+        }
       }
     }
 
@@ -1682,7 +1682,7 @@ namespace adept {
 
     template <int MyArrayNum, int NArrays>
     void set_location_(const ExpressionSize<2>& i, 
-		       ExpressionSize<NArrays>& index) const {
+                       ExpressionSize<NArrays>& index) const {
       index[MyArrayNum] = Engine::index(i[0],i[1],offset_);
       Engine::template set_extras<MyArrayNum>(i[0],offset_,index);
     }
@@ -1698,14 +1698,14 @@ namespace adept {
 
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				  ScratchVector<NScratch>& scratch) const {
+                                  ScratchVector<NScratch>& scratch) const {
       return Engine::template value_at_location<MyArrayNum>(data_, loc);
 
     }
 
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_stored_(const ExpressionSize<NArrays>& loc,
-		       const ScratchVector<NScratch>& scratch) const {
+                       const ScratchVector<NScratch>& scratch) const {
       return Engine::template value_at_location<MyArrayNum>(data_, loc);
     }
 
@@ -1719,14 +1719,14 @@ namespace adept {
     // to the operation stack (or 1.0 if no multiplier is specified
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     void calc_gradient_(Stack& stack, const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch) const {
+                        const ScratchVector<NScratch>& scratch) const {
       Engine::template push_rhs<MyArrayNum>(stack, static_cast<Type>(1.0), 
-					    gradient_index(), loc);
+                                            gradient_index(), loc);
     }
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch, typename MyType>
     void calc_gradient_(Stack& stack, const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch,
-			const MyType& multiplier) const {
+                        const ScratchVector<NScratch>& scratch,
+                        const MyType& multiplier) const {
       Engine::template push_rhs<MyArrayNum>(stack, multiplier, gradient_index(), loc);
     }
   
@@ -1746,11 +1746,11 @@ namespace adept {
     assign_inactive_scalar(X x) {
       Index j_start, j_end_plus_1, index, index_stride;
       for (Index i = 0 ; i < dimension_; ++i) {
-	Engine::get_row_range(i, dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
-	  data_[index] = x;
-	}
+        Engine::get_row_range(i, dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
+          data_[index] = x;
+        }
       }
     }
 
@@ -1761,19 +1761,19 @@ namespace adept {
       // If not recording we call the inactive version instead
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (! ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_inactive_scalar<false, X>(x);
-	return;
+        assign_inactive_scalar<false, X>(x);
+        return;
       }
 #endif
       Index j_start, j_end_plus_1, index, index_stride;
       for (Index i = 0 ; i < dimension_; ++i) {
-	Engine::get_row_range(i, dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	ADEPT_ACTIVE_STACK->push_lhs_range(gradient_index()+index, j_end_plus_1-j_start,
-					   index_stride);
-	for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
-	  data_[index] = x;
-	}
+        Engine::get_row_range(i, dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        ADEPT_ACTIVE_STACK->push_lhs_range(gradient_index()+index, j_end_plus_1-j_start,
+                                           index_stride);
+        for (Index j = j_start; j < j_end_plus_1; ++j, index += index_stride) {
+          data_[index] = x;
+        }
       }
     }
 
@@ -1789,14 +1789,14 @@ namespace adept {
       ExpressionSize<expr_cast<E>::n_arrays> ind(0);
       Index j_start, j_end_plus_1, index, index_stride;
       for ( ; i[0] < dimension_; ++i[0]) {
-	Engine::get_row_range(i[0], dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	i[1] = j_start;
-	rhs.set_location(i, ind);	
-	for (i[1] = j_start; i[1] < j_end_plus_1;
-	     ++i[1], index += index_stride) {
-	  data_[index] = rhs.next_value(ind);
-	}
+        Engine::get_row_range(i[0], dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        i[1] = j_start;
+        rhs.set_location(i, ind);        
+        for (i[1] = j_start; i[1] < j_end_plus_1;
+             ++i[1], index += index_stride) {
+          data_[index] = rhs.next_value(ind);
+        }
       }
     }
 
@@ -1806,8 +1806,8 @@ namespace adept {
       // If recording has been paused then call the inactive version
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_expression_<false,false>(rhs);
-	return;
+        assign_expression_<false,false>(rhs);
+        return;
       }
 #endif
       ExpressionSize<2> i(0);
@@ -1815,14 +1815,14 @@ namespace adept {
       ADEPT_ACTIVE_STACK->check_space(expr_cast<E>::n_active * size());
       Index j_start, j_end_plus_1, index, index_stride;
       for ( ; i[0] < dimension_; ++i[0]) {
-	Engine::get_row_range(i[0], dimension_, offset_, 
-			      j_start, j_end_plus_1, index, index_stride);
-	i[1] = j_start;
-	rhs.set_location(i, ind);	
-	for (i[1] = j_start; i[1] < j_end_plus_1; ++i[1], index += index_stride) {
-	  data_[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, ind);
-	  ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
-	}
+        Engine::get_row_range(i[0], dimension_, offset_, 
+                              j_start, j_end_plus_1, index, index_stride);
+        i[1] = j_start;
+        rhs.set_location(i, ind);        
+        for (i[1] = j_start; i[1] < j_end_plus_1; ++i[1], index += index_stride) {
+          data_[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, ind);
+          ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
+        }
       }
     }
 
@@ -1835,7 +1835,7 @@ namespace adept {
     Storage<Type>* storage_;          // Pointer to Storage object
     Index dimension_;                 // Size of each dimension
     Index offset_;                    // Memory offset for
-				      // slowest-varying dimension
+                                      // slowest-varying dimension
 
   }; // End of SpecialMatrix class
 
@@ -1880,13 +1880,13 @@ namespace adept {
   }
 
   template <typename Type, bool IsActive, Index J0, Index J1, Index J2,
-	    Index J3, Index J4, Index J5, Index J6>
+            Index J3, Index J4, Index J5, Index J6>
   inline
   SpecialMatrix<Type, internal::BandEngine<internal::ROW_MAJOR,0,0>, IsActive>
   FixedArray<Type,IsActive,J0,J1,J2,J3,J4,J5,J6>::diag_matrix() {
     return SpecialMatrix<Type, internal::BandEngine<internal::ROW_MAJOR,0,0>, 
       IsActive> (data_, 0, dimension_<0>::value, offset_<0>::value-1,
-		 GradientIndex<IsActive>::get());
+                 GradientIndex<IsActive>::get());
   }
 
 } // End namespace adept

@@ -137,18 +137,18 @@ namespace adept {
       void clear() { value_ = -9999; }
       template <typename Type>
       void set(const Type* data, const Storage<Type>* storage) {
-	value_ = (storage->gradient_index() + (data - storage->data()));
+        value_ = (storage->gradient_index() + (data - storage->data()));
       }
       void assert_inactive() {
-	throw invalid_operation("Operation applied that is invalid with active arrays"
-				ADEPT_EXCEPTION_LOCATION);
+        throw invalid_operation("Operation applied that is invalid with active arrays"
+                                ADEPT_EXCEPTION_LOCATION);
       }
       void unregister(Index n) { ADEPT_ACTIVE_STACK->unregister_gradients(value_, n); }
 #ifdef ADEPT_MOVE_SEMANTICS
       void swap(GradientIndex& rhs) noexcept {
-	Index tmp_value = rhs.get();
-	rhs.set(value_);
-	value_ = tmp_value;
+        Index tmp_value = rhs.get();
+        rhs.set(value_);
+        value_ = tmp_value;
       }
 #endif
     private:
@@ -210,7 +210,7 @@ namespace adept {
     // Initialize an empty array
     Array() : data_(0), storage_(0), dimensions_(0)
     { ADEPT_STATIC_ASSERT(!(std::numeric_limits<Type>::is_integer
-			    && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS); }
+                            && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS); }
 
     // Initialize an array with specified size
     Array(const Index* dims) : storage_(0)
@@ -236,16 +236,16 @@ namespace adept {
     // A way to directly create arrays, needed when subsetting
     // other arrays
     Array(Type* data, Storage<Type>* s, const ExpressionSize<Rank>& dims,
-	  const ExpressionSize<Rank>& offset)
+          const ExpressionSize<Rank>& offset)
       : data_(data), storage_(s), dimensions_(dims), offset_(offset) { 
       if (storage_) {
-	storage_->add_link(); 
-	GradientIndex<IsActive>::set(data_, storage_);
+        storage_->add_link(); 
+        GradientIndex<IsActive>::set(data_, storage_);
       }
       else {
-	// Active arrays need a gradient index so it is an error for
-	// them to get to this point
-	GradientIndex<IsActive>::assert_inactive();
+        // Active arrays need a gradient index so it is an error for
+        // them to get to this point
+        GradientIndex<IsActive>::assert_inactive();
       }
     }
 
@@ -253,9 +253,9 @@ namespace adept {
     // needed when an active FixedArray is being sliced, which
     // produces an active Array
     Array(const Type* data0, Index data_offset, const ExpressionSize<Rank>& dims,
-	  const ExpressionSize<Rank>& offset, Index gradient_index0)
+          const ExpressionSize<Rank>& offset, Index gradient_index0)
       : GradientIndex<IsActive>(gradient_index0, data_offset),
-	data_(const_cast<Type*>(data0)+data_offset), storage_(0), dimensions_(dims), offset_(offset) { }
+        data_(const_cast<Type*>(data0)+data_offset), storage_(0), dimensions_(dims), offset_(offset) { }
 
     // Initialize an array pointing at existing data: the fact that
     // storage_ is a null pointer is used to convey the information
@@ -279,8 +279,8 @@ namespace adept {
     // then pass to the Array in the calling function.
     Array(Array& rhs) 
       : GradientIndex<IsActive>(rhs.gradient_index()), 
-	data_(rhs.data()), storage_(rhs.storage()), 
-	dimensions_(rhs.dimensions()), offset_(rhs.offset())
+        data_(rhs.data()), storage_(rhs.storage()), 
+        dimensions_(rhs.dimensions()), offset_(rhs.offset())
     {
       if (storage_) storage_->add_link(); 
 #ifdef ADEPT_VERBOSE_FUNCTIONS
@@ -292,7 +292,7 @@ namespace adept {
     // thing
     Array(const Array& rhs) 
       : GradientIndex<IsActive>(rhs.gradient_index()),
-	dimensions_(rhs.dimensions()), offset_(rhs.offset())
+        dimensions_(rhs.dimensions()), offset_(rhs.offset())
     { 
       link_(const_cast<Array&>(rhs));
 #ifdef ADEPT_VERBOSE_FUNCTIONS
@@ -315,7 +315,7 @@ namespace adept {
     // implicit conversion, use the "explicit" keyword.
     template<typename EType, class E>
     Array(const Expression<EType, E>& rhs,
-	  typename enable_if<E::rank == Rank && (Rank > 0),int>::type = 0)
+          typename enable_if<E::rank == Rank && (Rank > 0),int>::type = 0)
       : data_(0), storage_(0), dimensions_(0)
     {
 #ifdef ADEPT_VERBOSE_FUNCTIONS
@@ -335,47 +335,47 @@ namespace adept {
     // mean that each possible Array rank needs explicit treatment
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<T> > list)
+          std::initializer_list<T> > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
 
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<T> > > list)
+          std::initializer_list<
+          std::initializer_list<T> > > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
 
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<T> > > > list)
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<T> > > > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
 
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<T> > > > > list)
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<T> > > > > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
 
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<T> > > > > > list)
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<T> > > > > > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
 
     template <typename T>
     Array(std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<
-	  std::initializer_list<T> > > > > > > list)
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<
+          std::initializer_list<T> > > > > > > list)
       : data_(0), storage_(0), dimensions_(0) { *this = list; }
     
 
@@ -419,21 +419,21 @@ namespace adept {
       // RHS data would otherwise be lost (but it is not clear that
       // this is necessary).
       if ((empty() || (storage_ && storage_->n_links() == 1))
-	  && (!rhs.storage() || rhs.storage()->n_links() == 1)) {
-	// We still need to check that the dimensions match
-	if (empty() || compatible(dimensions_, rhs.dimensions())) {
-	  swap(*this, rhs);
-	}
-	else {
-	  std::string str = rhs.expression_string()
-	    + " assigned to " + expression_string_();
-	  throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
-	}
+          && (!rhs.storage() || rhs.storage()->n_links() == 1)) {
+        // We still need to check that the dimensions match
+        if (empty() || compatible(dimensions_, rhs.dimensions())) {
+          swap(*this, rhs);
+        }
+        else {
+          std::string str = rhs.expression_string()
+            + " assigned to " + expression_string_();
+          throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        }
       }
       else {
-	// Need a full copy because other arrays are linked to the
-	// Storage object
-	*this = static_cast<const Expression<Type,Array>&> (rhs);
+        // Need a full copy because other arrays are linked to the
+        // Storage object
+        *this = static_cast<const Expression<Type,Array>&> (rhs);
       }
       return *this;
     }
@@ -467,54 +467,54 @@ namespace adept {
 #ifndef ADEPT_NO_DIMENSION_CHECKING
       ExpressionSize<Rank> dims;
       if (!rhs.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + rhs.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + rhs.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (empty()) {
-	resize(dims);
+        resize(dims);
       }
       else if (!compatible(dims, dimensions_)) {
-	std::string str = "Expr";
-	str += dims.str() + " object assigned to " + expression_string_();
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Expr";
+        str += dims.str() + " object assigned to " + expression_string_();
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
 #else
       if (empty()) {
-	ExpressionSize<Rank> dims;
-	if (!rhs.get_dimensions(dims)) {
-	  std::string str = "Array size mismatch in "
-	    + rhs.expression_string() + ".";
-	  throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
-	}	
-	resize(dims);
+        ExpressionSize<Rank> dims;
+        if (!rhs.get_dimensions(dims)) {
+          std::string str = "Array size mismatch in "
+            + rhs.expression_string() + ".";
+          throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        }        
+        resize(dims);
       }
 #endif
       if (!empty()) {
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	// Check for aliasing first
-	Type const * ptr_begin;
-	Type const * ptr_end;
-	data_range(ptr_begin, ptr_end);
-	if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	  Array<Rank,Type,IsActive> copy;
-	  // It would be nice to wrap noalias around rhs, but then
-	  // this leads to infinite template recursion since the "="
-	  // operator calls the current function but with a modified
-	  // expression type. perhaps a better way would be to make
-	  // copy.assign_no_alias(rhs) work.
-	  copy = rhs;
-	  assign_expression_<Rank, IsActive, E::is_active>(copy);
-	}
-	else {
+        // Check for aliasing first
+        Type const * ptr_begin;
+        Type const * ptr_end;
+        data_range(ptr_begin, ptr_end);
+        if (rhs.is_aliased(ptr_begin, ptr_end)) {
+          Array<Rank,Type,IsActive> copy;
+          // It would be nice to wrap noalias around rhs, but then
+          // this leads to infinite template recursion since the "="
+          // operator calls the current function but with a modified
+          // expression type. perhaps a better way would be to make
+          // copy.assign_no_alias(rhs) work.
+          copy = rhs;
+          assign_expression_<Rank, IsActive, E::is_active>(copy);
+        }
+        else {
 #endif
-	  // Select active/passive version by delegating to a
-	  // protected function
-	  // The cast() is needed because assign_expression_ accepts
-	  // its argument by value
-	  assign_expression_<Rank, IsActive, E::is_active>(rhs.cast());
+          // Select active/passive version by delegating to a
+          // protected function
+          // The cast() is needed because assign_expression_ accepts
+          // its argument by value
+          assign_expression_<Rank, IsActive, E::is_active>(rhs.cast());
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	}
+        }
 #endif
       }
       return *this;
@@ -528,33 +528,33 @@ namespace adept {
     assign_inactive(const Expression<EType,E>& rhs) {
       ExpressionSize<Rank> dims;
       if (!rhs.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + rhs.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + rhs.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (empty()) {
-	resize(dims);
+        resize(dims);
       }
       else if (!compatible(dims, dimensions_)) {
-	std::string str = "Expr";
-	str += dims.str() + " object assigned to " + expression_string_();
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Expr";
+        str += dims.str() + " object assigned to " + expression_string_();
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
 
       if (!empty()) {
-	// Check for aliasing first
-	Type const * ptr_begin;
-	Type const * ptr_end;
-	data_range(ptr_begin, ptr_end);
-	if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	  Array<Rank,Type,IsActive> copy;
-	  copy.assign_inactive(rhs);
-	  //	  *this = copy;
-	  assign_expression_<Rank, IsActive, false>(copy);
-	}
-	else {
-	  assign_expression_<Rank, IsActive, false>(rhs.cast());
-	}
+        // Check for aliasing first
+        Type const * ptr_begin;
+        Type const * ptr_end;
+        data_range(ptr_begin, ptr_end);
+        if (rhs.is_aliased(ptr_begin, ptr_end)) {
+          Array<Rank,Type,IsActive> copy;
+          copy.assign_inactive(rhs);
+          //          *this = copy;
+          assign_expression_<Rank, IsActive, false>(copy);
+        }
+        else {
+          assign_expression_<Rank, IsActive, false>(rhs.cast());
+        }
       }
       return *this;
     }
@@ -564,10 +564,10 @@ namespace adept {
     typename enable_if<is_not_expression<RType>::value
                        // FIX
                        || internal::is_active<Type>::value
-		       , Array&>::type
+                       , Array&>::type
     operator=(RType rhs) {
       if (!empty()) {
-	assign_inactive_scalar_<Rank,IsActive>(rhs);
+        assign_inactive_scalar_<Rank,IsActive>(rhs);
       }
       return *this;
     }
@@ -592,39 +592,39 @@ namespace adept {
       ADEPT_STATIC_ASSERT(IsActive, ATTEMPT_TO_ASSIGN_ACTIVE_SCALAR_TO_INACTIVE_ARRAY);
       if (!empty()) {
 #ifdef ADEPT_RECORDING_PAUSABLE
-	if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	  assign_inactive_scalar_<Rank,false>(rhs.scalar_value());
-	  return *this;
-	}
+        if (!ADEPT_ACTIVE_STACK->is_recording()) {
+          assign_inactive_scalar_<Rank,false>(rhs.scalar_value());
+          return *this;
+        }
 #endif
-	ExpressionSize<Rank> i(0);
-	Index index = 0;
-	int my_rank;
-	static const int last = Rank-1;
-	// In case PType != Type we make a local copy to minimize type
-	// conversions
-	Type val = rhs.scalar_value();
-	
-	ADEPT_ACTIVE_STACK->check_space(size());
-	do {
-	  i[last] = 0;
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    data_[index] = val;
-	    ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
-	    ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        ExpressionSize<Rank> i(0);
+        Index index = 0;
+        int my_rank;
+        static const int last = Rank-1;
+        // In case PType != Type we make a local copy to minimize type
+        // conversions
+        Type val = rhs.scalar_value();
+        
+        ADEPT_ACTIVE_STACK->check_space(size());
+        do {
+          i[last] = 0;
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            data_[index] = val;
+            ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
+            ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
       return *this;
     }
 
-#define ADEPT_DEFINE_OPERATOR(OPERATOR, OPSYMBOL)		\
-    template <class RType>				\
-    Array& OPERATOR(const RType& rhs) {			\
-      return *this = noalias(*this OPSYMBOL rhs);	\
+#define ADEPT_DEFINE_OPERATOR(OPERATOR, OPSYMBOL)                \
+    template <class RType>                                \
+    Array& OPERATOR(const RType& rhs) {                        \
+      return *this = noalias(*this OPSYMBOL rhs);        \
     }
     ADEPT_DEFINE_OPERATOR(operator+=, +);
     ADEPT_DEFINE_OPERATOR(operator-=, -);
@@ -643,13 +643,13 @@ namespace adept {
 #ifndef ADEPT_NO_DIMENSION_CHECKING
       ExpressionSize<Rank> dims;
       if (!bool_expr.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + bool_expr.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + bool_expr.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (dims != dimensions_) {
-	throw size_mismatch("Boolean expression of different size"
-			    ADEPT_EXCEPTION_LOCATION);
+        throw size_mismatch("Boolean expression of different size"
+                            ADEPT_EXCEPTION_LOCATION);
       }
 #endif
       return Where<Array,B>(*this, bool_expr.cast());
@@ -662,26 +662,26 @@ namespace adept {
     template <class B, typename C>
     typename enable_if<is_not_expression<C>::value, void>::type
     assign_conditional(const Expression<bool,B>& bool_expr,
-			    C rhs) {
+                            C rhs) {
       if (!empty()) {
-	assign_conditional_inactive_scalar_<IsActive>(bool_expr, rhs);
+        assign_conditional_inactive_scalar_<IsActive>(bool_expr, rhs);
       }
     }
 
     template <class B, typename T, class C>
     void assign_conditional(const Expression<bool,B>& bool_expr,
-			    const Expression<T,C>& rhs) {
+                            const Expression<T,C>& rhs) {
       // Assume size of bool_expr already checked
 #ifndef ADEPT_NO_DIMENSION_CHECKING
       ExpressionSize<Rank> dims;
       if (!rhs.get_dimensions(dims)) {
-	std::string str = "Array size mismatch in "
-	  + rhs.expression_string() + ".";
-	throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        std::string str = "Array size mismatch in "
+          + rhs.expression_string() + ".";
+        throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
       }
       else if (!compatible(dims,dimensions_)) {
-	throw size_mismatch("Right-hand-side of \"where\" construct of incompatible size"
-			    ADEPT_EXCEPTION_LOCATION);
+        throw size_mismatch("Right-hand-side of \"where\" construct of incompatible size"
+                            ADEPT_EXCEPTION_LOCATION);
       }
 #endif
       // Check for aliasing first
@@ -689,14 +689,14 @@ namespace adept {
       Type const * ptr_end;
       data_range(ptr_begin, ptr_end);
       if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	Array<Rank,Type,IsActive> copy;
-	copy = rhs;
-	assign_conditional_<IsActive>(bool_expr.cast(), copy);
+        Array<Rank,Type,IsActive> copy;
+        copy = rhs;
+        assign_conditional_<IsActive>(bool_expr.cast(), copy);
       }
       else {
-	// Select active/passive version by delegating to a
-	// protected function
-	assign_conditional_<IsActive>(bool_expr.cast(), rhs.cast());
+        // Select active/passive version by delegating to a
+        // protected function
+        assign_conditional_<IsActive>(bool_expr.cast(), rhs.cast());
       }
       //      return *this;
     }
@@ -710,19 +710,19 @@ namespace adept {
       ADEPT_STATIC_ASSERT(Rank==1,RANK_MISMATCH_IN_INITIALIZER_LIST);
 
       if (empty()) {
-	resize(list.size());
+        resize(list.size());
       }
       else if (list.size() > static_cast<std::size_t>(dimensions_[0])) {
-	throw size_mismatch("Initializer list is larger than Vector in assignment"
-			    ADEPT_EXCEPTION_LOCATION);
+        throw size_mismatch("Initializer list is larger than Vector in assignment"
+                            ADEPT_EXCEPTION_LOCATION);
       }
       // Zero the whole array first in order that automatic
       // differentiation works
       *this = 0;
       Index index = 0;
       for (auto i = std::begin(list); i < std::end(list); ++i,
-	   ++index) {
-	data_[index*offset_[0]] = *i;	
+           ++index) {
+        data_[index*offset_[0]] = *i;        
       }
       return *this;
     }
@@ -731,21 +731,21 @@ namespace adept {
     template <class IType>
     Array& operator=(std::initializer_list<std::initializer_list<IType> > list) {
       ADEPT_STATIC_ASSERT(Rank==initializer_list_rank<IType>::value+2,
-      			  RANK_MISMATCH_IN_INITIALIZER_LIST);
+                                RANK_MISMATCH_IN_INITIALIZER_LIST);
       if (empty()) {
-	Index dims[ADEPT_MAX_ARRAY_DIMENSIONS];
-	int ndims = 0;
-	shape_initializer_list_(list, dims, ndims);
-	resize(dims);
+        Index dims[ADEPT_MAX_ARRAY_DIMENSIONS];
+        int ndims = 0;
+        shape_initializer_list_(list, dims, ndims);
+        resize(dims);
       }
       else if (list.size() > static_cast<std::size_t>(dimensions_[0])) {
-	throw size_mismatch("Multi-dimensional initializer list larger than slowest-varying dimension of Array"
-			    ADEPT_EXCEPTION_LOCATION);
+        throw size_mismatch("Multi-dimensional initializer list larger than slowest-varying dimension of Array"
+                            ADEPT_EXCEPTION_LOCATION);
       }
       Index index = 0;
       for (auto i = std::begin(list); i < std::end(list); ++i,
-	   ++index) {
-	(*this)[index] = *i;
+           ++index) {
+        (*this)[index] = *i;
       }
       return *this;
     }
@@ -755,14 +755,14 @@ namespace adept {
     template <typename T>
     typename enable_if<std::is_convertible<T,Type>::value>::type
     shape_initializer_list_(std::initializer_list<T> list,
-			    Index* dims, int& ndims) const {
+                            Index* dims, int& ndims) const {
       dims[ndims] = list.size();
       ndims++;
     }
     template <class IType>
     void
     shape_initializer_list_(std::initializer_list<std::initializer_list<IType> > list,
-			    Index* dims, int& ndims) const {
+                            Index* dims, int& ndims) const {
       dims[ndims] = list.size();
       ndims++;
       shape_initializer_list_(*(list.begin()), dims, ndims);
@@ -877,7 +877,7 @@ namespace adept {
     // l-value access to active array with function-call operator
     template <typename I0>
     typename enable_if<Rank==1 && all_scalar_ints<1,I0>::value && IsActive,
-		       ActiveReference<Type> >::type
+                       ActiveReference<Type> >::type
     operator()(I0 i0) {
       Index offset = get_index_with_len(i0,dimensions_[0])*offset_[0];
       return ActiveReference<Type>(data_[offset], gradient_index()+offset);
@@ -886,7 +886,7 @@ namespace adept {
     // r-value access to active array with function-call operator
     template <typename I0>
     typename enable_if<Rank==1 && all_scalar_ints<1,I0>::value && IsActive,
-		       ActiveConstReference<Type> >::type
+                       ActiveConstReference<Type> >::type
     operator()(I0 i0) const {
       Index offset = get_index_with_len(i0,dimensions_[0])*offset_[0];
       return ActiveConstReference<Type>(data_[offset], gradient_index()+offset);
@@ -895,7 +895,7 @@ namespace adept {
     // l-value access to active array with element-access operator
     template <typename I0>
     typename enable_if<Rank==1 && all_scalar_ints<1,I0>::value && IsActive,
-		       ActiveReference<Type> >::type
+                       ActiveReference<Type> >::type
     operator[](I0 i0) {
       Index offset = get_index_with_len(i0,dimensions_[0])*offset_[0];
       return ActiveReference<Type>(data_[offset], gradient_index()+offset);
@@ -904,7 +904,7 @@ namespace adept {
     // r-value access to active array with element-access operator
     template <typename I0>
     typename enable_if<Rank==1 && all_scalar_ints<1,I0>::value && IsActive,
-		       ActiveConstReference<Type> >::type
+                       ActiveConstReference<Type> >::type
     operator[](I0 i0) const {
       Index offset = get_index_with_len(i0,dimensions_[0])*offset_[0];
       return ActiveConstReference<Type>(data_[offset], gradient_index()+offset);
@@ -913,145 +913,145 @@ namespace adept {
     // 2D array l-value and r-value access
     template <typename I0, typename I1>
     typename enable_if<Rank==2 && all_scalar_ints<2,I0,I1>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1) {
       return get_scalar_reference<IsActive>(
-		    get_index_with_len(i0,dimensions_[0])*offset_[0]
-		  + get_index_with_len(i1,dimensions_[1])*offset_[1]);
+                    get_index_with_len(i0,dimensions_[0])*offset_[0]
+                  + get_index_with_len(i1,dimensions_[1])*offset_[1]);
     }
     template <typename I0, typename I1>
     typename enable_if<Rank==2 && all_scalar_ints<2,I0,I1>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1) const {
       return get_scalar_reference<IsActive>(
-		    get_index_with_len(i0,dimensions_[0])*offset_[0]
-		  + get_index_with_len(i1,dimensions_[1])*offset_[1]);
+                    get_index_with_len(i0,dimensions_[0])*offset_[0]
+                  + get_index_with_len(i1,dimensions_[1])*offset_[1]);
     }
 
     // 3D array l-value and r-value access
     template <typename I0, typename I1, typename I2>
     typename enable_if<Rank==3 && all_scalar_ints<3,I0,I1,I2>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2) {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]);
     }
     template <typename I0, typename I1, typename I2>
     typename enable_if<Rank==3 && all_scalar_ints<3,I0,I1,I2>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2) const {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]);
     }
 
     // 4D array l-value and r-value access
     template <typename I0, typename I1, typename I2, typename I3>
     typename enable_if<Rank==4 && all_scalar_ints<4,I0,I1,I2,I3>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3) {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]);
     }
     template <typename I0, typename I1, typename I2, typename I3>
     typename enable_if<Rank==4 && all_scalar_ints<4,I0,I1,I2,I3>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3) const {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]);
     }
 
     // 5D array l-value and r-value access
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4>
+              typename I4>
     typename enable_if<Rank==5 && all_scalar_ints<5,I0,I1,I2,I3,I4>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4) {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]);
     }
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4>
+              typename I4>
     typename enable_if<Rank==5 && all_scalar_ints<5,I0,I1,I2,I3,I4>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4) const {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]);
     }
 
     // 6D array l-value and r-value access
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5>
+              typename I4, typename I5>
     typename enable_if<Rank==6 && all_scalar_ints<6,I0,I1,I2,I3,I4,I5>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5) {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]
-		   + get_index_with_len(i5,dimensions_[5])*offset_[5]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]
+                   + get_index_with_len(i5,dimensions_[5])*offset_[5]);
     }
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5>
+              typename I4, typename I5>
     typename enable_if<Rank==6 && all_scalar_ints<6,I0,I1,I2,I3,I4,I5>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5) const {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]
-		   + get_index_with_len(i5,dimensions_[5])*offset_[5]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]
+                   + get_index_with_len(i5,dimensions_[5])*offset_[5]);
     }
 
     // 7D array l-value and r-value access
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5, typename I6>
+              typename I4, typename I5, typename I6>
     typename enable_if<Rank==7 && all_scalar_ints<7,I0,I1,I2,I3,I4,I5,I6>::value,
-		       typename active_reference<Type,IsActive>::type>::type
+                       typename active_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6) {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]
-		   + get_index_with_len(i5,dimensions_[5])*offset_[5]
-		   + get_index_with_len(i6,dimensions_[6])*offset_[6]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]
+                   + get_index_with_len(i5,dimensions_[5])*offset_[5]
+                   + get_index_with_len(i6,dimensions_[6])*offset_[6]);
     }
      template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5, typename I6>
+              typename I4, typename I5, typename I6>
     typename enable_if<Rank==7 && all_scalar_ints<7,I0,I1,I2,I3,I4,I5,I6>::value,
-		       typename active_const_reference<Type,IsActive>::type>::type
+                       typename active_const_reference<Type,IsActive>::type>::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6) const {
       return get_scalar_reference<IsActive>(
-		     get_index_with_len(i0,dimensions_[0])*offset_[0]
-		   + get_index_with_len(i1,dimensions_[1])*offset_[1]
-		   + get_index_with_len(i2,dimensions_[2])*offset_[2]
-		   + get_index_with_len(i3,dimensions_[3])*offset_[3]
-		   + get_index_with_len(i4,dimensions_[4])*offset_[4]
-		   + get_index_with_len(i5,dimensions_[5])*offset_[5]
-		   + get_index_with_len(i6,dimensions_[6])*offset_[6]);
+                     get_index_with_len(i0,dimensions_[0])*offset_[0]
+                   + get_index_with_len(i1,dimensions_[1])*offset_[1]
+                   + get_index_with_len(i2,dimensions_[2])*offset_[2]
+                   + get_index_with_len(i3,dimensions_[3])*offset_[3]
+                   + get_index_with_len(i4,dimensions_[4])*offset_[4]
+                   + get_index_with_len(i5,dimensions_[5])*offset_[5]
+                   + get_index_with_len(i6,dimensions_[6])*offset_[6]);
     }
    
 
@@ -1069,33 +1069,33 @@ namespace adept {
     // "range" object
     template <typename I0>
     typename enable_if<is_ranged<Rank,I0>::value,
-		       Array<1,Type,IsActive> >::type
+                       Array<1,Type,IsActive> >::type
     operator()(I0 i0) {
       ExpressionSize<1> new_dim((i0.end(dimensions_[0])
-				 + i0.stride(dimensions_[0])
-				 -i0.begin(dimensions_[0]))
-				/i0.stride(dimensions_[0]));
+                                 + i0.stride(dimensions_[0])
+                                 -i0.begin(dimensions_[0]))
+                                /i0.stride(dimensions_[0]));
       ExpressionSize<1> new_offset(i0.stride(dimensions_[0])*offset_[0]);
 #ifdef ADEPT_VERBOSE_FUNCTIONS
       std::cout << "  running Array::operator()(RANGED)\n";
 #endif
       return Array<1,Type,IsActive>(data_ + i0.begin(dimensions_[0])*offset_[0],
-	storage_, new_dim, new_offset);
+        storage_, new_dim, new_offset);
     }
     template <typename I0>
     typename enable_if<is_ranged<Rank,I0>::value,
-		       const Array<1,Type,IsActive> >::type
+                       const Array<1,Type,IsActive> >::type
     operator()(I0 i0) const {
       ExpressionSize<1> new_dim((i0.end(dimensions_[0])
-				 + i0.stride(dimensions_[0])
-				 -i0.begin(dimensions_[0]))
-				/i0.stride(dimensions_[0]));
+                                 + i0.stride(dimensions_[0])
+                                 -i0.begin(dimensions_[0]))
+                                /i0.stride(dimensions_[0]));
       ExpressionSize<1> new_offset(i0.stride(dimensions_[0])*offset_[0]);
 #ifdef ADEPT_VERBOSE_FUNCTIONS
       std::cout << "  running Array::operator()(RANGED) const\n";
 #endif
       return Array<1,Type,IsActive>(data_ + i0.begin(dimensions_[0])*offset_[0],
-				    storage_, new_dim, new_offset);
+                                    storage_, new_dim, new_offset);
     }
 
   private:
@@ -1106,8 +1106,8 @@ namespace adept {
     template <typename T, int NewRank>
     typename enable_if<is_scalar_int<T>::value, void>::type
     update_index(const Index& irank, const T& i, Index& inew_rank, Index& ibegin,
-		 ExpressionSize<NewRank>& new_dim, 
-		 ExpressionSize<NewRank>& new_offset) const {
+                 ExpressionSize<NewRank>& new_dim, 
+                 ExpressionSize<NewRank>& new_offset) const {
       ibegin += get_index_with_len(i,dimensions_[irank])*offset_[irank];
     }
 
@@ -1116,12 +1116,12 @@ namespace adept {
     template <typename T, int NewRank>
     typename enable_if<is_range<T>::value, void>::type
     update_index(const Index& irank, const T& i, Index& inew_rank, Index& ibegin,
-		 ExpressionSize<NewRank>& new_dim, 
-		 ExpressionSize<NewRank>& new_offset) const {
+                 ExpressionSize<NewRank>& new_dim, 
+                 ExpressionSize<NewRank>& new_offset) const {
       ibegin += i.begin(dimensions_[irank])*offset_[irank];
       new_dim[inew_rank]
       = (i.end(dimensions_[irank])
-	 + i.stride(dimensions_[irank])-i.begin(dimensions_[irank]))
+         + i.stride(dimensions_[irank])-i.begin(dimensions_[irank]))
       / i.stride(dimensions_[irank]);
       new_offset[inew_rank] = i.stride(dimensions_[irank])*offset_[irank];
       ++inew_rank;
@@ -1134,7 +1134,7 @@ namespace adept {
     // versions
     template <typename I0, typename I1>
     typename enable_if<is_ranged<Rank,I0,I1>::value,
-		       Array<is_ranged<Rank,I0,I1>::count,Type,IsActive> >::type
+                       Array<is_ranged<Rank,I0,I1>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1) {
       static const int new_rank = is_ranged<Rank,I0,I1>::count;
       ExpressionSize<new_rank> new_dim;
@@ -1144,12 +1144,12 @@ namespace adept {
       update_index(0, i0, inew_rank, ibegin, new_dim, new_offset);
       update_index(1, i1, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1>
     typename enable_if<is_ranged<Rank,I0,I1>::value,
-		       const Array<is_ranged<Rank,I0,I1>::count,Type,IsActive> >::type
+                       const Array<is_ranged<Rank,I0,I1>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1) const {
       static const int new_rank = is_ranged<Rank,I0,I1>::count;
       ExpressionSize<new_rank> new_dim;
@@ -1159,12 +1159,12 @@ namespace adept {
       update_index(0, i0, inew_rank, ibegin, new_dim, new_offset);
       update_index(1, i1, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2>
     typename enable_if<is_ranged<Rank,I0,I1,I2>::value,
-	       Array<is_ranged<Rank,I0,I1,I2>::count,Type,IsActive> >::type
+               Array<is_ranged<Rank,I0,I1,I2>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2) {
       static const int new_rank = is_ranged<Rank,I0,I1,I2>::count;
       ExpressionSize<new_rank> new_dim;
@@ -1175,12 +1175,12 @@ namespace adept {
       update_index(1, i1, inew_rank, ibegin, new_dim, new_offset);
       update_index(2, i2, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2>
     typename enable_if<is_ranged<Rank,I0,I1,I2>::value,
-	       const Array<is_ranged<Rank,I0,I1,I2>::count,Type,IsActive> >::type
+               const Array<is_ranged<Rank,I0,I1,I2>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2) const {
       static const int new_rank = is_ranged<Rank,I0,I1,I2>::count;
       ExpressionSize<new_rank> new_dim;
@@ -1191,7 +1191,7 @@ namespace adept {
       update_index(1, i1, inew_rank, ibegin, new_dim, new_offset);
       update_index(2, i2, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2, typename I3>
@@ -1208,7 +1208,7 @@ namespace adept {
       update_index(2, i2, inew_rank, ibegin, new_dim, new_offset);
       update_index(3, i3, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2, typename I3>
@@ -1225,11 +1225,11 @@ namespace adept {
       update_index(2, i2, inew_rank, ibegin, new_dim, new_offset);
       update_index(3, i3, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4>
+              typename I4>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4>::value,
        Array<is_ranged<Rank,I0,I1,I2,I3,I4>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4) {
@@ -1244,11 +1244,11 @@ namespace adept {
       update_index(3, i3, inew_rank, ibegin, new_dim, new_offset);
       update_index(4, i4, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
   
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4>
+              typename I4>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4>::value,
        const Array<is_ranged<Rank,I0,I1,I2,I3,I4>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4) const {
@@ -1263,11 +1263,11 @@ namespace adept {
       update_index(3, i3, inew_rank, ibegin, new_dim, new_offset);
       update_index(4, i4, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
   
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5>
+              typename I4, typename I5>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4,I5>::value,
        Array<is_ranged<Rank,I0,I1,I2,I3,I4,I5>::count,Type,IsActive> >::type
      operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5) {
@@ -1283,12 +1283,12 @@ namespace adept {
       update_index(4, i4, inew_rank, ibegin, new_dim, new_offset);
       update_index(5, i5, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
 
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5>
+              typename I4, typename I5>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4,I5>::value,
        const Array<is_ranged<Rank,I0,I1,I2,I3,I4,I5>::count,Type,IsActive> >::type
      operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5) const {
@@ -1304,11 +1304,11 @@ namespace adept {
       update_index(4, i4, inew_rank, ibegin, new_dim, new_offset);
       update_index(5, i5, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5, typename I6>
+              typename I4, typename I5, typename I6>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4,I5,I6>::value,
        Array<is_ranged<Rank,I0,I1,I2,I3,I4,I5,I6>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6) {
@@ -1325,11 +1325,11 @@ namespace adept {
       update_index(5, i5, inew_rank, ibegin, new_dim, new_offset);
       update_index(6, i6, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
 
     template <typename I0, typename I1, typename I2, typename I3,
-	      typename I4, typename I5, typename I6>
+              typename I4, typename I5, typename I6>
     typename enable_if<is_ranged<Rank,I0,I1,I2,I3,I4,I5,I6>::value,
        const Array<is_ranged<Rank,I0,I1,I2,I3,I4,I5,I6>::count,Type,IsActive> >::type
     operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6) const {
@@ -1346,7 +1346,7 @@ namespace adept {
       update_index(5, i5, inew_rank, ibegin, new_dim, new_offset);
       update_index(6, i6, inew_rank, ibegin, new_dim, new_offset);
       return Array<new_rank,Type,IsActive>(data_ + ibegin, storage_,
-					   new_dim, new_offset);
+                                           new_dim, new_offset);
     }
   
     // If one or more of the indices is not guaranteed to be monotonic
@@ -1356,168 +1356,168 @@ namespace adept {
     // Indexing a 1D array
     template <typename I0>
     typename enable_if<Rank == 1 && is_int_vector<I0>::value
-		       && !is_ranged<Rank,I0>::value,
-		       IndexedArray<Rank,Type,IsActive,Array,I0> >::type
+                       && !is_ranged<Rank,I0>::value,
+                       IndexedArray<Rank,Type,IsActive,Array,I0> >::type
     operator()(const I0& i0) {
       return IndexedArray<Rank,Type,IsActive,Array,I0>(*this, i0);
     }
     template <typename I0>
     typename enable_if<Rank == 1 && is_int_vector<I0>::value
-		       && !is_ranged<Rank,I0>::value,
-		       const IndexedArray<Rank,Type,IsActive,
-					  Array,I0> >::type
+                       && !is_ranged<Rank,I0>::value,
+                       const IndexedArray<Rank,Type,IsActive,
+                                          Array,I0> >::type
     operator()(const I0& i0) const {
       return IndexedArray<Rank,Type,IsActive,
-			  Array,I0>(*const_cast<Array*>(this), i0);
+                          Array,I0>(*const_cast<Array*>(this), i0);
     }
   
     // Indexing a 2D array
     template <typename I0, typename I1>
     typename enable_if<Rank == 2 && is_irreg_indexed<Rank,I0,I1>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1>::count,
-				    Type,IsActive,Array,I0,I1> >::type
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1>::count,
+                                    Type,IsActive,Array,I0,I1> >::type
     operator()(const I0& i0, const I1& i1) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1>(*this, i0, i1);
     }
     template <typename I0, typename I1>
     typename enable_if<Rank == 2 && is_irreg_indexed<Rank,I0,I1>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,I0,I1>::count,
-				    Type,IsActive,Array,I0,I1> >::type
+                       const IndexedArray<is_irreg_indexed<Rank,I0,I1>::count,
+                                    Type,IsActive,Array,I0,I1> >::type
     operator()(const I0& i0, const I1& i1) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1>::count;
       return IndexedArray<new_rank,Type,IsActive,
-			  Array,I0,I1>(*const_cast<Array*>(this), i0, i1);
+                          Array,I0,I1>(*const_cast<Array*>(this), i0, i1);
     }
 
     // Indexing a 3D array
     template <typename I0, typename I1, typename I2>
     typename enable_if<Rank == 3 && is_irreg_indexed<Rank,I0,I1,I2>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2>::count,
-				    Type,IsActive,Array,I0,I1,I2> >::type
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2>::count,
+                                    Type,IsActive,Array,I0,I1,I2> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,
-			  I0,I1,I2>(*this, i0, i1, i2);
+                          I0,I1,I2>(*this, i0, i1, i2);
     }
     template <typename I0, typename I1, typename I2>
     typename enable_if<Rank == 3 && is_irreg_indexed<Rank,I0,I1,I2>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,
-							   I0,I1,I2>::count,
-				    Type,IsActive,Array,I0,I1,I2> >::type
+                       const IndexedArray<is_irreg_indexed<Rank,
+                                                           I0,I1,I2>::count,
+                                    Type,IsActive,Array,I0,I1,I2> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,
-			  I0,I1,I2>(*const_cast<Array*>(this), i0, i1, i2);
+                          I0,I1,I2>(*const_cast<Array*>(this), i0, i1, i2);
     }
 
     // Indexing a 4D array
     template <typename I0, typename I1, typename I2, typename I3>
     typename enable_if<Rank == 4 && is_irreg_indexed<Rank,I0,I1,I2,I3>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3>::count,
-				    Type,IsActive,Array,I0,I1,I2,I3> >::type
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3>::count,
+                                    Type,IsActive,Array,I0,I1,I2,I3> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, const I3& i3) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,
-			  I0,I1,I2,I3>(*this, i0, i1, i2, i3);
+                          I0,I1,I2,I3>(*this, i0, i1, i2, i3);
     }
     template <typename I0, typename I1, typename I2, typename I3>
     typename enable_if<Rank == 4 && is_irreg_indexed<Rank,I0,I1,I2,I3>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,I0,I1,
-							   I2,I3>::count,
-				    Type,IsActive,Array,I0,I1,I2,I3> >::type
+                       const IndexedArray<is_irreg_indexed<Rank,I0,I1,
+                                                           I2,I3>::count,
+                                    Type,IsActive,Array,I0,I1,I2,I3> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, const I3& i3) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,
-			  I3>(*const_cast<Array*>(this), i0, i1, i2, i3);
+                          I3>(*const_cast<Array*>(this), i0, i1, i2, i3);
     }
 
     // Indexing a 5D array
     template <typename I0, typename I1, typename I2, typename I3, typename I4>
     typename enable_if<Rank == 5
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,
-						     I3,I4>::count,
-			    Type,IsActive,Array,I0,I1,I2,I3,I4> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4>::value,
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,
+                                                     I3,I4>::count,
+                            Type,IsActive,Array,I0,I1,I2,I3,I4> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, 
-	       const I3& i3, const I4& i4) {
+               const I3& i3, const I4& i4) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4>::count;
+                                                   I4>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,
-			  I4>(*this, i0, i1, i2, i3, i4);
+                          I4>(*this, i0, i1, i2, i3, i4);
     }
     template <typename I0, typename I1, typename I2, typename I3, typename I4>
     typename enable_if<Rank == 5
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,
-							   I3,I4>::count,
-				  Type,IsActive,Array,I0,I1,I2,I3,I4> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4>::value,
+                       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,
+                                                           I3,I4>::count,
+                                  Type,IsActive,Array,I0,I1,I2,I3,I4> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, 
-	       const I3& i3, const I4& i4) const {
+               const I3& i3, const I4& i4) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4>::count;
+                                                   I4>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,
-			  I4>(*const_cast<Array*>(this), i0, i1, i2, i3, i4);
+                          I4>(*const_cast<Array*>(this), i0, i1, i2, i3, i4);
     }
 
     // Indexing a 6D array
     template <typename I0, typename I1, typename I2,
-	      typename I3, typename I4, typename I5>
+              typename I3, typename I4, typename I5>
     typename enable_if<Rank == 6
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
-							   I4,I5>::count,
-			  Type,IsActive,Array,I0,I1,I2,I3,I4,I5> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
+                                                           I4,I5>::count,
+                          Type,IsActive,Array,I0,I1,I2,I3,I4,I5> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, 
-	       const I3& i3, const I4& i4, const I5& i5) {
+               const I3& i3, const I4& i4, const I5& i5) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4,I5>::count;
+                                                   I4,I5>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,I4,
-			  I5>(*this,i0,i1,i2,i3,i4,i5);
+                          I5>(*this,i0,i1,i2,i3,i4,i5);
     }
     template <typename I0, typename I1, typename I2,
-	      typename I3, typename I4, typename I5>
+              typename I3, typename I4, typename I5>
     typename enable_if<Rank == 6
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
-							   I4,I5>::count,
-			  Type,IsActive,Array,I0,I1,I2,I3,I4,I5> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
+                       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
+                                                           I4,I5>::count,
+                          Type,IsActive,Array,I0,I1,I2,I3,I4,I5> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, 
-	       const I3& i3, const I4& i4, const I5& i5) const {
+               const I3& i3, const I4& i4, const I5& i5) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4,I5>::count;
+                                                   I4,I5>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,I4,
-			  I5>(*const_cast<Array*>(this),i0,i1,i2,i3,i4,i5);
+                          I5>(*const_cast<Array*>(this),i0,i1,i2,i3,i4,i5);
     }
 
     // Indexing a 7D array
     template <typename I0, typename I1, typename I2,
-	      typename I3, typename I4, typename I5, typename I6>
+              typename I3, typename I4, typename I5, typename I6>
     typename enable_if<Rank == 7
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
-		       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
-						     I4,I5,I6>::count,
-			  Type,IsActive,Array,I0,I1,I2,I3,I4,I5,I6> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
+                       IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
+                                                     I4,I5,I6>::count,
+                          Type,IsActive,Array,I0,I1,I2,I3,I4,I5,I6> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, const I3& i3,
-	       const I4& i4, const I5& i5, const I6& i6) {
+               const I4& i4, const I5& i5, const I6& i6) {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4,I5,I6>::count;
+                                                   I4,I5,I6>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,I4,I5,
-			  I6>(*this,i0,i1,i2,i3,i4,i5,i6);
+                          I6>(*this,i0,i1,i2,i3,i4,i5,i6);
     }
     template <typename I0, typename I1, typename I2,
-	      typename I3, typename I4, typename I5, typename I6>
+              typename I3, typename I4, typename I5, typename I6>
     typename enable_if<Rank == 7
-		       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
-		       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
-							   I4,I5,I6>::count,
-			  Type,IsActive,Array,I0,I1,I2,I3,I4,I5,I6> >::type
+                       && is_irreg_indexed<Rank,I0,I1,I2,I3,I4,I5>::value,
+                       const IndexedArray<is_irreg_indexed<Rank,I0,I1,I2,I3,
+                                                           I4,I5,I6>::count,
+                          Type,IsActive,Array,I0,I1,I2,I3,I4,I5,I6> >::type
     operator()(const I0& i0, const I1& i1, const I2& i2, const I3& i3,
-	       const I4& i4, const I5& i5, const I6& i6) const {
+               const I4& i4, const I5& i5, const I6& i6) const {
       static const int new_rank = is_irreg_indexed<Rank,I0,I1,I2,I3,
-						   I4,I5,I6>::count;
+                                                   I4,I5,I6>::count;
       return IndexedArray<new_rank,Type,IsActive,Array,I0,I1,I2,I3,I4,I5,
-			  I6>(*const_cast<Array*>(this),i0,i1,i2,i3,i4,i5,i6);
+                          I6>(*const_cast<Array*>(this),i0,i1,i2,i3,i4,i5,i6);
     }
 
 
@@ -1537,12 +1537,12 @@ namespace adept {
       ExpressionSize<Rank-1> new_dim;
       ExpressionSize<Rank-1> new_offset;
       for (int j = 1; j < Rank; ++j) {
-	new_dim[j-1] = dimensions_[j];
-	new_offset[j-1] = offset_[j];
+        new_dim[j-1] = dimensions_[j];
+        new_offset[j-1] = offset_[j];
       }
       return Array<Rank-1,Type,IsActive>(data_ + index,
-					 storage_,
-					 new_dim, new_offset);
+                                         storage_,
+                                         new_dim, new_offset);
     }
 
 
@@ -1556,44 +1556,44 @@ namespace adept {
     diag_vector(Index offdiag = 0) {
       ADEPT_STATIC_ASSERT(Rank == 2, DIAG_VECTOR_ONLY_WORKS_ON_SQUARE_MATRICES);
       if (empty()) {
-	// Return an empty vector
-	return Array<1,Type,IsActive>();
+        // Return an empty vector
+        return Array<1,Type,IsActive>();
       }
       else if (dimensions_[0] != dimensions_[1]) {
-	throw invalid_operation("diag_vector member function only applicable to square matrices"
-				ADEPT_EXCEPTION_LOCATION);
+        throw invalid_operation("diag_vector member function only applicable to square matrices"
+                                ADEPT_EXCEPTION_LOCATION);
       }
       else if (offdiag >= 0) {
-	Index new_dim = std::min(dimensions_[0], dimensions_[1]-offdiag);
-	return Array<1,Type,IsActive>(data_+offset_[1]*offdiag, storage_, 
-				      ExpressionSize<1>(new_dim),
-				      ExpressionSize<1>(offset_[0]+offset_[1]));
+        Index new_dim = std::min(dimensions_[0], dimensions_[1]-offdiag);
+        return Array<1,Type,IsActive>(data_+offset_[1]*offdiag, storage_, 
+                                      ExpressionSize<1>(new_dim),
+                                      ExpressionSize<1>(offset_[0]+offset_[1]));
       }
       else {
-	Index new_dim = std::min(dimensions_[0]+offdiag, dimensions_[1]);
-	return Array<1,Type,IsActive>(data_-offset_[0]*offdiag, storage_, 
-				      ExpressionSize<1>(new_dim),
-				      ExpressionSize<1>(offset_[0]+offset_[1]));
+        Index new_dim = std::min(dimensions_[0]+offdiag, dimensions_[1]);
+        return Array<1,Type,IsActive>(data_-offset_[0]*offdiag, storage_, 
+                                      ExpressionSize<1>(new_dim),
+                                      ExpressionSize<1>(offset_[0]+offset_[1]));
       }
     }
   
     Array
     submatrix_on_diagonal(Index ibegin, Index iend) {
       ADEPT_STATIC_ASSERT(Rank == 2,
-		SUBMATRIX_ON_DIAGONAL_ONLY_WORKS_ON_SQUARE_MATRICES);
+                SUBMATRIX_ON_DIAGONAL_ONLY_WORKS_ON_SQUARE_MATRICES);
       if (dimensions_[0] != dimensions_[1]) {
-	throw invalid_operation("submatrix_on_diagonal member function only applicable to square matrices"
-				ADEPT_EXCEPTION_LOCATION);
+        throw invalid_operation("submatrix_on_diagonal member function only applicable to square matrices"
+                                ADEPT_EXCEPTION_LOCATION);
       }
       else if (ibegin < 0 || ibegin > iend || iend >= dimensions_[0]) {
-	throw index_out_of_bounds("Dimensions out of range in submatrix_on_diagonal"
-				  ADEPT_EXCEPTION_LOCATION);
+        throw index_out_of_bounds("Dimensions out of range in submatrix_on_diagonal"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	Index len = iend-ibegin+1;
-	ExpressionSize<2> dim(len,len);
-	return Array(data_+ibegin*(offset_[0]+offset_[1]),
-		     storage_, dim, offset_);
+        Index len = iend-ibegin+1;
+        ExpressionSize<2> dim(len,len);
+        return Array(data_+ibegin*(offset_[0]+offset_[1]),
+                     storage_, dim, offset_);
       }
     }
 
@@ -1606,14 +1606,14 @@ namespace adept {
     Array
     subset(const B0& ibegin0, const E0& iend0) {
       ADEPT_STATIC_ASSERT(Rank == 1,
-			  SUBSET_WITH_2_ARGS_ONLY_ON_RANK_1_ARRAY);
+                          SUBSET_WITH_2_ARGS_ONLY_ON_RANK_1_ARRAY);
       return (*this)(range(ibegin0,iend0));
     }
     template <typename B0, typename E0>
     const Array
     subset(const B0& ibegin0, const E0& iend0) const {
       ADEPT_STATIC_ASSERT(Rank == 1,
-			  SUBSET_WITH_2_ARGS_ONLY_ON_RANK_1_ARRAY);
+                          SUBSET_WITH_2_ARGS_ONLY_ON_RANK_1_ARRAY);
       return (*this)(range(ibegin0,iend0));
     }
 
@@ -1621,174 +1621,174 @@ namespace adept {
     template <typename B0, typename E0, typename B1, typename E1>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1) {
+           const B1& ibegin1, const E1& iend1) {
       ADEPT_STATIC_ASSERT(Rank == 2,
-			  SUBSET_WITH_4_ARGS_ONLY_ON_RANK_2_ARRAY);
+                          SUBSET_WITH_4_ARGS_ONLY_ON_RANK_2_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1));
     }
     template <typename B0, typename E0, typename B1, typename E1>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	  const B1& ibegin1, const E1& iend1) const {
+          const B1& ibegin1, const E1& iend1) const {
       ADEPT_STATIC_ASSERT(Rank == 2,
-			  SUBSET_WITH_4_ARGS_ONLY_ON_RANK_2_ARRAY);
+                          SUBSET_WITH_4_ARGS_ONLY_ON_RANK_2_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1));
     }
 
     // 3D array subset
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2>
+              typename B2, typename E2>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2) {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2) {
       ADEPT_STATIC_ASSERT(Rank == 3,
-			  SUBSET_WITH_6_ARGS_ONLY_ON_RANK_3_ARRAY);
+                          SUBSET_WITH_6_ARGS_ONLY_ON_RANK_3_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2));
+                     range(ibegin2,iend2));
     }     
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2>
+              typename B2, typename E2>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2) const {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2) const {
       ADEPT_STATIC_ASSERT(Rank == 3,
-			  SUBSET_WITH_6_ARGS_ONLY_ON_RANK_3_ARRAY);
+                          SUBSET_WITH_6_ARGS_ONLY_ON_RANK_3_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2));
+                     range(ibegin2,iend2));
     }
 
     // 4D array subset
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3>
+              typename B2, typename E2, typename B3, typename E3>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3) {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3) {
       ADEPT_STATIC_ASSERT(Rank == 4,
-			  SUBSET_WITH_8_ARGS_ONLY_ON_RANK_4_ARRAY);
+                          SUBSET_WITH_8_ARGS_ONLY_ON_RANK_4_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3));
+                     range(ibegin2,iend2),range(ibegin3,iend3));
     }
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3>
+              typename B2, typename E2, typename B3, typename E3>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3) const {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3) const {
       ADEPT_STATIC_ASSERT(Rank == 4,
-			  SUBSET_WITH_8_ARGS_ONLY_ON_RANK_4_ARRAY);
+                          SUBSET_WITH_8_ARGS_ONLY_ON_RANK_4_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3));
+                     range(ibegin2,iend2),range(ibegin3,iend3));
     } 
 
     // 5D array subset
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4) {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4) {
       ADEPT_STATIC_ASSERT(Rank == 5,
-			  SUBSET_WITH_10_ARGS_ONLY_ON_RANK_5_ARRAY);
+                          SUBSET_WITH_10_ARGS_ONLY_ON_RANK_5_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4));
     }
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4) const {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4) const {
       ADEPT_STATIC_ASSERT(Rank == 5,
-			  SUBSET_WITH_10_ARGS_ONLY_ON_RANK_5_ARRAY);
+                          SUBSET_WITH_10_ARGS_ONLY_ON_RANK_5_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4));
     }
 
     // 6D array subset
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4, typename B5, typename E5>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4, typename B5, typename E5>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4,
-	   const B5& ibegin5, const E5& iend5) {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4,
+           const B5& ibegin5, const E5& iend5) {
       ADEPT_STATIC_ASSERT(Rank == 6,
-			  SUBSET_WITH_12_ARGS_ONLY_ON_RANK_6_ARRAY);
+                          SUBSET_WITH_12_ARGS_ONLY_ON_RANK_6_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4),range(ibegin5,iend5));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4),range(ibegin5,iend5));
     }
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4, typename B5, typename E5>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4, typename B5, typename E5>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4,
-	   const B5& ibegin5, const E5& iend5) const {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4,
+           const B5& ibegin5, const E5& iend5) const {
       ADEPT_STATIC_ASSERT(Rank == 6,
-			  SUBSET_WITH_12_ARGS_ONLY_ON_RANK_6_ARRAY);
+                          SUBSET_WITH_12_ARGS_ONLY_ON_RANK_6_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4),range(ibegin5,iend5));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4),range(ibegin5,iend5));
     }
 
     // 7D array subset
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4, typename B5, typename E5,
-	      typename B6, typename E6>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4, typename B5, typename E5,
+              typename B6, typename E6>
     Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4,
-	   const B5& ibegin5, const E5& iend5,
-	   const B6& ibegin6, const E6& iend6) {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4,
+           const B5& ibegin5, const E5& iend5,
+           const B6& ibegin6, const E6& iend6) {
       ADEPT_STATIC_ASSERT(Rank == 7,
-			  SUBSET_WITH_14_ARGS_ONLY_ON_RANK_7_ARRAY);
+                          SUBSET_WITH_14_ARGS_ONLY_ON_RANK_7_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4),range(ibegin5,iend5),
-		     range(ibegin6,iend6));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4),range(ibegin5,iend5),
+                     range(ibegin6,iend6));
     }
     template <typename B0, typename E0, typename B1, typename E1,
-	      typename B2, typename E2, typename B3, typename E3,
-	      typename B4, typename E4, typename B5, typename E5,
-	      typename B6, typename E6>
+              typename B2, typename E2, typename B3, typename E3,
+              typename B4, typename E4, typename B5, typename E5,
+              typename B6, typename E6>
     const Array
     subset(const B0& ibegin0, const E0& iend0, 
-	   const B1& ibegin1, const E1& iend1,
-	   const B2& ibegin2, const E2& iend2,
-	   const B3& ibegin3, const E3& iend3,
-	   const B4& ibegin4, const E4& iend4,
-	   const B5& ibegin5, const E5& iend5,
-	   const B6& ibegin6, const E6& iend6) const {
+           const B1& ibegin1, const E1& iend1,
+           const B2& ibegin2, const E2& iend2,
+           const B3& ibegin3, const E3& iend3,
+           const B4& ibegin4, const E4& iend4,
+           const B5& ibegin5, const E5& iend5,
+           const B6& ibegin6, const E6& iend6) const {
       ADEPT_STATIC_ASSERT(Rank == 7,
-			  SUBSET_WITH_14_ARGS_ONLY_ON_RANK_7_ARRAY);
+                          SUBSET_WITH_14_ARGS_ONLY_ON_RANK_7_ARRAY);
       return (*this)(range(ibegin0,iend0),range(ibegin1,iend1),
-		     range(ibegin2,iend2),range(ibegin3,iend3),
-		     range(ibegin4,iend4),range(ibegin5,iend5),
-		     range(ibegin6,iend6));
+                     range(ibegin2,iend2),range(ibegin3,iend3),
+                     range(ibegin4,iend4),range(ibegin5,iend5),
+                     range(ibegin6,iend6));
     }
 
     // -------------------------------------------------------------------
@@ -1798,21 +1798,21 @@ namespace adept {
     // Link to an existing array of the same rank, type and activeness
     Array& link(Array& rhs) {
       if (!rhs.data()) {
-	throw empty_array("Attempt to link to empty array"
-			  ADEPT_EXCEPTION_LOCATION);
+        throw empty_array("Attempt to link to empty array"
+                          ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	clear();
-	data_ = rhs.data();
-	storage_ = rhs.storage();
-	dimensions_.copy(rhs.dimensions());
-	offset_.copy(rhs.offset());
-	if (storage_) {
-	  storage_->add_link();
-	}
-	if (IsActive) {
-	  GradientIndex<IsActive>::set(data_, storage_);
-	}
+        clear();
+        data_ = rhs.data();
+        storage_ = rhs.storage();
+        dimensions_.copy(rhs.dimensions());
+        offset_.copy(rhs.offset());
+        if (storage_) {
+          storage_->add_link();
+        }
+        if (IsActive) {
+          GradientIndex<IsActive>::set(data_, storage_);
+        }
       }
       return *this;
     }
@@ -1854,7 +1854,7 @@ namespace adept {
     Index size() const {
       Index s = 1;
       for (int i = 0; i < Rank; ++i) {
-	s *= dimensions_[i];
+        s *= dimensions_[i];
       }
       return s; 
     }
@@ -1898,7 +1898,7 @@ namespace adept {
       std::stringstream str;
       str << "Array<" << Rank << ">, dim=" << dimensions_ << ", offset=" << offset_ << ", data_location=" << data_;
       if (IsActive) {
-	str << ", gradient_index=" << gradient_index();
+        str << ", gradient_index=" << gradient_index();
       }
       return str.str();
     }
@@ -1918,19 +1918,19 @@ namespace adept {
     Type* data_pointer(Index i) { 
       ADEPT_STATIC_ASSERT(Rank == 1, CAN_ONLY_USE_DATA_POINTER_WITH_INDEX_ON_VECTORS);
       if (data_) {
-	return data_ + offset_[0]*i;
+        return data_ + offset_[0]*i;
       }
       else {
-	return 0;
+        return 0;
       }
     }
     const Type* const_data_pointer(Index i) const { 
       ADEPT_STATIC_ASSERT(Rank == 1, CAN_ONLY_USE_CONST_DATA_POINTER_WITH_INDEX_ON_VECTORS);
       if (data_) {
-	return data_ + offset_[0]*i;
+        return data_ + offset_[0]*i;
       }
       else {
-	return 0;
+        return 0;
       }
     }
    
@@ -1942,8 +1942,8 @@ namespace adept {
     // link) and set the dimensions to zero
     void clear() {
       if (storage_) {
-	storage_->remove_link();
-	storage_ = 0;
+        storage_->remove_link();
+        storage_ = 0;
       }
       data_ = 0;
       dimensions_.set_all(0);
@@ -1956,33 +1956,33 @@ namespace adept {
     resize(const Index* dim) {
 
       ADEPT_STATIC_ASSERT(!(std::numeric_limits<Type>::is_integer
-	    && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS);
+            && IsActive), CANNOT_CREATE_ACTIVE_ARRAY_OF_INTEGERS);
 
       if (storage_) {
-	storage_->remove_link();
-	storage_ = 0;
+        storage_->remove_link();
+        storage_ = 0;
       }
       // Check requested dimensions
       for (int i = 0; i < Rank; ++i) {
-	if (dim[i] < 0) {
-	  throw invalid_dimension("Negative array dimension requested"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
-	else if (dim[i] == 0) {
-	  // If any of the dimensions is zero, we clear the array
-	  // completely and all dimensions will be zero
-	  clear();
-	  return;
-	}
+        if (dim[i] < 0) {
+          throw invalid_dimension("Negative array dimension requested"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
+        else if (dim[i] == 0) {
+          // If any of the dimensions is zero, we clear the array
+          // completely and all dimensions will be zero
+          clear();
+          return;
+        }
       }
       dimensions_.copy(dim); // Copy dimensions
       pack_();
       Index data_vol;
       if (array_row_major_order) {
-	data_vol = offset_[0]*dimensions_[0];
+        data_vol = offset_[0]*dimensions_[0];
       }
       else {
-	data_vol = size();
+        data_vol = size();
       }
       storage_ = new Storage<Type>(data_vol, IsActive);
       data_ = storage_->data();
@@ -2006,42 +2006,42 @@ namespace adept {
 
     void
     resize(Index m0, Index m1=-1, Index m2=-1, Index m3=-1,
-	   Index m4=-1, Index m5=-1, Index m6=-1) {
+           Index m4=-1, Index m5=-1, Index m6=-1) {
       Index dim[7] = {m0, m1, m2, m3, m4, m5, m6};
       // Check invalid dimensions
       for (int i = 0; i < Rank; ++i) {
-	if (dim[i] < 0) {
-	  throw invalid_dimension("Invalid dimensions in array resize"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (dim[i] < 0) {
+          throw invalid_dimension("Invalid dimensions in array resize"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       resize(dim);
     }
 
     void
     resize_row_major(Index m0, Index m1=-1, Index m2=-1, Index m3=-1,
-	   Index m4=-1, Index m5=-1, Index m6=-1) {
+           Index m4=-1, Index m5=-1, Index m6=-1) {
       Index dim[7] = {m0, m1, m2, m3, m4, m5, m6};
       // Check invalid dimensions
       for (int i = 0; i < Rank; ++i) {
-	if (dim[i] < 0) {
-	  throw invalid_dimension("Invalid dimensions in array resize"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (dim[i] < 0) {
+          throw invalid_dimension("Invalid dimensions in array resize"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       resize_row_major(dim);
     }
 
     void
     resize_column_major(Index m0, Index m1=-1, Index m2=-1, Index m3=-1,
-	   Index m4=-1, Index m5=-1, Index m6=-1) {
+           Index m4=-1, Index m5=-1, Index m6=-1) {
       Index dim[7] = {m0, m1, m2, m3, m4, m5, m6};
       // Check invalid dimensions
       for (int i = 0; i < Rank; ++i) {
-	if (dim[i] < 0) {
-	  throw invalid_dimension("Invalid dimensions in array resize"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (dim[i] < 0) {
+          throw invalid_dimension("Invalid dimensions in array resize"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       resize_column_major(dim);
     }
@@ -2053,7 +2053,7 @@ namespace adept {
     template <int MyRank>
     typename enable_if<Rank == MyRank,void>::type
     resize_(Index m0, Index m1=-1, Index m2=-1, Index m3=-1,
-	   Index m4=-1, Index m5=-1, Index m6=-1) {
+           Index m4=-1, Index m5=-1, Index m6=-1) {
       Index dim[7] = {m0, m1, m2, m3, m4, m5, m6};
       resize(dim);
     }
@@ -2079,10 +2079,10 @@ namespace adept {
       Type const * ptr_end;
       data_range(ptr_begin, ptr_end);
       if (ptr_begin <= mem2 && ptr_end >= mem1) {
-	return true;
+        return true;
       }
       else {
-	return false;
+        return false;
       }
     }
     bool all_arrays_contiguous_() const { return offset_[Rank-1] == 1 && columns_aligned_<Rank>(); }
@@ -2112,14 +2112,14 @@ namespace adept {
 
     std::string expression_string_() const {
       if (true) {
-	std::string a = array_helper<Rank,IsActive>().name();
-	a += dimensions_.str();
-	return a;
+        std::string a = array_helper<Rank,IsActive>().name();
+        a += dimensions_.str();
+        return a;
       }
       else {
-	std::stringstream s;
-	print(s);
-	return s.str();
+        std::stringstream s;
+        print(s);
+        return s.str();
       }
     }
 
@@ -2129,7 +2129,7 @@ namespace adept {
     typename enable_if<is_not_expression<RType>::value, Array&>::type
     set_value(RType x) {
       if (!empty()) {
-	assign_inactive_scalar_<Rank,false>(x);
+        assign_inactive_scalar_<Rank,false>(x);
       }
       return *this;
     }
@@ -2139,10 +2139,10 @@ namespace adept {
     bool is_contiguous() const {
       Index offset_expected = 1;
       for (int i = Rank-1; i >= 0; ++i) {
-	if (offset_[i] != offset_expected) {
-	  return false;
-	}
-	offset_expected *= dimensions_[i];
+        if (offset_[i] != offset_expected) {
+          return false;
+        }
+        offset_expected *= dimensions_[i];
       }
       return true;
     }
@@ -2156,10 +2156,10 @@ namespace adept {
       //      ADEPT_STATIC_ASSERT(Rank == 2, CANNOT_CHECK_ROW_CONTIGUOUS_IF_NOT_MATRIX);
       //      return offset_[1] == 1;
       if (Rank > 1) {
-	return offset_[Rank-1] == 1 && offset_[Rank-2] >= dimensions_[Rank-1];
+        return offset_[Rank-1] == 1 && offset_[Rank-2] >= dimensions_[Rank-1];
       }
       else {
-	return offset_[Rank-1] == 1;
+        return offset_[Rank-1] == 1;
       }
     }
     bool is_column_contiguous() const {
@@ -2179,59 +2179,59 @@ namespace adept {
     /*
     std::ostream& print(std::ostream& os) const {
       if (empty()) {
-	os << "(empty " << Rank << "-D array)";
+        os << "(empty " << Rank << "-D array)";
       }
       else if (adept::internal::array_print_curly_brackets) {
-	adept::ExpressionSize<Rank> i(0);
-	int my_rank = -1;
-	if (Rank > 1) {
-	  os << "\n";
-	}
-	do {
-	  for (int r = 0; r < my_rank+1; r++)
-	    { os << " "; }
-	  for (int r = my_rank+1; r < Rank; r++)
-	    { os << "{"; }
-	  for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]-1; ++i[Rank-1])
-	    { os << data_[index_(i)] << ", "; }
-	  os << data_[index_(i)];
-	  my_rank = Rank-1;
-	  while (--my_rank >= 0) {
-	    if (++i[my_rank] >= dimensions_[my_rank]) {
-	      i[my_rank] = 0;
-	      os << "}";
-	    }
-	    else {
-	      os << "},\n";
-	      break;
-	    }
-	  }
-	} while (my_rank >= 0);
-	if (Rank > 1) {
-	  os << "}"; // "}/n"
-	}
-	else {
-	  os << "}";
-	}
+        adept::ExpressionSize<Rank> i(0);
+        int my_rank = -1;
+        if (Rank > 1) {
+          os << "\n";
+        }
+        do {
+          for (int r = 0; r < my_rank+1; r++)
+            { os << " "; }
+          for (int r = my_rank+1; r < Rank; r++)
+            { os << "{"; }
+          for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]-1; ++i[Rank-1])
+            { os << data_[index_(i)] << ", "; }
+          os << data_[index_(i)];
+          my_rank = Rank-1;
+          while (--my_rank >= 0) {
+            if (++i[my_rank] >= dimensions_[my_rank]) {
+              i[my_rank] = 0;
+              os << "}";
+            }
+            else {
+              os << "},\n";
+              break;
+            }
+          }
+        } while (my_rank >= 0);
+        if (Rank > 1) {
+          os << "}"; // "}/n"
+        }
+        else {
+          os << "}";
+        }
       }
       else {
-	adept::ExpressionSize<Rank> i(0);
-	int my_rank;
-	do {
-	  for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]; ++i[Rank-1]) {
-	    os << " " << data_[index_(i)];
-	  }
-	  my_rank = Rank-1;
-	  while (--my_rank >= 0) {
-	    if (++i[my_rank] >= dimensions_[my_rank]) {
-	      i[my_rank] = 0;
-	    }
-	    else {
-	      break;
-	    }
-	  }
-	  os << "\n";
-	} while (my_rank >= 0);
+        adept::ExpressionSize<Rank> i(0);
+        int my_rank;
+        do {
+          for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]; ++i[Rank-1]) {
+            os << " " << data_[index_(i)];
+          }
+          my_rank = Rank-1;
+          while (--my_rank >= 0) {
+            if (++i[my_rank] >= dimensions_[my_rank]) {
+              i[my_rank] = 0;
+            }
+            else {
+              break;
+            }
+          }
+          os << "\n";
+        } while (my_rank >= 0);
       }
       return os;
     }
@@ -2239,61 +2239,61 @@ namespace adept {
 
     std::ostream& print(std::ostream& os) const {
       if (empty()) {
-	os << array_print_empty_before;
-	if (array_print_empty_rank) {
-	  os << Rank;
-	}
-	os << array_print_empty_after;
+        os << array_print_empty_before;
+        if (array_print_empty_rank) {
+          os << Rank;
+        }
+        os << array_print_empty_after;
       }
       else if (Rank == 1) {
-	// Print a vector
-	os << vector_print_before << data_[0];
-	for (int i = 1; i < dimensions_[0]; ++i) {
-	  os << vector_separator << data_[i*offset_[0]];
-	}
-	os << vector_print_after;
+        // Print a vector
+        os << vector_print_before << data_[0];
+        for (int i = 1; i < dimensions_[0]; ++i) {
+          os << vector_separator << data_[i*offset_[0]];
+        }
+        os << vector_print_after;
       }
       else {
-	// Print a multi-dimensional array
-	adept::ExpressionSize<Rank> i(0);
-	int my_rank = -1;
-	os << array_print_before;
-	do {
-	  if (array_print_indent) {
-	    if (my_rank >= 0) {
-	      os << " ";
-	      for (int r = 0; r < my_rank*static_cast<int>(array_opening_bracket.size()); r++) {
-		os << " ";
-	      }
-	    }
-	  }
-	  if (my_rank == -1) {
-	    for (int r = 1; r < Rank; r++) {
-	      os << array_opening_bracket;
-	    }
-	  }
-	  else {
-	    for (int r = my_rank+1; r < Rank; r++) {
-	      os << array_opening_bracket;
-	    }
-	  }
-	  for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]-1; ++i[Rank-1]) {
-	    os << data_[index_(i)] << array_contiguous_separator;
-	  }
-	  os << data_[index_(i)];
-	  my_rank = Rank-1;
-	  while (--my_rank >= 0) {
-	    if (++i[my_rank] >= dimensions_[my_rank]) {
-	      i[my_rank] = 0;
-	      os << array_closing_bracket;
-	    }
-	    else {
-	      os << array_closing_bracket << array_non_contiguous_separator;
-	      break;
-	    }
-	  }
-	} while (my_rank >= 0);
-	os << array_print_after;
+        // Print a multi-dimensional array
+        adept::ExpressionSize<Rank> i(0);
+        int my_rank = -1;
+        os << array_print_before;
+        do {
+          if (array_print_indent) {
+            if (my_rank >= 0) {
+              os << " ";
+              for (int r = 0; r < my_rank*static_cast<int>(array_opening_bracket.size()); r++) {
+                os << " ";
+              }
+            }
+          }
+          if (my_rank == -1) {
+            for (int r = 1; r < Rank; r++) {
+              os << array_opening_bracket;
+            }
+          }
+          else {
+            for (int r = my_rank+1; r < Rank; r++) {
+              os << array_opening_bracket;
+            }
+          }
+          for (i[Rank-1] = 0; i[Rank-1] < dimensions_[Rank-1]-1; ++i[Rank-1]) {
+            os << data_[index_(i)] << array_contiguous_separator;
+          }
+          os << data_[index_(i)];
+          my_rank = Rank-1;
+          while (--my_rank >= 0) {
+            if (++i[my_rank] >= dimensions_[my_rank]) {
+              i[my_rank] = 0;
+              os << array_closing_bracket;
+            }
+            else {
+              os << array_closing_bracket << array_non_contiguous_separator;
+              break;
+            }
+          }
+        } while (my_rank >= 0);
+        os << array_print_after;
       }
       return os;
     }
@@ -2303,12 +2303,12 @@ namespace adept {
       data_begin = data_;
       data_end = data_;
       for (int i = 0; i < Rank; i++) {
-	if (offset_[i] >= 0) {
-	  data_end += (dimensions_[i]-1)*offset_[i];
-	}
-	else {
-	  data_begin += (dimensions_[i]-1)*offset_[i];
-	}
+        if (offset_[i] >= 0) {
+          data_end += (dimensions_[i]-1)*offset_[i];
+        }
+        else {
+          data_begin += (dimensions_[i]-1)*offset_[i];
+        }
       }
     }
 
@@ -2320,22 +2320,22 @@ namespace adept {
     template <typename IndexType>
     void push_gradient_indices(std::vector<IndexType>& vec) const {
       ADEPT_STATIC_ASSERT(IsActive,
-		  CANNOT_PUSH_GRADIENT_INDICES_FOR_INACTIVE_ARRAY); 
+                  CANNOT_PUSH_GRADIENT_INDICES_FOR_INACTIVE_ARRAY); 
       ExpressionSize<Rank> i(0);
       Index gradient_ind = gradient_index();
       Index index = 0;
       int my_rank;
       vec.reserve(vec.size() + size());
       do {
-	// Innermost loop - note that the counter is index, not max_index
-	for (Index max_index = index + dimensions_[Rank-1]*offset_[Rank-1];
-	     index < max_index;
-	     index += offset_[Rank-1]) {
-	  vec.push_back(gradient_ind + index);
-	}
-	// Increment counters appropriately depending on which
-	// dimensions have been finished
-	advance_index(index, my_rank, i);
+        // Innermost loop - note that the counter is index, not max_index
+        for (Index max_index = index + dimensions_[Rank-1]*offset_[Rank-1];
+             index < max_index;
+             index += offset_[Rank-1]) {
+          vec.push_back(gradient_ind + index);
+        }
+        // Increment counters appropriately depending on which
+        // dimensions have been finished
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -2347,7 +2347,7 @@ namespace adept {
     // Perform an in-place transpose for 2D arrays only
     Array& in_place_transpose() {
       ADEPT_STATIC_ASSERT(Rank == 2, 
-			  IN_PLACE_TRANSPOSE_ONLY_POSSIBLE_WITH_2D_ARRAYS);
+                          IN_PLACE_TRANSPOSE_ONLY_POSSIBLE_WITH_2D_ARRAYS);
       Index tmp;
       // Swap dimensions
       tmp = dimensions_[0];
@@ -2386,13 +2386,13 @@ namespace adept {
     Array<2,Type,IsActive>
     T() {
       ADEPT_STATIC_ASSERT(Rank == 1 || Rank == 2, 
-			  TRANSPOSE_ONLY_POSSIBLE_WITH_1D_OR_2D_ARRAYS);
+                          TRANSPOSE_ONLY_POSSIBLE_WITH_1D_OR_2D_ARRAYS);
       return my_T<Rank>();
     }
     const Array<2,Type,IsActive>
     T() const {
       ADEPT_STATIC_ASSERT(Rank == 1 || Rank == 2, 
-			  TRANSPOSE_ONLY_POSSIBLE_WITH_1D_OR_2D_ARRAYS);
+                          TRANSPOSE_ONLY_POSSIBLE_WITH_1D_OR_2D_ARRAYS);
       return my_T<Rank>();
     }
 
@@ -2404,26 +2404,26 @@ namespace adept {
     // that will be dimension 1 of the new array and so on.
     Array permute(const Index* idim) {
       if (empty()) {
-	throw empty_array("Attempt to permute an empty array"
-			  ADEPT_EXCEPTION_LOCATION);
+        throw empty_array("Attempt to permute an empty array"
+                          ADEPT_EXCEPTION_LOCATION);
       }
       ExpressionSize<Rank> new_dims(0);
       ExpressionSize<Rank> new_offset;
       for (int i = 0; i < Rank; ++i) {
-	if (idim[i] >= 0 && idim[i] < Rank) {
-	  new_dims[i] = dimensions_[idim[i]];
-	  new_offset[i] = offset_[idim[i]];
-	}
-	else {
-	  throw invalid_dimension("Dimensions must be in range 0 to Rank-1 in permute"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (idim[i] >= 0 && idim[i] < Rank) {
+          new_dims[i] = dimensions_[idim[i]];
+          new_offset[i] = offset_[idim[i]];
+        }
+        else {
+          throw invalid_dimension("Dimensions must be in range 0 to Rank-1 in permute"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       for (int i = 0; i < Rank; ++i) {
-	if (new_dims[i] == 0) {
-	  throw invalid_dimension("Missing dimension in permute"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (new_dims[i] == 0) {
+          throw invalid_dimension("Missing dimension in permute"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       return Array(data_, storage_, new_dims, new_offset);
     }
@@ -2436,13 +2436,13 @@ namespace adept {
     // arguments
     typename enable_if<(Rank < 7), Array>::type
     permute(Index i0, Index i1, Index i2 = -1, Index i3 = -1, Index i4 = -1,
-	    Index i5 = -1, Index i6 = -1) {
+            Index i5 = -1, Index i6 = -1) {
       Index idim[7] = {i0, i1, i2, i3, i4, i5, i6};
       for (int i = 0; i < Rank; ++i) {
-	if (idim[i] == -1) {
-	  throw invalid_dimension("Incorrect number of dimensions provided to permute"
-				  ADEPT_EXCEPTION_LOCATION);
-	}
+        if (idim[i] == -1) {
+          throw invalid_dimension("Incorrect number of dimensions provided to permute"
+                                  ADEPT_EXCEPTION_LOCATION);
+        }
       }
       return permute(idim);
     }
@@ -2454,15 +2454,15 @@ namespace adept {
       ADEPT_STATIC_ASSERT(Rank == 1, CANNOT_RESHAPE_MULTIDIMENSIONAL_ARRAY);
       Index new_size = 1;
       for (int i = 0; i < NewRank; ++i) {
-	new_size *= dims[i];
+        new_size *= dims[i];
       }
       if (new_size != dimensions_[0]) {
-	throw invalid_dimension("Size of reshaped array does not match original vector");
+        throw invalid_dimension("Size of reshaped array does not match original vector");
       }
       ExpressionSize<NewRank> offset;
       offset[NewRank-1] = offset_[0];
       for (int i = NewRank-2; i >= 0; --i) {
-	offset[i] = dims[i+1]*offset[i+1];
+        offset[i] = dims[i+1]*offset[i+1];
       }
       return Array<NewRank,Type,IsActive>(data_,storage_,dims,offset);
     }
@@ -2478,10 +2478,10 @@ namespace adept {
     Array<5,Type,IsActive> reshape(Index i0, Index i1, Index i2, Index i3, Index i4)
     { return reshape(ExpressionSize<2>(i0,i1,i2,i3,i4)); }
     Array<6,Type,IsActive> reshape(Index i0, Index i1, Index i2, Index i3,
-				   Index i4, Index i5)
+                                   Index i4, Index i5)
     { return reshape(ExpressionSize<2>(i0,i1,i2,i3,i4,i5)); }
     Array<7,Type,IsActive> reshape(Index i0, Index i1, Index i2, Index i3,
-				   Index i4, Index i5, Index i6)
+                                   Index i4, Index i5, Index i6)
     { return reshape(ExpressionSize<2>(i0,i1,i2,i3,i4,i5,i6)); }
 
 
@@ -2504,11 +2504,11 @@ namespace adept {
     void get_gradient(Array<Rank,MyType,false>& gradient) const {
       ADEPT_STATIC_ASSERT(IsActive,CANNOT_USE_GET_GRADIENT_ON_INACTIVE_ARRAY);
       if (gradient.empty()) {
-	gradient.resize(dimensions_);
+        gradient.resize(dimensions_);
       }
       else if (gradient.dimensions() != dimensions_) {
-	throw size_mismatch("Attempt to get_gradient with array of different dimensions"
-			    ADEPT_EXCEPTION_LOCATION);
+        throw size_mismatch("Attempt to get_gradient with array of different dimensions"
+                            ADEPT_EXCEPTION_LOCATION);
       }
       static const int last = Rank-1;
       ExpressionSize<Rank> target_offset = gradient.offset();
@@ -2519,16 +2519,16 @@ namespace adept {
       Index last_dim_stretch = dimensions_[last]*offset_[last];
       MyType* target = gradient.data();
       do {
-	i[last] = 0;
-	index_target = 0;
-	for (int r = 0; r < Rank-1; r++) {
-	  index_target += i[r]*target_offset[r];
-	}
-	ADEPT_ACTIVE_STACK->get_gradients(gradient_index()+index,
-				  gradient_index()+index+last_dim_stretch,
-				  target+index_target, offset_[last], target_offset[last]);
-	index += last_dim_stretch;
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        index_target = 0;
+        for (int r = 0; r < Rank-1; r++) {
+          index_target += i[r]*target_offset[r];
+        }
+        ADEPT_ACTIVE_STACK->get_gradients(gradient_index()+index,
+                                  gradient_index()+index+last_dim_stretch,
+                                  target+index_target, offset_[last], target_offset[last]);
+        index += last_dim_stretch;
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -2546,7 +2546,7 @@ namespace adept {
     //   ADEPT_STATIC_ASSERT(Rank == 1, STD_VECTOR_ONLY_AVAILABLE_FOR_RANK_1_ARRAYS);
     //   std::vector<typename internal::active_scalar<Type,IsActive>::type> data(dimensions_[0]);
     //   for (Index i = 0; i < dimensions_[0]; ++i) {
-    // 	data[i] = (*this)(i);
+    //         data[i] = (*this)(i);
     //   }
     //   return data;
     // }
@@ -2555,10 +2555,10 @@ namespace adept {
     put(std::vector<typename internal::active_scalar<Type,IsActive>::type>& data) const {
       ADEPT_STATIC_ASSERT(Rank == 1, PUT_ONLY_AVAILABLE_FOR_RANK_1_ARRAYS);
       if (data.size() != dimensions_[0]) {
-	data.resize(dimensions_[0]);
+        data.resize(dimensions_[0]);
       }
       for (Index i = 0; i < dimensions_[0]; ++i) {
-	data[i] = (*this)(i);
+        data[i] = (*this)(i);
       }  
     }
 
@@ -2566,10 +2566,10 @@ namespace adept {
     get(const std::vector<typename internal::active_scalar<Type,IsActive>::type>& data) {
       ADEPT_STATIC_ASSERT(Rank == 1, GET_ONLY_AVAILABLE_FOR_RANK_1_ARRAYS);
       if (data.size() != dimensions_[0]) {
-	resize(data.size());
+        resize(data.size());
       }
       for (Index i = 0; i < dimensions_[0]; ++i) {
-	(*this)(i) = data[i];
+        (*this)(i) = data[i];
       }  
     }
 
@@ -2580,7 +2580,7 @@ namespace adept {
 
     template <int MyArrayNum, int NArrays>
     void set_location_(const ExpressionSize<Rank>& i, 
-		       ExpressionSize<NArrays>& index) const {
+                       ExpressionSize<NArrays>& index) const {
       index[MyArrayNum] = index_(i);
     }
     
@@ -2599,7 +2599,7 @@ namespace adept {
 
     // Return a scalar
     template <bool IsAligned, int MyArrayNum, typename PacketType,
-	      int NArrays>
+              int NArrays>
     typename enable_if<is_same<Type,PacketType>::value, Type>::type
     values_at_location_(const ExpressionSize<NArrays>& loc) const {
       return data_[loc[MyArrayNum]];
@@ -2607,7 +2607,7 @@ namespace adept {
 
     // Return a Paket from an aligned memory address
     template <bool IsAligned, int MyArrayNum, typename PacketType,
-	      int NArrays>
+              int NArrays>
     typename enable_if<IsAligned && is_same<Packet<Type>,PacketType>::value, PacketType>::type
     values_at_location_(const ExpressionSize<NArrays>& loc) const {
       return Packet<Type>(data_+loc[MyArrayNum]);
@@ -2615,7 +2615,7 @@ namespace adept {
 
     // Return a Paket from an unaligned memory address
     template <bool IsAligned, int MyArrayNum, typename PacketType,
-	      int NArrays>
+              int NArrays>
     typename enable_if<!IsAligned && is_same<Packet<Type>,PacketType>::value, PacketType>::type
     values_at_location_(const ExpressionSize<NArrays>& loc) const {
       // integer dummy second argument indicates unaligned load
@@ -2624,40 +2624,40 @@ namespace adept {
 
     // Return a scalar
     template <bool UseStored, bool IsAligned, int MyArrayNum, int MyScratchNum,
-	      typename PacketType, int NArrays, int NScratch>
+              typename PacketType, int NArrays, int NScratch>
     typename enable_if<is_same<Type,PacketType>::value, Type>::type
     values_at_location_store_(const ExpressionSize<NArrays>& loc,
-			      ScratchVector<NScratch,PacketType>& scratch) const {
+                              ScratchVector<NScratch,PacketType>& scratch) const {
       return data_[loc[MyArrayNum]];
     }
 
     // Return a Paket from an aligned memory address
     template <bool UseStored, bool IsAligned, int MyArrayNum, int MyScratchNum,
-	      typename PacketType, int NArrays, int NScratch>
+              typename PacketType, int NArrays, int NScratch>
     typename enable_if<IsAligned && is_same<Packet<Type>,PacketType>::value, PacketType>::type
     values_at_location_store_(const ExpressionSize<NArrays>& loc,
-			      ScratchVector<NScratch,PacketType>& scratch) const {
+                              ScratchVector<NScratch,PacketType>& scratch) const {
       return Packet<Type>(data_+loc[MyArrayNum]);
     }
     // Return a Paket from an unaligned memory address
     template <bool UseStored, bool IsAligned, int MyArrayNum, int MyScratchNum,
-	      typename PacketType, int NArrays, int NScratch>
+              typename PacketType, int NArrays, int NScratch>
     typename enable_if<!IsAligned && is_same<Packet<Type>,PacketType>::value, PacketType>::type
     values_at_location_store_(const ExpressionSize<NArrays>& loc,
-			      ScratchVector<NScratch,PacketType>& scratch) const {
+                              ScratchVector<NScratch,PacketType>& scratch) const {
       return Packet<Type>(data_+loc[MyArrayNum], 0);
     }
    
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				  ScratchVector<NScratch>& scratch) const {
+                                  ScratchVector<NScratch>& scratch) const {
       return data_[loc[MyArrayNum]];
 
     }
 
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_stored_(const ExpressionSize<NArrays>& loc,
-		       const ScratchVector<NScratch>& scratch) const {
+                       const ScratchVector<NScratch>& scratch) const {
       return data_[loc[MyArrayNum]];
     }
 
@@ -2671,34 +2671,34 @@ namespace adept {
     // to the operation stack (or 1.0 if no multiplier is specified
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     void calc_gradient_(Stack& stack, const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch) const {
+                        const ScratchVector<NScratch>& scratch) const {
       stack.push_rhs(1.0, gradient_index() + loc[MyArrayNum]);
     }
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch, typename MyType>
     void calc_gradient_(Stack& stack, const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch,
-			const MyType& multiplier) const {
+                        const ScratchVector<NScratch>& scratch,
+                        const MyType& multiplier) const {
       stack.push_rhs(multiplier, gradient_index() + loc[MyArrayNum]);
     }
   
     template <int MyArrayNum, int MyScratchNum, int MyActiveNum,
-	      int NArrays, int NScratch, int NActive>
+              int NArrays, int NScratch, int NActive>
     void calc_gradient_packet_(Stack& stack, 
-			       const ExpressionSize<NArrays>& loc,
-			       const ScratchVector<NScratch,Packet<Real> >& scratch,
-			       ScratchVector<NActive,Packet<Real> >& gradients) const {
+                               const ExpressionSize<NArrays>& loc,
+                               const ScratchVector<NScratch,Packet<Real> >& scratch,
+                               ScratchVector<NActive,Packet<Real> >& gradients) const {
       printf("calc_gradient_packet activenum: %d\n", MyActiveNum);
       stack.push_rhs_indices<Packet<Real>::size,NActive>(gradient_index() + loc[MyArrayNum]);
       gradients[MyActiveNum] = Packet<Real>(1.0);
     }
 
     template <int MyArrayNum, int MyScratchNum, int MyActiveNum,
-	      int NArrays, int NScratch, int NActive, typename MyType>
+              int NArrays, int NScratch, int NActive, typename MyType>
     void calc_gradient_packet_(Stack& stack, 
-			       const ExpressionSize<NArrays>& loc,
-			       const ScratchVector<NScratch,Packet<Real> >& scratch,
-			       ScratchVector<NActive,Packet<Real> >& gradients,
-			       const MyType& multiplier) const {
+                               const ExpressionSize<NArrays>& loc,
+                               const ScratchVector<NScratch,Packet<Real> >& scratch,
+                               ScratchVector<NActive,Packet<Real> >& gradients,
+                               const MyType& multiplier) const {
       printf("calc_gradient_packet 2nd one activenum: %d\n", MyActiveNum);
       stack.push_rhs_indices<Packet<Real>::size,NActive>(gradient_index() + loc[MyArrayNum]);
       gradients[MyActiveNum] = multiplier;
@@ -2718,30 +2718,30 @@ namespace adept {
     void pack_row_major_() {
       offset_[Rank-1] = 1;
       if (Rank > 1) {
-	// Round up to nearest packet size so that all rows are aligned
-	if (dimensions_[Rank-1] >= Packet<Type>::size*2) {
-	  offset_[Rank-2] = ((dimensions_[Rank-1] + Packet<Type>::size - 1) / Packet<Type>::size) * Packet<Type>::size;
-	}
-	else {
-	  offset_[Rank-2] = dimensions_[Rank-1];
-	}
-	for (int i = Rank-3; i >= 0; --i) {
-	  offset_[i] = dimensions_[i+1]*offset_[i+1];
-	}
+        // Round up to nearest packet size so that all rows are aligned
+        if (dimensions_[Rank-1] >= Packet<Type>::size*2) {
+          offset_[Rank-2] = ((dimensions_[Rank-1] + Packet<Type>::size - 1) / Packet<Type>::size) * Packet<Type>::size;
+        }
+        else {
+          offset_[Rank-2] = dimensions_[Rank-1];
+        }
+        for (int i = Rank-3; i >= 0; --i) {
+          offset_[i] = dimensions_[i+1]*offset_[i+1];
+        }
       }
     }
     void pack_column_major_() {
       offset_[0] = 1;
       for (int i = 1; i < Rank; ++i) {
-	offset_[i] = dimensions_[i-1]*offset_[i-1];
+        offset_[i] = dimensions_[i-1]*offset_[i-1];
       }
     }
     void pack_() {
       if (array_row_major_order) {
-	pack_row_major_();
+        pack_row_major_();
       }
       else {
-	pack_column_major_();
+        pack_column_major_();
       }
     }
 
@@ -2750,16 +2750,16 @@ namespace adept {
     void pack_row_major_contiguous_() {
       offset_[Rank-1] = 1;
       for (int i = Rank-2; i >= 0; --i) {
-	offset_[i] = dimensions_[i+1]*offset_[i+1];
+        offset_[i] = dimensions_[i+1]*offset_[i+1];
       }
     }
 
     void pack_contiguous_() {
       if (array_row_major_order) {
-	pack_row_major_contiguous_();
+        pack_row_major_contiguous_();
       }
       else {
-	pack_column_major_();
+        pack_column_major_();
       }
     }
 
@@ -2768,14 +2768,14 @@ namespace adept {
     Index index_(Index j[Rank]) const {
       Index o = 0;
       for (int i = 0; i < Rank; i++) {
-	o += j[i]*offset_[i];
+        o += j[i]*offset_[i];
       }
       return o;
     }
     Index index_(const ExpressionSize<Rank>& j) const {
       Index o = 0;
       for (int i = 0; i < Rank; i++) {
-	o += j[i]*offset_[i];
+        o += j[i]*offset_[i];
       }
       return o;
     }
@@ -2785,14 +2785,14 @@ namespace adept {
       index -= offset_[Rank-1]*dimensions_[Rank-1];
       rank = Rank-1;
       while (--rank >= 0) {
-	if (++i[rank] >= dimensions_[rank]) {
-	  i[rank] = 0;
-	  index -= offset_[rank]*(dimensions_[rank]-1);
-	}
-	else {
-	  index += offset_[rank];
-	  break;
-	}
+        if (++i[rank] >= dimensions_[rank]) {
+          i[rank] = 0;
+          index -= offset_[rank]*(dimensions_[rank]-1);
+        }
+        else {
+          index += offset_[rank];
+          break;
+        }
       }
     }
 
@@ -2807,15 +2807,15 @@ namespace adept {
       Index index = 0;
       int my_rank;
       do {
-	// Innermost loop - note that the counter is index, not max_index
-	for (Index max_index = index + dimensions_[LocalRank-1]*offset_[LocalRank-1];
-	     index < max_index;
-	     index += offset_[LocalRank-1]) {
-	  data_[index] = x;
-	}
-	// Increment counters appropriately depending on which
-	// dimensions have been finished
-	advance_index(index, my_rank, i);
+        // Innermost loop - note that the counter is index, not max_index
+        for (Index max_index = index + dimensions_[LocalRank-1]*offset_[LocalRank-1];
+             index < max_index;
+             index += offset_[LocalRank-1]) {
+          data_[index] = x;
+        }
+        // Increment counters appropriately depending on which
+        // dimensions have been finished
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -2826,8 +2826,8 @@ namespace adept {
       // If not recording we call the inactive version instead
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (! ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_inactive_scalar_<LocalRank, false, X>(x);
-	return;
+        assign_inactive_scalar_<LocalRank, false, X>(x);
+        return;
       }
 #endif
 
@@ -2836,17 +2836,17 @@ namespace adept {
       Index index = 0;
       int my_rank;
       do {
-	// Innermost loop
-	ADEPT_ACTIVE_STACK->push_lhs_range(gradient_ind+index, dimensions_[LocalRank-1],
-					   offset_[LocalRank-1]);
-	for (Index max_index = index + dimensions_[LocalRank-1]*offset_[LocalRank-1];
-	     index < max_index; index += offset_[LocalRank-1]) {
-	  data_[index] = x;
-	}
+        // Innermost loop
+        ADEPT_ACTIVE_STACK->push_lhs_range(gradient_ind+index, dimensions_[LocalRank-1],
+                                           offset_[LocalRank-1]);
+        for (Index max_index = index + dimensions_[LocalRank-1]*offset_[LocalRank-1];
+             index < max_index; index += offset_[LocalRank-1]) {
+          data_[index] = x;
+        }
 
-	// Increment counters appropriately depending on which
-	// dimensions have been finished
-	advance_index(index, my_rank, i);
+        // Increment counters appropriately depending on which
+        // dimensions have been finished
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -2857,7 +2857,7 @@ namespace adept {
     template<int LocalRank, bool LocalIsActive, bool EIsActive, class E>
     inline
     typename enable_if<!LocalIsActive && (!expr_cast<E>::is_vectorizable
-					  || !is_same<typename E::type,Type>::value),void>::type
+                                          || !is_same<typename E::type,Type>::value),void>::type
     assign_expression_(const E& rhs) {
       ADEPT_STATIC_ASSERT(!EIsActive, CANNOT_ASSIGN_ACTIVE_EXPRESSION_TO_INACTIVE_ARRAY);
       ExpressionSize<LocalRank> i(0);
@@ -2867,30 +2867,30 @@ namespace adept {
       static const int last = LocalRank-1;
       // FIX!!!
       if (false) { //rhs.all_arrays_contiguous()) {
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    // Note that this is faster as we know that all indices
-	    // need to be incremented by 1
-	    data_[index] = rhs.next_value_contiguous(ind);
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            // Note that this is faster as we know that all indices
+            // need to be incremented by 1
+            data_[index] = rhs.next_value_contiguous(ind);
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
       else {
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    data_[index] = rhs.next_value(ind);
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            data_[index] = rhs.next_value(ind);
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
     }
 
@@ -2898,7 +2898,7 @@ namespace adept {
     template<int LocalRank, bool LocalIsActive, bool EIsActive, class E>
     inline //__attribute__((always_inline))
     typename enable_if<!LocalIsActive && expr_cast<E>::is_vectorizable && LocalRank == 1
-		       && is_same<typename E::type,Type>::value,void>::type
+                       && is_same<typename E::type,Type>::value,void>::type
       // Removing the reference speeds things up because otherwise E
       // is dereferenced each loop
       //  assign_expression_(const E& __restrict rhs) {
@@ -2908,52 +2908,52 @@ namespace adept {
       ExpressionSize<expr_cast<E>::n_arrays> ind(0);
 
       if (dimensions_[0] >= Packet<Type>::size*2
-	  && offset_[0] == 1
-	  && rhs.all_arrays_contiguous()
-	  ) {
-	// Contiguous source and destination data
-	Index istartvec = 0;
-	Index iendvec = 0;
+          && offset_[0] == 1
+          && rhs.all_arrays_contiguous()
+          ) {
+        // Contiguous source and destination data
+        Index istartvec = 0;
+        Index iendvec = 0;
 
-	istartvec = rhs.alignment_offset();
-	
-	if (istartvec < 0 || istartvec != alignment_offset_<Packet<Type>::size>()) {
-	  istartvec = iendvec = 0;
-	}
-	else  {
-	  iendvec = (dimensions_[0]-istartvec);
-	  iendvec -= (iendvec % Packet<Type>::size);
-	  iendvec += istartvec;
-	}
-	i[0] = 0;
-	rhs.set_location(i, ind);
-	Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
-	// Innermost loop
-	for (int index = 0; index < istartvec; ++index) {
-	  // Scalar version
-	  t[index] = rhs.next_value_contiguous(ind);
-	}
-	for (int index = istartvec ; index < iendvec;
-	     index += Packet<Type>::size) {
-	  // Vectorized version
-	  //	    rhs.next_packet(ind).put(data_+index)
-	  // FIX may need unaligned store
-	  rhs.next_packet(ind).put(t+index);
-	}
-	for (int index = iendvec ; index < dimensions_[0]; ++index) {
-	  // Scalar version
-	  t[index] = rhs.next_value_contiguous(ind);
-	}
+        istartvec = rhs.alignment_offset();
+        
+        if (istartvec < 0 || istartvec != alignment_offset_<Packet<Type>::size>()) {
+          istartvec = iendvec = 0;
+        }
+        else  {
+          iendvec = (dimensions_[0]-istartvec);
+          iendvec -= (iendvec % Packet<Type>::size);
+          iendvec += istartvec;
+        }
+        i[0] = 0;
+        rhs.set_location(i, ind);
+        Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
+        // Innermost loop
+        for (int index = 0; index < istartvec; ++index) {
+          // Scalar version
+          t[index] = rhs.next_value_contiguous(ind);
+        }
+        for (int index = istartvec ; index < iendvec;
+             index += Packet<Type>::size) {
+          // Vectorized version
+          //            rhs.next_packet(ind).put(data_+index)
+          // FIX may need unaligned store
+          rhs.next_packet(ind).put(t+index);
+        }
+        for (int index = iendvec ; index < dimensions_[0]; ++index) {
+          // Scalar version
+          t[index] = rhs.next_value_contiguous(ind);
+        }
       }
       else {
-	// Non-contiguous source or destination data
-	i[0] = 0;
-	rhs.set_location(i, ind);
-	Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
-	for (int index = 0; i[0] < dimensions_[0]; ++i[0],
-	       index += offset_[0]) {
-	  t[index] = rhs.next_value(ind);
-	}
+        // Non-contiguous source or destination data
+        i[0] = 0;
+        rhs.set_location(i, ind);
+        Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
+        for (int index = 0; i[0] < dimensions_[0]; ++i[0],
+               index += offset_[0]) {
+          t[index] = rhs.next_value(ind);
+        }
       }
     }
 
@@ -2974,56 +2974,56 @@ namespace adept {
       static const int last = LocalRank-1;
       
       if (dimensions_[last] >= Packet<Type>::size*2
-	  && all_arrays_contiguous_()
-	  && rhs.all_arrays_contiguous()) {
-	// Contiguous source and destination data
-	int iendvec;
-	int istartvec = rhs.alignment_offset();
-	if (istartvec < 0 || istartvec != alignment_offset_<Packet<Type>::size>()) {
-	  istartvec = iendvec = 0;
-	}
-	else {
-	  iendvec = (dimensions_[last]-istartvec);
-	  iendvec -= (iendvec % Packet<Type>::size);
-	  iendvec += istartvec;
-	}
+          && all_arrays_contiguous_()
+          && rhs.all_arrays_contiguous()) {
+        // Contiguous source and destination data
+        int iendvec;
+        int istartvec = rhs.alignment_offset();
+        if (istartvec < 0 || istartvec != alignment_offset_<Packet<Type>::size>()) {
+          istartvec = iendvec = 0;
+        }
+        else {
+          iendvec = (dimensions_[last]-istartvec);
+          iendvec -= (iendvec % Packet<Type>::size);
+          iendvec += istartvec;
+        }
 
 
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < istartvec; ++i[last], ++index) {
-	    // Scalar version
-	    data_[index] = rhs.next_value_contiguous(ind);
-	  }
-	  Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
-	  for ( ; i[last] < iendvec; i[last] += Packet<Type>::size,
-		  index += Packet<Type>::size) {
-	    // Vectorized version
-	    //	    rhs.next_packet(ind).put(data_+index);
-	    // FIX may need unaligned store
-	    rhs.next_packet(ind).put(t+index);
-	  }
-	  for ( ; i[last] < dimensions_[last]; ++i[last], ++index) {
-	    // Scalar version
-	    data_[index] = rhs.next_value_contiguous(ind);
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < istartvec; ++i[last], ++index) {
+            // Scalar version
+            data_[index] = rhs.next_value_contiguous(ind);
+          }
+          Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
+          for ( ; i[last] < iendvec; i[last] += Packet<Type>::size,
+                  index += Packet<Type>::size) {
+            // Vectorized version
+            //            rhs.next_packet(ind).put(data_+index);
+            // FIX may need unaligned store
+            rhs.next_packet(ind).put(t+index);
+          }
+          for ( ; i[last] < dimensions_[last]; ++i[last], ++index) {
+            // Scalar version
+            data_[index] = rhs.next_value_contiguous(ind);
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
       else {
-	// Non-contiguous source or destination data
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    data_[index] = rhs.next_value(ind);
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        // Non-contiguous source or destination data
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            data_[index] = rhs.next_value(ind);
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
     }
 
@@ -3035,8 +3035,8 @@ namespace adept {
       // If recording has been paused then call the inactive version
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_expression_<LocalRank,false,false>(rhs);
-	return;
+        assign_expression_<LocalRank,false,false>(rhs);
+        return;
       }
 #endif
       ExpressionSize<LocalRank> i(0);
@@ -3048,34 +3048,34 @@ namespace adept {
       ADEPT_ACTIVE_STACK->check_space(expr_cast<E>::n_active * size());
 
       if (expr_cast<E>::is_vectorizable && rhs.all_arrays_contiguous()) {
-	// Contiguous source and destination data
-	Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    t[index] = rhs.next_value_and_gradient_contiguous(*ADEPT_ACTIVE_STACK, ind);
-	    ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        // Contiguous source and destination data
+        Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            t[index] = rhs.next_value_and_gradient_contiguous(*ADEPT_ACTIVE_STACK, ind);
+            ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
       else {
-	// Non-contiguous source or destination data
-	Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
-	do {
-	  i[last] = 0;
-	  rhs.set_location(i, ind);
-	  // Innermost loop
-	  for ( ; i[last] < dimensions_[last]; ++i[last],
-		  index += offset_[last]) {
-	    t[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, ind);
-	    ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
-	  }
-	  advance_index(index, my_rank, i);
-	} while (my_rank >= 0);
+        // Non-contiguous source or destination data
+        Type* const __restrict t = data_; // Avoids an unnecessary load for some reason
+        do {
+          i[last] = 0;
+          rhs.set_location(i, ind);
+          // Innermost loop
+          for ( ; i[last] < dimensions_[last]; ++i[last],
+                  index += offset_[last]) {
+            t[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, ind);
+            ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
+          }
+          advance_index(index, my_rank, i);
+        } while (my_rank >= 0);
       }
     }
 
@@ -3086,8 +3086,8 @@ namespace adept {
       // If recording has been paused then call the inactive version
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_expression_<LocalRank,false,false>(rhs);
-	return;
+        assign_expression_<LocalRank,false,false>(rhs);
+        return;
       }
 #endif
       ExpressionSize<LocalRank> i(0);
@@ -3097,16 +3097,16 @@ namespace adept {
       Index gradient_ind = gradient_index();
       static const int last = LocalRank-1;
       do {
-	i[last] = 0;
-	rhs.set_location(i, ind);
-	// Innermost loop
-	ADEPT_ACTIVE_STACK->push_lhs_range(gradient_ind+index, dimensions_[LocalRank-1],
-					   offset_[LocalRank-1]);
-	for ( ; i[last] < dimensions_[last]; ++i[last],
-	       index += offset_[last]) {
-	  data_[index] = rhs.next_value(ind);
-	}
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        rhs.set_location(i, ind);
+        // Innermost loop
+        ADEPT_ACTIVE_STACK->push_lhs_range(gradient_ind+index, dimensions_[LocalRank-1],
+                                           offset_[LocalRank-1]);
+        for ( ; i[last] < dimensions_[last]; ++i[last],
+               index += offset_[last]) {
+          data_[index] = rhs.next_value(ind);
+        }
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -3122,16 +3122,16 @@ namespace adept {
       static const int last = Rank-1;
 
       do {
-	i[last] = 0;
-	bool_expr.set_location(i, bool_ind);
-	// Innermost loop
-	for ( ; i[last] < dimensions_[last]; ++i[last],
-	       index += offset_[last]) {
-	  if (bool_expr.next_value(bool_ind)) {
-	    data_[index] = rhs;
-	  }
-	}
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        bool_expr.set_location(i, bool_ind);
+        // Innermost loop
+        for ( ; i[last] < dimensions_[last]; ++i[last],
+               index += offset_[last]) {
+          if (bool_expr.next_value(bool_ind)) {
+            data_[index] = rhs;
+          }
+        }
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -3140,8 +3140,8 @@ namespace adept {
     assign_conditional_inactive_scalar_(const B& bool_expr, C rhs) {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (! ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_conditional_inactive_scalar_<false, B, C>(bool_expr, rhs);
-	return;
+        assign_conditional_inactive_scalar_<false, B, C>(bool_expr, rhs);
+        return;
       }
 #endif
 
@@ -3152,17 +3152,17 @@ namespace adept {
       static const int last = Rank-1;
 
       do {
-	i[last] = 0;
-	bool_expr.set_location(i, bool_ind);
-	// Innermost loop
-	for ( ; i[last] < dimensions_[last]; ++i[last],
-	       index += offset_[last]) {
-	  if (bool_expr.next_value(bool_ind)) {
-	    data_[index] = rhs;
-	    ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
-	  }
-	}
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        bool_expr.set_location(i, bool_ind);
+        // Innermost loop
+        for ( ; i[last] < dimensions_[last]; ++i[last],
+               index += offset_[last]) {
+          if (bool_expr.next_value(bool_ind)) {
+            data_[index] = rhs;
+            ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index);
+          }
+        }
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -3178,24 +3178,24 @@ namespace adept {
       bool is_gap = false;
 
       do {
-	i[last] = 0;
-	rhs.set_location(i, rhs_ind);
-	bool_expr.set_location(i, bool_ind);
-	// Innermost loop
-	for ( ; i[last] < dimensions_[last]; ++i[last],
-	       index += offset_[last]) {
-	  if (bool_expr.next_value(bool_ind)) {
-	    if (is_gap) {
-	      rhs.set_location(i, rhs_ind);
-	      is_gap = false;
-	    }
-	    data_[index] = rhs.next_value(rhs_ind);
-	  }
-	  else {
-	    is_gap = true;
-	  }
-	}
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        rhs.set_location(i, rhs_ind);
+        bool_expr.set_location(i, bool_ind);
+        // Innermost loop
+        for ( ; i[last] < dimensions_[last]; ++i[last],
+               index += offset_[last]) {
+          if (bool_expr.next_value(bool_ind)) {
+            if (is_gap) {
+              rhs.set_location(i, rhs_ind);
+              is_gap = false;
+            }
+            data_[index] = rhs.next_value(rhs_ind);
+          }
+          else {
+            is_gap = true;
+          }
+        }
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -3206,8 +3206,8 @@ namespace adept {
       // If recording has been paused then call the inactive version
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	assign_conditional_<false>(bool_expr, rhs);
-	return;
+        assign_conditional_<false>(bool_expr, rhs);
+        return;
       }
 #endif
       ExpressionSize<Rank> i(0);
@@ -3220,25 +3220,25 @@ namespace adept {
 
       ADEPT_ACTIVE_STACK->check_space(expr_cast<C>::n_active * size());
       do {
-	i[last] = 0;
-	rhs.set_location(i, rhs_ind);
-	bool_expr.set_location(i, bool_ind);
-	// Innermost loop
-	for ( ; i[last] < dimensions_[last]; ++i[last],
-	       index += offset_[last]) {
-	  if (bool_expr.next_value(bool_ind)) {
-	    if (is_gap) {
-	      rhs.set_location(i, rhs_ind);
-	      is_gap = false;
-	    }
-	    data_[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, rhs_ind);
-	    ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
-	  }
-	  else {
-	    is_gap = true;
-	  }
-	}
-	advance_index(index, my_rank, i);
+        i[last] = 0;
+        rhs.set_location(i, rhs_ind);
+        bool_expr.set_location(i, bool_ind);
+        // Innermost loop
+        for ( ; i[last] < dimensions_[last]; ++i[last],
+               index += offset_[last]) {
+          if (bool_expr.next_value(bool_ind)) {
+            if (is_gap) {
+              rhs.set_location(i, rhs_ind);
+              is_gap = false;
+            }
+            data_[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, rhs_ind);
+            ADEPT_ACTIVE_STACK->push_lhs(gradient_index()+index); // What if RHS not active?
+          }
+          else {
+            is_gap = true;
+          }
+        }
+        advance_index(index, my_rank, i);
       } while (my_rank >= 0);
     }
 
@@ -3352,8 +3352,8 @@ namespace adept {
   Array<2,Type,IsActive>
   transpose(Array<1,Type,IsActive>& in) {
     return Array<2,Type,IsActive>(in.data(), in.storage(),
-				  ExpressionSize<2>(1,in.dimension(0)),
-				  ExpressionSize<2>(in.dimension(0)*in.offset(0),in.offset(0)));
+                                  ExpressionSize<2>(1,in.dimension(0)),
+                                  ExpressionSize<2>(in.dimension(0)*in.offset(0),in.offset(0)));
   }
 
   // Transpose a 2D expression
@@ -3374,8 +3374,8 @@ namespace adept {
   transpose(const Expression<Type,E>& in) {
     Array<1,Type,E::is_active> out_1D(in);
     return Array<2,Type,E::is_active>(out_1D.data(), out_1D.storage(),
-				      ExpressionSize<2>(1,out_1D.dimension(0)),
-				      ExpressionSize<2>(out_1D.dimension(0)*out_1D.offset(0),out_1D.offset(0)));
+                                      ExpressionSize<2>(1,out_1D.dimension(0)),
+                                      ExpressionSize<2>(out_1D.dimension(0)*out_1D.offset(0),out_1D.offset(0)));
   }
 
   // Extract the gradients from an active Array after the

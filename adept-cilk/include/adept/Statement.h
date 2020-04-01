@@ -24,7 +24,7 @@ namespace adept {
     struct Statement {
       Statement() { }
       Statement(uIndex index_, uIndex end_plus_one_)
-	: index(index_), end_plus_one(end_plus_one_) { }
+        : index(index_), end_plus_one(end_plus_one_) { }
       uIndex index;
       uIndex end_plus_one;
     };

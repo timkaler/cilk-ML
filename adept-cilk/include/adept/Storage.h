@@ -68,7 +68,7 @@ namespace adept {
       //internal::n_storage_objects_created_++; 
 #ifndef ADEPT_NO_AUTOMATIC_DIFFERENTIATION
       if (IsActive) {
-	gradient_index_ = ADEPT_ACTIVE_STACK->register_gradients(n);
+        gradient_index_ = ADEPT_ACTIVE_STACK->register_gradients(n);
       }
 #endif
     }
@@ -85,9 +85,9 @@ namespace adept {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
-	if (gradient_index_ >= 0) {
-	  ADEPT_ACTIVE_STACK->unregister_gradients(gradient_index_, n_);
-	}
+        if (gradient_index_ >= 0) {
+          ADEPT_ACTIVE_STACK->unregister_gradients(gradient_index_, n_);
+        }
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
@@ -154,7 +154,7 @@ namespace adept {
       //if (n_links_arr[128] == 0) {
       ////if (n_links_arr[128] == 0) {
       //  throw invalid_operation("Attempt to remove more links to a storage object than set"
-      //  			ADEPT_EXCEPTION_LOCATION);
+      //                          ADEPT_EXCEPTION_LOCATION);
       //} else {
 
       //}
@@ -191,7 +191,7 @@ namespace adept {
     info_string() const {
       std::stringstream x;
       x << n_ << " " << sizeof(Type) << "-byte elements allocated with "
-	<< n_links_ << " links"; //n_links_ << " links";
+        << n_links_ << " links"; //n_links_ << " links";
       return x.str();
     }
 

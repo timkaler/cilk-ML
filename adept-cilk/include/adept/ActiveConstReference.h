@@ -77,7 +77,7 @@ namespace adept {
     /*
     ActiveConstReference(const ActiveConstReference& rhs)
       : val_(const_cast<ActiveConstReference<Type>&>(rhs).lvalue()),
-	gradient_index_(rhs.gradient_index()) { }
+       gradient_index_(rhs.gradient_index()) { }
     */
 
     // Destructor does not unregister the object from the stack since
@@ -88,7 +88,7 @@ namespace adept {
     // -------------------------------------------------------------------
     // 3. Operators
     // -------------------------------------------------------------------
-	   
+          
     // Assignment operator with an active variable on the rhs: first a
     // non-template version because otherwise compiler will generate
     // its own; must be inaccessible
@@ -118,7 +118,7 @@ namespace adept {
 
     template <int Rank, typename MyType>
     void calc_gradient(Stack& stack, const MyType& multiplier, 
-		       const ExpressionSize<Rank>&) const {
+                     const ExpressionSize<Rank>&) const {
       stack.push_rhs(multiplier, gradient_index_);
     }
 
@@ -128,8 +128,8 @@ namespace adept {
     template <typename MyType>
     void set_gradient(const MyType& gradient) const {
       return ADEPT_ACTIVE_STACK->set_gradients(gradient_index_,
-					       gradient_index_+1, 
-					       &gradient);
+                                          gradient_index_+1, 
+                                          &gradient);
     }
 
     // Get the value of the gradient, for extracting the adjoint after
@@ -137,12 +137,12 @@ namespace adept {
     template <typename MyType>
     void get_gradient(MyType& gradient) const {
       return ADEPT_ACTIVE_STACK->get_gradients(gradient_index_,
-					       gradient_index_+1, &gradient);
+                                          gradient_index_+1, &gradient);
     }
     Type get_gradient() const {
       Type gradient = 0;
       ADEPT_ACTIVE_STACK->get_gradients(gradient_index_,
-					gradient_index_+1, &gradient);
+                                   gradient_index_+1, &gradient);
       return gradient;
     }
  
@@ -163,26 +163,26 @@ namespace adept {
     // to stride the indexing to the derivatives, in case they are
     // part of a matrix that is oriented in a different sense.
     void add_derivative_dependence(const Active<Type>* rhs,
-				   const Real* multiplier,
-				   int n, 
-				   int multiplier_stride = 1) const {
+                               const Real* multiplier,
+                               int n, 
+                               int multiplier_stride = 1) const {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
 #ifndef ADEPT_MANUAL_MEMORY_ALLOCATION
-	// Check there is space in the operation stack for n entries
-	ADEPT_ACTIVE_STACK->check_space(n);
+       // Check there is space in the operation stack for n entries
+       ADEPT_ACTIVE_STACK->check_space(n);
 #endif
-	for (int i = 0; i < n; i++) {
-	  Real mult = multiplier[i*multiplier_stride];
-	  if (mult != 0.0) {
-	    // For each non-zero multiplier, add a pseudo-operation to
-	    // the operation stack
-	    ADEPT_ACTIVE_STACK->push_rhs(mult,
-					 rhs[i].gradient_index());
-	  }
-	}
-	ADEPT_ACTIVE_STACK->push_lhs(gradient_index_);
+       for (int i = 0; i < n; i++) {
+         Real mult = multiplier[i*multiplier_stride];
+         if (mult != 0.0) {
+           // For each non-zero multiplier, add a pseudo-operation to
+           // the operation stack
+           ADEPT_ACTIVE_STACK->push_rhs(mult,
+                                    rhs[i].gradient_index());
+         }
+       }
+       ADEPT_ACTIVE_STACK->push_lhs(gradient_index_);
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
@@ -197,29 +197,29 @@ namespace adept {
     // y depends on x.  To specify also how y depends on z, call
     // "y.append_derivative_dependence(z, dy_dz, n);".
     void append_derivative_dependence(const Active<Type>* rhs,
-				      const Real* multiplier,
-				      int n,
-				      int multiplier_stride = 1) const {
+                                  const Real* multiplier,
+                                  int n,
+                                  int multiplier_stride = 1) const {
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
 #ifndef ADEPT_MANUAL_MEMORY_ALLOCATION
-	// Check there is space in the operation stack for n entries
-	ADEPT_ACTIVE_STACK->check_space(n);
+       // Check there is space in the operation stack for n entries
+       ADEPT_ACTIVE_STACK->check_space(n);
 #endif
-	for (int i = 0; i < n; i++) {
-	  Real mult = multiplier[i*multiplier_stride];
-	  if (mult != 0.0) {
-	    // For each non-zero multiplier, add a pseudo-operation to
-	    // the operation stack
-	    ADEPT_ACTIVE_STACK->push_rhs(mult,
-					 rhs[i].gradient_index());
-	  }
-	}
-	if (!(ADEPT_ACTIVE_STACK->update_lhs(gradient_index_))) {
-	  throw wrong_gradient("Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call"
-			       ADEPT_EXCEPTION_LOCATION);
-	}
+       for (int i = 0; i < n; i++) {
+         Real mult = multiplier[i*multiplier_stride];
+         if (mult != 0.0) {
+           // For each non-zero multiplier, add a pseudo-operation to
+           // the operation stack
+           ADEPT_ACTIVE_STACK->push_rhs(mult,
+                                    rhs[i].gradient_index());
+         }
+       }
+       if (!(ADEPT_ACTIVE_STACK->update_lhs(gradient_index_))) {
+         throw wrong_gradient("Wrong gradient: append_derivative_dependence called on a different aReal object from the most recent add_derivative_dependence call"
+                            ADEPT_EXCEPTION_LOCATION);
+       }
 #ifdef ADEPT_RECORDING_PAUSABLE
       }
 #endif
@@ -229,14 +229,14 @@ namespace adept {
     template <class T>
     void add_derivative_dependence(T& rhs, Real multiplier) const {
       ADEPT_ACTIVE_STACK->add_derivative_dependence(gradient_index_,
-						    rhs.gradient_index(),
-						    multiplier);
+                                              rhs.gradient_index(),
+                                              multiplier);
     }
     template <class T>
     void append_derivative_dependence(T& rhs, Real multiplier) const {
       ADEPT_ACTIVE_STACK->append_derivative_dependence(gradient_index_,
-						       rhs.gradient_index(),
-						       multiplier);
+                                                 rhs.gradient_index(),
+                                                 multiplier);
     }
  
     // -------------------------------------------------------------------
@@ -266,33 +266,33 @@ namespace adept {
     
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				ScratchVector<NScratch>& scratch) const
+                            ScratchVector<NScratch>& scratch) const
     { return val_; }
 
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     Type value_stored_(const ExpressionSize<NArrays>& loc,
-		     const ScratchVector<NScratch>& scratch) const
+                   const ScratchVector<NScratch>& scratch) const
     { return val_; }
 
     template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
     void calc_gradient_(Stack& stack, 
-			const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch) const {
+                     const ExpressionSize<NArrays>& loc,
+                     const ScratchVector<NScratch>& scratch) const {
       stack.push_rhs(1.0, gradient_index_);
     }
 
     template <int MyArrayNum, int MyScratchNum, 
-	      int NArrays, int NScratch, typename MyType>
+             int NArrays, int NScratch, typename MyType>
     void calc_gradient_(Stack& stack, 
-			const ExpressionSize<NArrays>& loc,
-			const ScratchVector<NScratch>& scratch,
-			const MyType& multiplier) const {
+                     const ExpressionSize<NArrays>& loc,
+                     const ScratchVector<NScratch>& scratch,
+                     const MyType& multiplier) const {
       stack.push_rhs(multiplier, gradient_index_);
     }
 
     template <int MyArrayNum, int Rank, int NArrays>
     void set_location_(const ExpressionSize<Rank>& i, 
-		       ExpressionSize<NArrays>& index) const {}
+                     ExpressionSize<NArrays>& index) const {}
 
 
     // The Stack::independent(x) and Stack::dependent(y) functions add
@@ -323,8 +323,8 @@ namespace adept {
   private:
     const Type& val_;              // Reference to the numerical value
     Index gradient_index_;         // Index to where the corresponding
-				   // gradient will be held during the
-				   // adjoint calculation
+                               // gradient will be held during the
+                               // adjoint calculation
   }; // End of definition of ActiveConstReference
 
 

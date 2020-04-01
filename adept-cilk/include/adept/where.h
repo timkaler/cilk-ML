@@ -76,8 +76,8 @@ namespace adept {
       template <class C>
       typename enable_if<is_not_either_or<C>::value, Where&>::type
       operator=(const C& c) {
-	array_.assign_conditional(bool_expr_, c);
-	return *this;
+        array_.assign_conditional(bool_expr_, c);
+        return *this;
       }
 
       // With either_or on the right-hand-side: this implementation
@@ -85,27 +85,27 @@ namespace adept {
       template <class C>
       typename enable_if<!is_not_either_or<C>::value, Where&>::type
       operator=(const C& c) {
-	array_.assign_conditional(!const_cast<B&>(bool_expr_), c.value_if_false());
-	array_.assign_conditional(bool_expr_,  c.value_if_true());
-	return *this;
+        array_.assign_conditional(!const_cast<B&>(bool_expr_), c.value_if_false());
+        array_.assign_conditional(bool_expr_,  c.value_if_true());
+        return *this;
       }
 
-#define ADEPT_WHERE_OPERATOR(EQ_OP, OP)					\
-      template <class C>						\
-      typename enable_if<is_not_either_or<C>::value, Where&>::type	\
-      EQ_OP(const C& c) {						\
-	array_.assign_conditional(bool_expr_, noalias(*this) OP c);	\
-        return *this;							\
-      }									\
-      template <class C>						\
-      typename enable_if<!is_not_either_or<C>::value, Where&>::type	\
-      EQ_OP(const C& c) {						\
-	array_.assign_conditional(!const_cast<B&>(bool_expr_),		\
-				  noalias(*this) OP c.value_if_false()); \
-	array_.assign_conditional(bool_expr_,				\
-				  noalias(*this) OP c.value_if_true()); \
-	return *this;							\
-      }									
+#define ADEPT_WHERE_OPERATOR(EQ_OP, OP)                                        \
+      template <class C>                                                \
+      typename enable_if<is_not_either_or<C>::value, Where&>::type        \
+      EQ_OP(const C& c) {                                                \
+        array_.assign_conditional(bool_expr_, noalias(*this) OP c);        \
+        return *this;                                                        \
+      }                                                                        \
+      template <class C>                                                \
+      typename enable_if<!is_not_either_or<C>::value, Where&>::type        \
+      EQ_OP(const C& c) {                                                \
+        array_.assign_conditional(!const_cast<B&>(bool_expr_),                \
+                                  noalias(*this) OP c.value_if_false()); \
+        array_.assign_conditional(bool_expr_,                                \
+                                  noalias(*this) OP c.value_if_true()); \
+        return *this;                                                        \
+      }                                                                        
       ADEPT_WHERE_OPERATOR(operator+=, +)
       ADEPT_WHERE_OPERATOR(operator-=, -)
       ADEPT_WHERE_OPERATOR(operator*=, *)

@@ -1,15 +1,14 @@
-/* adept_arrays.h -- Header file for array functionality of Adept automatic differentiation library
+/* adept_arrays.h
+Header file for array functionality of Adept automatic differentiation library
 
-    Copyright (C) 2014-2015 European Centre for Medium-Range Weather Forecasts
+Copyright (C) 2014-2015 European Centre for Medium-Range Weather Forecasts
+Author: Robin Hogan <r.j.hogan@ecmwf.int>
 
-    Author: Robin Hogan <r.j.hogan@ecmwf.int>
-
-    This file is part of the Adept library.
-
+This file is part of the Adept library.
 */
 
-#ifndef AdeptArrays_H
-#define AdeptArrays_H 1
+#ifndef ADEPTARRAYS_H
+#define ADEPTARRAYS_H
 
 #include <adept.h>
 
@@ -27,4 +26,4 @@
 #include <adept/array_shortcuts.h>
 #include <adept/vector_utilities.h>
 
-#endif
+#endif  // ADEPTARRAYS_H

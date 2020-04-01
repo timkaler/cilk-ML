@@ -8,8 +8,6 @@ using adept::Real;
 using adept::aReal;
 using adept::Matrix;
 using adept::aMatrix;
-using adept::Vector;
-using adept::aVector;
 
 using namespace activations;
 
@@ -37,18 +35,6 @@ aReal activations::logitCrossEntropy(aMatrix yHat, aMatrix y) {
   return loss_sum / (1.0 * y.dimensions()[0] * y.dimensions()[1]);
 }
 
-aReal activations::relu(aReal arg) {
-  return fmax(0.0, arg);
-}
-
-aVector activations::relu(aVector arg) {
-  return fmax(0.0, arg);
-}
-
-aMatrix activations::relu(aMatrix arg) {
-  return fmax(0.0, arg);
-}
-
 // Softmax with softening parameter p (active in case you want to learn it)
 // Divide everything by the maximum value for numerical stability
 aMatrix activations::softmax(aMatrix arg, aReal p) {
@@ -56,14 +42,8 @@ aMatrix activations::softmax(aMatrix arg, aReal p) {
   return exp(p*arg-mval) / sum(exp(p*arg-mval));
 }
 
-// Sigmoid function: (-inf, inf) --> (0, 1)
-// The ranch ensures numerical stability
-aReal activations::sigmoid(aReal arg) {
-  if (arg > 0.0) {
-    return 1.0 / (1 + exp(-1.0*arg));
-  } else {
-    return exp(arg) / (exp(arg) + 1);
-  }
+aMatrix activations::relu(aMatrix arg) {
+  return fmax(0.0, arg);
 }
 
 aMatrix activations::sigmoid(aMatrix arg) {

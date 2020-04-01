@@ -206,7 +206,6 @@ void learn_lstm() {
                   / (1.0 * BATCH_SIZE * (LEN - 1));
       }
       // Aggregate the accuracy. TODO: use a reducer here
-      
       for (int j = 0; j < LEN-1; ++j) {
         int argmax = 0;
         double argmaxvalue = output_softmax[j](0, 0).value();

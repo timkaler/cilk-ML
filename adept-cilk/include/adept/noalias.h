@@ -31,32 +31,32 @@ namespace adept {
       const R& arg;
 
       NoAlias(const Expression<Type, R>& arg_)
-	: arg(arg_.cast()) { }
+        : arg(arg_.cast()) { }
       
       template <int Rank>
-	bool get_dimensions_(ExpressionSize<Rank>& dim) const {
-	return arg.get_dimensions(dim);
+        bool get_dimensions_(ExpressionSize<Rank>& dim) const {
+        return arg.get_dimensions(dim);
       }
 
 //       Index get_dimension_with_len(Index len) const {
-// 	return arg.get_dimension_with_len_(len);
+//         return arg.get_dimension_with_len_(len);
 //       }
 
       std::string expression_string_() const {
-	std::string str = "noalias(";
-	str += static_cast<const R*>(&arg)->expression_string() + ")";
-	return str;
+        std::string str = "noalias(";
+        str += static_cast<const R*>(&arg)->expression_string() + ")";
+        return str;
       }
 
       bool is_aliased_(const Type* mem1, const Type* mem2) const {
-	return false;
+        return false;
       }
       bool all_arrays_contiguous_() const {
-	return arg.all_arrays_contiguous_(); 
+        return arg.all_arrays_contiguous_(); 
       }
  
       bool is_aligned_() const {
-	return arg.is_aligned_();
+        return arg.is_aligned_();
       } 
      
       template <int n>
@@ -66,59 +66,59 @@ namespace adept {
 
       template <int Rank>
       Type value_with_len_(Index i, Index len) const {
-	return operation(arg.value_with_len(i, len));
+        return operation(arg.value_with_len(i, len));
       }
       
       template <int MyArrayNum, int NArrays>
       void advance_location_(ExpressionSize<NArrays>& loc) const {
-	arg.template advance_location_<MyArrayNum>(loc);
+        arg.template advance_location_<MyArrayNum>(loc);
       }
 
       template <int MyArrayNum, int NArrays>
       Type value_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return arg.template value_at_location_<MyArrayNum>(loc);
+        return arg.template value_at_location_<MyArrayNum>(loc);
       }
       template <int MyArrayNum, int NArrays>
       Packet<Type> packet_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return arg.template packet_at_location_<MyArrayNum>(loc);
+        return arg.template packet_at_location_<MyArrayNum>(loc);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				    ScratchVector<NScratch>& scratch) const {
-	return arg.template value_at_location_store_<MyArrayNum,MyScratchNum>(loc, 
-								     scratch);
+                                    ScratchVector<NScratch>& scratch) const {
+        return arg.template value_at_location_store_<MyArrayNum,MyScratchNum>(loc, 
+                                                                     scratch);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_stored_(const ExpressionSize<NArrays>& loc,
-			 const ScratchVector<NScratch>& scratch) const {
-	return scratch[MyScratchNum];
+                         const ScratchVector<NScratch>& scratch) const {
+        return scratch[MyScratchNum];
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch) const {
-	arg.template calc_gradient_<MyArrayNum, MyScratchNum>(stack, loc, 
-							      scratch);
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch) const {
+        arg.template calc_gradient_<MyArrayNum, MyScratchNum>(stack, loc, 
+                                                              scratch);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch,
-		typename MyType>
+                typename MyType>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch,
-			  MyType multiplier) const {
-	arg.template calc_gradient_<MyArrayNum, MyScratchNum+1>(stack, loc, 
-								scratch,
-								multiplier);
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch,
+                          MyType multiplier) const {
+        arg.template calc_gradient_<MyArrayNum, MyScratchNum+1>(stack, loc, 
+                                                                scratch,
+                                                                multiplier);
       }
 
       template <int MyArrayNum, int Rank, int NArrays>
       void set_location_(const ExpressionSize<Rank>& i, 
-			 ExpressionSize<NArrays>& index) const {
-	arg.template set_location_<MyArrayNum>(i, index);
+                         ExpressionSize<NArrays>& index) const {
+        arg.template set_location_<MyArrayNum>(i, index);
       }
 
     }; // End struct NoAlias

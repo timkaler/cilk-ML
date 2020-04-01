@@ -27,15 +27,15 @@ namespace adept {
     template <int Len, typename Type>
     store_transpose(ScratchVector<Len,Packet<Type> >& src, Type* dest) {
       for (int i = 0; i < Len; ++i) {
-	union {
-	  Packet<Type>::intrinsic_type packet;
-	  Type[Packet<Type>::size]     array;
-	}
-	packet = src[i];
-	for (int j = 0; j < Packet<Type>::size; ++j) {
-	  dest[j*Len] = array[j];
-	}
-	++dest;
+        union {
+          Packet<Type>::intrinsic_type packet;
+          Type[Packet<Type>::size]     array;
+        }
+        packet = src[i];
+        for (int j = 0; j < Packet<Type>::size; ++j) {
+          dest[j*Len] = array[j];
+        }
+        ++dest;
       }
     }
 

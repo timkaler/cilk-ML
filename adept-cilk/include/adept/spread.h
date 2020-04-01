@@ -41,47 +41,47 @@ namespace adept {
 
     public:
       Spread(const Expression<Type,E>& e, Index n_)
-	: array(e.cast()), n(n_) {
-	for (int i = 0; i < SpreadDim; ++i) {
-	  dims[i] = array.dimension(i);
-	}
-	dims[SpreadDim] = n_;
-	for (int i = SpreadDim+1; i < rank; ++i) {
-	  dims[i] = array.dimension(i-1);
-	}
-	// Communicate empty array if n == 0
-	if (n_ == 0) {
-	  dims[0] = 0;
-	}
+        : array(e.cast()), n(n_) {
+        for (int i = 0; i < SpreadDim; ++i) {
+          dims[i] = array.dimension(i);
+        }
+        dims[SpreadDim] = n_;
+        for (int i = SpreadDim+1; i < rank; ++i) {
+          dims[i] = array.dimension(i-1);
+        }
+        // Communicate empty array if n == 0
+        if (n_ == 0) {
+          dims[0] = 0;
+        }
       }
 
       bool get_dimensions_(ExpressionSize<rank>& dim) const {
-	dim = dims;
-	return true;
+        dim = dims;
+        return true;
       }
 
       std::string expression_string_() const {
-	std::stringstream s;
-	s << "spread<" << SpreadDim << ">(" << array.expression_string()
-	  << "," << n << ")";
-	return s.str();
+        std::stringstream s;
+        s << "spread<" << SpreadDim << ">(" << array.expression_string()
+          << "," << n << ")";
+        return s.str();
       }
 
       bool is_aliased_(const Type* mem1, const Type* mem2) const {
-	return false;
+        return false;
       }
 
       bool all_arrays_contiguous_() const {
-	return array.all_arrays_contiguous_();
+        return array.all_arrays_contiguous_();
       }
 
       bool is_aligned_() const {
-	return array.is_aligned_();
+        return array.is_aligned_();
       }
      
       template <int N>
       int alignment_offset_() const {
-	return array.template alignment_offset_<N>();
+        return array.template alignment_offset_<N>();
       }
 
       // Do not implement value_with_len_
@@ -89,31 +89,31 @@ namespace adept {
       // Advance only if the spread dimension is not the last
       template <int MyArrayNum, int NArrays>
       void advance_location_(ExpressionSize<NArrays>& loc) const {
-	// If false this if statement should be optimized away
-	if (SpreadDim < rank-1) {
-	  array.template advance_location_<MyArrayNum>(loc);
-	}
+        // If false this if statement should be optimized away
+        if (SpreadDim < rank-1) {
+          array.template advance_location_<MyArrayNum>(loc);
+        }
       }
 
       template <int MyArrayNum, int NArrays>
       Type value_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return array.template value_at_location_<MyArrayNum>(loc);
+        return array.template value_at_location_<MyArrayNum>(loc);
       }
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				    ScratchVector<NScratch>& scratch) const {
-	return array.template value_at_location_<MyArrayNum>(loc);
+                                    ScratchVector<NScratch>& scratch) const {
+        return array.template value_at_location_<MyArrayNum>(loc);
       }
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_stored_(const ExpressionSize<NArrays>& loc,
-			 const ScratchVector<NScratch>& scratch) const {
-	return array.template value_at_location_<MyArrayNum>(loc);
+                         const ScratchVector<NScratch>& scratch) const {
+        return array.template value_at_location_<MyArrayNum>(loc);
       }
 
       template <int MyArrayNum, int NArrays>
       Packet<Type> 
       packet_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return packet_at_location_local_<SpreadDim==rank-1,MyArrayNum>(loc);
+        return packet_at_location_local_<SpreadDim==rank-1,MyArrayNum>(loc);
 
       }
 
@@ -124,7 +124,7 @@ namespace adept {
       template <bool IsDuplicate, int MyArrayNum, int NArrays>
       typename enable_if<!IsDuplicate, Packet<Type> >::type
       packet_at_location_local_(const ExpressionSize<NArrays>& loc) const {
-	return array.template packet_at_location_<MyArrayNum>(loc);
+        return array.template packet_at_location_<MyArrayNum>(loc);
       }
 
       // Specializing for the case when the final dimension is to be
@@ -135,39 +135,39 @@ namespace adept {
       template <bool IsDuplicate, int MyArrayNum, int NArrays>
       typename enable_if<IsDuplicate, Packet<Type> >::type
       packet_at_location_local_(const ExpressionSize<NArrays>& loc) const {
-	return Packet<Type>(array.template value_at_location_<MyArrayNum>(loc));
+        return Packet<Type>(array.template value_at_location_<MyArrayNum>(loc));
       }
       
     public:
 
       template <int MyArrayNum, int NArrays>
       void set_location_(const ExpressionSize<rank>& i, 
-			 ExpressionSize<NArrays>& index) const {
-	ExpressionSize<rank-1> i_array(0);
-	int j = 0;
-	for ( ; j < SpreadDim; ++j) {
-	  i_array[j] = i[j];
-	}
-	for ( ; j < rank-1; ++j) {
-	  i_array[j] = i[j+1];
-	}
-	array.template set_location_<MyArrayNum>(i_array, index);
+                         ExpressionSize<NArrays>& index) const {
+        ExpressionSize<rank-1> i_array(0);
+        int j = 0;
+        for ( ; j < SpreadDim; ++j) {
+          i_array[j] = i[j];
+        }
+        for ( ; j < rank-1; ++j) {
+          i_array[j] = i[j+1];
+        }
+        array.template set_location_<MyArrayNum>(i_array, index);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       void calc_gradient_(Stack& stack, const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch) const {
-	array.template calc_gradient_<MyArrayNum,MyScratchNum>(stack,loc,scratch);
+                          const ScratchVector<NScratch>& scratch) const {
+        array.template calc_gradient_<MyArrayNum,MyScratchNum>(stack,loc,scratch);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch,
-		typename MyType>
+                typename MyType>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch,
-			  MyType multiplier) const {
-	array.template calc_gradient_<MyArrayNum,MyScratchNum>(stack,loc,
-						      scratch,multiplier);
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch,
+                          MyType multiplier) const {
+        array.template calc_gradient_<MyArrayNum,MyScratchNum>(stack,loc,
+                                                      scratch,multiplier);
       }
 
 
@@ -179,7 +179,7 @@ namespace adept {
   // Define spread function
   template <int SpreadDim, typename Type, class E>
   typename internal::enable_if<(SpreadDim >= 0 && SpreadDim <= E::rank),
-	       internal::Spread<SpreadDim,Type,E> >::type
+               internal::Spread<SpreadDim,Type,E> >::type
   spread(const Expression<Type,E>& e, Index n) {
     return internal::Spread<SpreadDim,Type,E>(e,n);
   }

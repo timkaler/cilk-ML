@@ -51,14 +51,14 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 0, Index>::type
+                       && E::rank == 0, Index>::type
     get_size_with_len(const Expression<T,E>&, const Index& len) { return 1; }
 
     // Extract the length of an IntVector
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && E::rank == 1 && !is_range<E>::value, Index>::type
+                       && E::rank == 1 && !is_range<E>::value, Index>::type
     get_size_with_len(const Expression<T,E>& e, const Index& len) { 
       ExpressionSize<1> s;
       e.get_dimensions(s);
@@ -70,7 +70,7 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && is_range<E>::value, Index>::type
+                       && is_range<E>::value, Index>::type
     get_size_with_len(const Expression<T,E>& e, const Index& len) { 
       return e.cast().size_with_len_(len);
     }
@@ -99,16 +99,16 @@ namespace adept {
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && (E::rank < 2), Index>::type
+                       && (E::rank < 2), Index>::type
     get_value_with_len(const Expression<T,E>& ind, const Index& j, 
-		       const Index& len) {
+                       const Index& len) {
       return ind.value_with_len(j, len); 
     }
 
     template <typename T>
     inline
     Index get_value_with_len(const std::vector<T>& ind, const Index& j, 
-			     const Index&) { 
+                             const Index&) { 
       return ind[j];
     }
 #else
@@ -117,46 +117,46 @@ namespace adept {
     inline
     Index get_value_with_len(const Index& ind, const Index& j, const Index& len)   { 
       if (j != 0) {
-	throw index_out_of_bounds("Index to IndexedArray is out of bounds"
-				  ADEPT_EXCEPTION_LOCATION);
+        throw index_out_of_bounds("Index to IndexedArray is out of bounds"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       else if (ind < 0 || ind >= len) {
-	throw index_out_of_bounds("Scalar index out of bounds in IndexedArray"
-				  ADEPT_EXCEPTION_LOCATION);
+        throw index_out_of_bounds("Scalar index out of bounds in IndexedArray"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	return ind; 
+        return ind; 
       }
     }
 
     template <typename T, class E>
     inline
     typename enable_if<std::numeric_limits<T>::is_integer
-		       && (E::rank < 2), Index>::type
+                       && (E::rank < 2), Index>::type
     get_value_with_len(const Expression<T,E>& ind, const Index& j, 
-		       const Index& len) {
+                       const Index& len) {
       Index i = ind.value_with_len(j, len);
       if (i < 0 || i >= len) {
-	abort();
-	throw index_out_of_bounds("Index out of bounds in IndexedArray"
-				  ADEPT_EXCEPTION_LOCATION);
+        abort();
+        throw index_out_of_bounds("Index out of bounds in IndexedArray"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	return i;
+        return i;
       }
     }
 
     template <typename T>
     inline
     Index get_value_with_len(const std::vector<T>& ind, const Index& j, 
-			     const Index& len) {
+                             const Index& len) {
       Index i = ind[j];
       if (i < 0 || i >= len) {
-	throw index_out_of_bounds("Index from std::vector out of bounds in IndexedArray"
-				  ADEPT_EXCEPTION_LOCATION);
+        throw index_out_of_bounds("Index from std::vector out of bounds in IndexedArray"
+                                  ADEPT_EXCEPTION_LOCATION);
       }
       else {
-	return i;
+        return i;
       }    
     }
 #endif
@@ -173,7 +173,7 @@ namespace adept {
 
     template <typename T>
     struct is_int_vector<T,
-	 typename enable_if<is_not_expression<T>::value>::type>
+         typename enable_if<is_not_expression<T>::value>::type>
     { static const bool value = false; };
 
     template <typename T>
@@ -182,20 +182,20 @@ namespace adept {
     {
       static const bool value 
       = std::numeric_limits<typename T::type>::is_integer
-	&& expr_cast<T>::rank == 1;
+        && expr_cast<T>::rank == 1;
     };
     
     template <typename T>
     struct is_index {
       static const bool value = is_regular_index<T>::value 
-	|| is_int_vector<T>::value;
+        || is_int_vector<T>::value;
       static const int count = value;
     };
 
     template <typename T>
     struct is_irregular_index {
       static const bool value = !is_range<T>::value 
-	&& is_int_vector<T>::value;
+        && is_int_vector<T>::value;
       static const int count = value;
     };
     
@@ -212,24 +212,24 @@ namespace adept {
     // indexing an Array of the specified Rank with indices I0 to
     // I[Rank-1].
     template <int Rank, typename I0, typename I1 = Index, 
-	      typename I2 = Index, typename I3 = Index,
-	      typename I4 = Index, typename I5 = Index,
-	      typename I6 = Index>
+              typename I2 = Index, typename I3 = Index,
+              typename I4 = Index, typename I5 = Index,
+              typename I6 = Index>
     struct is_irreg_indexed {
       static const bool value
         = (   is_irregular_index<I0>::value || is_irregular_index<I1>::value
-	   || is_irregular_index<I2>::value || is_irregular_index<I3>::value
-	   || is_irregular_index<I4>::value || is_irregular_index<I5>::value
-	   || is_irregular_index<I6>::value)
-	&& (   is_index<I0>::value && is_index<I1>::value
-	    && is_index<I2>::value && is_index<I3>::value
-	    && is_index<I4>::value && is_index<I5>::value
-	    && is_index<I6>::value);
+           || is_irregular_index<I2>::value || is_irregular_index<I3>::value
+           || is_irregular_index<I4>::value || is_irregular_index<I5>::value
+           || is_irregular_index<I6>::value)
+        && (   is_index<I0>::value && is_index<I1>::value
+            && is_index<I2>::value && is_index<I3>::value
+            && is_index<I4>::value && is_index<I5>::value
+            && is_index<I6>::value);
       static const int count 
          = 7 - (  is_scalar_int<I0>::count + is_scalar_int<I1>::count
-		+ is_scalar_int<I2>::count + is_scalar_int<I3>::count
-		+ is_scalar_int<I4>::count + is_scalar_int<I5>::count
-		+ is_scalar_int<I6>::count);
+                + is_scalar_int<I2>::count + is_scalar_int<I3>::count
+                + is_scalar_int<I4>::count + is_scalar_int<I5>::count
+                + is_scalar_int<I6>::count);
     };
     
 
@@ -244,13 +244,13 @@ namespace adept {
     // of integer expressions, but by C++ rules they will not be
     // deleted until the full expression is complete.
     template <int Rank, typename Type, bool IsActive, 
-	      class ArrayType, class I0, 
-	      class I1 = Index, class I2 = Index, 
-	      class I3 = Index, class I4 = Index, 
-	      class I5 = Index, class I6 = Index>
+              class ArrayType, class I0, 
+              class I1 = Index, class I2 = Index, 
+              class I3 = Index, class I4 = Index, 
+              class I5 = Index, class I6 = Index>
     class IndexedArray : public Expression<Type, 
-		   IndexedArray<Rank, Type, IsActive, ArrayType, 
-				I0, I1, I2, I3, I4, I5, I6> > {
+                   IndexedArray<Rank, Type, IsActive, ArrayType, 
+                                I0, I1, I2, I3, I4, I5, I6> > {
     public:
       // ---------------------------------------------------------------------
       // Section 5.1. IndexedArray: Static definitions
@@ -284,151 +284,151 @@ namespace adept {
     public:
       // The constructor sets all unused indices to an integer of zero
       IndexedArray(ArrayType& a, const I0& i0,
-		   const I1& i1 = 0, const I2& i2 = 0,
-		   const I3& i3 = 0, const I4& i4 = 0,
-		   const I5& i5 = 0, const I6& i6 = 0)
-	: a_(a), i0_(i0), i1_(i1), i2_(i2), i3_(i3), 
-	  i4_(i4), i5_(i5), i6_(i6), a_dims_(a.dimensions())
+                   const I1& i1 = 0, const I2& i2 = 0,
+                   const I3& i3 = 0, const I4& i4 = 0,
+                   const I5& i5 = 0, const I6& i6 = 0)
+        : a_(a), i0_(i0), i1_(i1), i2_(i2), i3_(i3), 
+          i4_(i4), i5_(i5), i6_(i6), a_dims_(a.dimensions())
       {
-	// Compute the dimensions of the IndexedArray objects from the
-	// lengths of the non-singleton indices to Array
-	set_dimensions_<0,0>(); 
+        // Compute the dimensions of the IndexedArray objects from the
+        // lengths of the non-singleton indices to Array
+        set_dimensions_<0,0>(); 
 
-	// For stepping through memory efficiently in the inner loop,
-	// we store the distance between elements in the fastest
-	// varying dimension in Array
-	last_offset_ = a.offset()[a_fastest_varying_dim];
+        // For stepping through memory efficiently in the inner loop,
+        // we store the distance between elements in the fastest
+        // varying dimension in Array
+        last_offset_ = a.offset()[a_fastest_varying_dim];
       }
 
       // ---------------------------------------------------------------------
       // Section 5.3. IndexedArray: Functions facilitating Expression functionality
       // ---------------------------------------------------------------------
       bool get_dimensions_(ExpressionSize<Rank>& dim) const {
-	dim = dimensions_;
-	return true;
+        dim = dimensions_;
+        return true;
       }
       
       std::string info_string() const {
-	std::stringstream s;
-	s << expression_string_() 
-	  << ", array-dim=" << a_dims_ << ", dim=" << dimensions_
-	  << ", last-offset_=" << last_offset_;
-	return s.str();	
+        std::stringstream s;
+        s << expression_string_() 
+          << ", array-dim=" << a_dims_ << ", dim=" << dimensions_
+          << ", last-offset_=" << last_offset_;
+        return s.str();        
       }
 
       std::string expression_string_() const {
-	std::string str;
-	str = a_.expression_string() + "(";
-	str += expr_string(i0_);
-	if (a_rank > 1) {
-	  str += std::string(",") + expr_string(i1_);
-	  if (a_rank > 2) {
-	    str += std::string(",") + expr_string(i2_);
-	    if (a_rank > 3) {
-	      str += std::string(",") + expr_string(i3_);
-	      if (a_rank > 4) {
-		str += std::string(",") + expr_string(i4_);
-		if (a_rank > 5) {
-		  str += std::string(",") + expr_string(i5_);
-		  if (a_rank > 6) {
-		    str += std::string(",") + expr_string(i6_);
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-	str += ")";
-	return str;
+        std::string str;
+        str = a_.expression_string() + "(";
+        str += expr_string(i0_);
+        if (a_rank > 1) {
+          str += std::string(",") + expr_string(i1_);
+          if (a_rank > 2) {
+            str += std::string(",") + expr_string(i2_);
+            if (a_rank > 3) {
+              str += std::string(",") + expr_string(i3_);
+              if (a_rank > 4) {
+                str += std::string(",") + expr_string(i4_);
+                if (a_rank > 5) {
+                  str += std::string(",") + expr_string(i5_);
+                  if (a_rank > 6) {
+                    str += std::string(",") + expr_string(i6_);
+                  }
+                }
+              }
+            }
+          }
+        }
+        str += ")";
+        return str;
       }
      
     protected:
       // Helper functions for expression_string()
       template <typename T, typename E>
       std::string expr_string(const Expression<T,E>& e) const {
-	return e.expression_string();
+        return e.expression_string();
       }
       template <typename T>
       typename enable_if<is_not_expression<T>::value, std::string>::type
       expr_string(const T& e) const {
-	std::stringstream s;
-	s << e;
-	return s.str();
+        std::stringstream s;
+        s << e;
+        return s.str();
       }
 
     public:
       bool is_aliased_(const Type* mem1, const Type* mem2) const {
-	return a_.is_aliased(mem1, mem2);
+        return a_.is_aliased(mem1, mem2);
       }
 
       Type value_with_len_(const Index& i, const Index& len) const {
-	// Treat as one dimensional
-	return a_(get_value_with_len_<Rank-1>(i));
+        // Treat as one dimensional
+        return a_(get_value_with_len_<Rank-1>(i));
       }
       
       template <int MyArrayNum, int NArrays>
       void set_location_(const ExpressionSize<Rank>& coords,
-			 ExpressionSize<NArrays>& loc) const {
-	ExpressionSize<a_rank> a_coords;
-	translate_coords_<0,0>(coords, a_coords);
-	// Location of start of most rapidly varying dimension in
-	// Array
-	a_.template set_location_<MyArrayNum>(a_coords, loc);
-	// Index to most rapidly varying dimension in IndexedArray
-	loc[MyArrayNum+1] = coords[Rank-1];
-	loc[MyArrayNum+2] = loc[MyArrayNum] + last_offset_
-	  * get_value_with_len_<a_fastest_varying_dim>(loc[MyArrayNum+1]);
+                         ExpressionSize<NArrays>& loc) const {
+        ExpressionSize<a_rank> a_coords;
+        translate_coords_<0,0>(coords, a_coords);
+        // Location of start of most rapidly varying dimension in
+        // Array
+        a_.template set_location_<MyArrayNum>(a_coords, loc);
+        // Index to most rapidly varying dimension in IndexedArray
+        loc[MyArrayNum+1] = coords[Rank-1];
+        loc[MyArrayNum+2] = loc[MyArrayNum] + last_offset_
+          * get_value_with_len_<a_fastest_varying_dim>(loc[MyArrayNum+1]);
       }
 
       // Advance the location of each array in the expression
       template <int MyArrayNum, int NArrays>
       void advance_location_(ExpressionSize<NArrays>& loc) const {
-	++loc[MyArrayNum+1];
-	// Note that next_value calls advance_location even when it
-	// has reached the end of a row, in which case finding the
-	// location of an indexed array is an invalid operation since
-	// it would require accessing the indexing array out of
-	// bounds. Hence the "if" test here.
-	if (loc[MyArrayNum+1] < dimensions_[Rank-1]) {
-	  loc[MyArrayNum+2] = loc[MyArrayNum] + last_offset_
-	    * get_value_with_len_<a_fastest_varying_dim>(loc[MyArrayNum+1]);
-	}
+        ++loc[MyArrayNum+1];
+        // Note that next_value calls advance_location even when it
+        // has reached the end of a row, in which case finding the
+        // location of an indexed array is an invalid operation since
+        // it would require accessing the indexing array out of
+        // bounds. Hence the "if" test here.
+        if (loc[MyArrayNum+1] < dimensions_[Rank-1]) {
+          loc[MyArrayNum+2] = loc[MyArrayNum] + last_offset_
+            * get_value_with_len_<a_fastest_varying_dim>(loc[MyArrayNum+1]);
+        }
       }
 
       template <int MyArrayNum, int NArrays>
       Type value_at_location_(const ExpressionSize<NArrays>& loc) const {
-	return a_.template value_at_location_<MyArrayNum+2>(loc);
+        return a_.template value_at_location_<MyArrayNum+2>(loc);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_at_location_store_(const ExpressionSize<NArrays>& loc,
-				    ScratchVector<NScratch>& scratch) const {
-	ADEPT_STATIC_ASSERT(ArrayType::n_scratch == 0,
-			    ASSUMING_ARRAY_N_SCRATCH_IS_ZERO);
-	return (scratch[MyScratchNum] 
-		= a_.template value_at_location_<MyArrayNum+2>(loc));
+                                    ScratchVector<NScratch>& scratch) const {
+        ADEPT_STATIC_ASSERT(ArrayType::n_scratch == 0,
+                            ASSUMING_ARRAY_N_SCRATCH_IS_ZERO);
+        return (scratch[MyScratchNum] 
+                = a_.template value_at_location_<MyArrayNum+2>(loc));
       }
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       Type value_stored_(const ExpressionSize<NArrays>& loc,
-			 const ScratchVector<NScratch>& scratch) const {
-	return scratch[MyScratchNum];
+                         const ScratchVector<NScratch>& scratch) const {
+        return scratch[MyScratchNum];
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch) const {
-	a_.template calc_gradient_<MyArrayNum+2,MyScratchNum+1>(stack, loc, scratch);
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch) const {
+        a_.template calc_gradient_<MyArrayNum+2,MyScratchNum+1>(stack, loc, scratch);
       }
 
       template <int MyArrayNum, int MyScratchNum, int NArrays, int NScratch,
-		typename MyType>
+                typename MyType>
       void calc_gradient_(Stack& stack, 
-			  const ExpressionSize<NArrays>& loc,
-			  const ScratchVector<NScratch>& scratch,
-			  MyType multiplier) const {
-	a_.template calc_gradient_<MyArrayNum+2, MyScratchNum+1>(stack, loc, 
-								 scratch, multiplier);
+                          const ExpressionSize<NArrays>& loc,
+                          const ScratchVector<NScratch>& scratch,
+                          MyType multiplier) const {
+        a_.template calc_gradient_<MyArrayNum+2, MyScratchNum+1>(stack, loc, 
+                                                                 scratch, multiplier);
       }
 
 
@@ -438,27 +438,27 @@ namespace adept {
       // Operators so that IndexedArray can appear on the
       // left-hand-side of a statement
       IndexedArray& operator=(const IndexedArray& src) {
-	*this = static_cast<const Expression<Type,IndexedArray>&>(src);
-	return *this;
+        *this = static_cast<const Expression<Type,IndexedArray>&>(src);
+        return *this;
       }
 
       // Assignment to a single value copies to every element
       template <typename RType>
       typename enable_if<is_not_expression<RType>::value, IndexedArray&>::type
       operator=(RType rhs) {
-	if (!empty()) {
+        if (!empty()) {
 #ifdef ADEPT_RECORDING_PAUSABLE
-	  if (ADEPT_ACTIVE_STACK->is_recording()) {
+          if (ADEPT_ACTIVE_STACK->is_recording()) {
 #endif
-	    assign_inactive_scalar_<IsActive>(rhs);
+            assign_inactive_scalar_<IsActive>(rhs);
 #ifdef ADEPT_RECORDING_PAUSABLE
-	  }
-	  else {
-	    assign_inactive_scalar_<false>(rhs);
-	  }
+          }
+          else {
+            assign_inactive_scalar_<false>(rhs);
+          }
 #endif
-	}
-	return *this;
+        }
+        return *this;
       }
 
     public:
@@ -468,37 +468,37 @@ namespace adept {
       operator=(const Expression<EType,E>& rhs) {
       // Definition moved to Array.h due to its dependence on the
       // Array class
-	ExpressionSize<Rank> dims;
-	if (!rhs.get_dimensions(dims)) {
-	  std::string str = "Array size mismatch in "
-	    + rhs.expression_string() + ".";
-	  throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
-	}
-	else if (!compatible(dims, dimensions_)) {
-	  std::string str = "Expr";
-	  str += dims.str() + " object assigned to " + expression_string_();
-	  throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
-	}
+        ExpressionSize<Rank> dims;
+        if (!rhs.get_dimensions(dims)) {
+          std::string str = "Array size mismatch in "
+            + rhs.expression_string() + ".";
+          throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        }
+        else if (!compatible(dims, dimensions_)) {
+          std::string str = "Expr";
+          str += dims.str() + " object assigned to " + expression_string_();
+          throw size_mismatch(str ADEPT_EXCEPTION_LOCATION);
+        }
 
-	if (!empty()) {
+        if (!empty()) {
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	  // Check for aliasing first
-	  Type const * ptr_begin;
-	  Type const * ptr_end;
-	  a_.data_range(ptr_begin, ptr_end);
-	  if (rhs.is_aliased(ptr_begin, ptr_end)) {
-	    Array<Rank,Type,IsActive> copy;
-	    copy = noalias(rhs);
-	    assign_expression_<IsActive, E::is_active>(copy);
-	  }
-	  else {
+          // Check for aliasing first
+          Type const * ptr_begin;
+          Type const * ptr_end;
+          a_.data_range(ptr_begin, ptr_end);
+          if (rhs.is_aliased(ptr_begin, ptr_end)) {
+            Array<Rank,Type,IsActive> copy;
+            copy = noalias(rhs);
+            assign_expression_<IsActive, E::is_active>(copy);
+          }
+          else {
 #endif
-	    assign_expression_<IsActive, E::is_active>(rhs);
+            assign_expression_<IsActive, E::is_active>(rhs);
 #ifndef ADEPT_NO_ALIAS_CHECKING
-	  }
+          }
 #endif
-	}
-	return *this;
+        }
+        return *this;
       }
 
 
@@ -506,59 +506,59 @@ namespace adept {
       // converting the RHS to an active scalar
       template <typename EType, class E>
       typename enable_if<E::rank == 0 && (Rank > 0)
-	                 && IsActive && !E::is_lvalue,
-	IndexedArray&>::type
+                         && IsActive && !E::is_lvalue,
+        IndexedArray&>::type
       operator=(const Expression<EType,E>& rhs) {
-	Active<EType> x = rhs;
-	*this = x;
-	return *this;
+        Active<EType> x = rhs;
+        *this = x;
+        return *this;
       }
 
       // Assign an active scalar to an active array
       template <typename PType>
       typename enable_if<!internal::is_active<PType>::value && IsActive, IndexedArray&>::type
       operator=(const Active<PType>& rhs) {
-	ADEPT_STATIC_ASSERT(IsActive, ATTEMPT_TO_ASSIGN_ACTIVE_SCALAR_TO_INACTIVE_INDEXED_ARRAY);
-	if (!empty()) {
+        ADEPT_STATIC_ASSERT(IsActive, ATTEMPT_TO_ASSIGN_ACTIVE_SCALAR_TO_INACTIVE_INDEXED_ARRAY);
+        if (!empty()) {
 #ifdef ADEPT_RECORDING_PAUSABLE
-	  if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	    assign_inactive_scalar_<false>(rhs.scalar_value());
-	    return *this;
-	  }
+          if (!ADEPT_ACTIVE_STACK->is_recording()) {
+            assign_inactive_scalar_<false>(rhs.scalar_value());
+            return *this;
+          }
 #endif
-	  
-	  ExpressionSize<Rank> coords(0);
-	  ExpressionSize<a_rank> a_coords(0);
-	  ExpressionSize<1> a_loc(0);
-	  Type val = rhs.scalar_value();
-	  int dim;
-	  static const int last = Rank-1;
-	  do {
- 	    coords[last] = 0;
-	    // Convert between the coordinates of the IndexedArray
-	    // object to the coordinates of the Array object
-	    translate_coords_<0,0>(coords, a_coords);
-	    a_.set_location(a_coords, a_loc);
-	    // Innermost loop
-	    for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	      Index index = a_loc[0]
-		+ last_offset_
-		* get_value_with_len_<a_fastest_varying_dim>(coords[last]);
-	      a_.data()[index] = val;
-	      ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
-	      ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
-	    }
-	    advance_index(dim, coords);
-	  } while (dim >= 0);
+          
+          ExpressionSize<Rank> coords(0);
+          ExpressionSize<a_rank> a_coords(0);
+          ExpressionSize<1> a_loc(0);
+          Type val = rhs.scalar_value();
+          int dim;
+          static const int last = Rank-1;
+          do {
+             coords[last] = 0;
+            // Convert between the coordinates of the IndexedArray
+            // object to the coordinates of the Array object
+            translate_coords_<0,0>(coords, a_coords);
+            a_.set_location(a_coords, a_loc);
+            // Innermost loop
+            for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+              Index index = a_loc[0]
+                + last_offset_
+                * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
+              a_.data()[index] = val;
+              ADEPT_ACTIVE_STACK->push_rhs(1.0, rhs.gradient_index());
+              ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
+            }
+            advance_index(dim, coords);
+          } while (dim >= 0);
         }
         return *this;
       } 
 
 
-#define ADEPT_DEFINE_OPERATOR(OPERATOR, OPSYMBOL)	\
-    template <class RType>			\
-    IndexedArray& OPERATOR(const RType& rhs) {	\
-    return *this = noalias(*this) OPSYMBOL rhs;	\
+#define ADEPT_DEFINE_OPERATOR(OPERATOR, OPSYMBOL)        \
+    template <class RType>                        \
+    IndexedArray& OPERATOR(const RType& rhs) {        \
+    return *this = noalias(*this) OPSYMBOL rhs;        \
     }
     ADEPT_DEFINE_OPERATOR(operator+=, +);
     ADEPT_DEFINE_OPERATOR(operator-=, -);
@@ -581,45 +581,45 @@ namespace adept {
     }
     template <class IType>
     IndexedArray& operator=(std::initializer_list<
-			    std::initializer_list<IType> > list) {
+                            std::initializer_list<IType> > list) {
       ADEPT_STATIC_ASSERT(Rank==2,RANK_MISMATCH_IN_INITIALIZER_LIST);
       Array<Rank,Type,false> array = list;
       return (*this = array);
     }
     template <class IType>
     IndexedArray& operator=(std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<IType> > > list) {
+                            std::initializer_list<
+                            std::initializer_list<IType> > > list) {
       ADEPT_STATIC_ASSERT(Rank==3,RANK_MISMATCH_IN_INITIALIZER_LIST);
       Array<Rank,Type,false> array = list;
       return (*this = array);
     }
     template <class IType>
     IndexedArray& operator=(std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<IType> > > > list) {
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<IType> > > > list) {
       ADEPT_STATIC_ASSERT(Rank==4,RANK_MISMATCH_IN_INITIALIZER_LIST);
       Array<Rank,Type,false> array = list;
       return (*this = array);
     }
     template <class IType>
     IndexedArray& operator=(std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<IType> > > > > list) {
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<IType> > > > > list) {
       ADEPT_STATIC_ASSERT(Rank==5,RANK_MISMATCH_IN_INITIALIZER_LIST);
       Array<Rank,Type,false> array = list;
       return (*this = array);
     }
     template <class IType>
     IndexedArray& operator=(std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<
-			    std::initializer_list<IType> > > > > > list) {
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<
+                            std::initializer_list<IType> > > > > > list) {
       ADEPT_STATIC_ASSERT(Rank==6,RANK_MISMATCH_IN_INITIALIZER_LIST);
       Array<Rank,Type,false> array = list;
       return (*this = array);
@@ -639,60 +639,60 @@ namespace adept {
       template <bool LocalIsActive, typename X>
       typename enable_if<!LocalIsActive,void>::type
       assign_inactive_scalar_(X x) {
-	ExpressionSize<Rank> coords(0);
-	ExpressionSize<a_rank> a_coords(0);
-	ExpressionSize<1> a_loc(0);
-	int dim;
-	static const int last = Rank-1;
-	do {
-	  coords[last] = 0;
-	  // Convert between the coordinates of the IndexedArray
-	  // object to the coordinates of the Array object
-	  translate_coords_<0,0>(coords, a_coords);
-	  a_.set_location(a_coords, a_loc);
-	  // Innermost loop
-	  for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	    a_.data()[a_loc[0]
-		      + last_offset_
-		      * get_value_with_len_<a_fastest_varying_dim>(coords[last])]
-	      = x;
-	  }
-	  advance_index(dim, coords);
-	} while (dim >= 0);
+        ExpressionSize<Rank> coords(0);
+        ExpressionSize<a_rank> a_coords(0);
+        ExpressionSize<1> a_loc(0);
+        int dim;
+        static const int last = Rank-1;
+        do {
+          coords[last] = 0;
+          // Convert between the coordinates of the IndexedArray
+          // object to the coordinates of the Array object
+          translate_coords_<0,0>(coords, a_coords);
+          a_.set_location(a_coords, a_loc);
+          // Innermost loop
+          for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+            a_.data()[a_loc[0]
+                      + last_offset_
+                      * get_value_with_len_<a_fastest_varying_dim>(coords[last])]
+              = x;
+          }
+          advance_index(dim, coords);
+        } while (dim >= 0);
       }
 
       // Active version of assigning an inactive scalar
       template <bool LocalIsActive, typename X>
       typename enable_if<LocalIsActive,void>::type
       assign_inactive_scalar_(X x) {
-	// If not recording we call the inactive version instead
+        // If not recording we call the inactive version instead
 #ifdef ADEPT_RECORDING_PAUSABLE
-	if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	  assign_inactive_scalar_<false, X>(x);
-	  return;
-	}
+        if (!ADEPT_ACTIVE_STACK->is_recording()) {
+          assign_inactive_scalar_<false, X>(x);
+          return;
+        }
 #endif
-	ExpressionSize<Rank> coords(0);
-	ExpressionSize<a_rank> a_coords(0);
-	ExpressionSize<1> a_loc(0);
-	int dim;
-	static const int last = Rank-1;
-	do {
-	  coords[last] = 0;
-	  // Convert between the coordinates of the IndexedArray
-	  // object to the coordinates of the Array object
-	  translate_coords_<0,0>(coords, a_coords);
-	  a_.set_location(a_coords, a_loc);
-	  // Innermost loop
-	  for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	    Index index = a_loc[0]
-	      + last_offset_
-	      * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
-	    a_.data()[index] = x;
-	    ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
-	  }
-	  advance_index(dim, coords);
-	} while (dim >= 0);
+        ExpressionSize<Rank> coords(0);
+        ExpressionSize<a_rank> a_coords(0);
+        ExpressionSize<1> a_loc(0);
+        int dim;
+        static const int last = Rank-1;
+        do {
+          coords[last] = 0;
+          // Convert between the coordinates of the IndexedArray
+          // object to the coordinates of the Array object
+          translate_coords_<0,0>(coords, a_coords);
+          a_.set_location(a_coords, a_loc);
+          // Innermost loop
+          for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+            Index index = a_loc[0]
+              + last_offset_
+              * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
+            a_.data()[index] = x;
+            ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
+          }
+          advance_index(dim, coords);
+        } while (dim >= 0);
       }
       
 
@@ -700,30 +700,30 @@ namespace adept {
       template<bool LeftIsActive, bool RightIsActive, class E>
       typename enable_if<!LeftIsActive,void>::type
       assign_expression_(const E& rhs) {
-	ADEPT_STATIC_ASSERT(!RightIsActive, 
-		    CANNOT_ASSIGN_ACTIVE_EXPRESSION_TO_INACTIVE_INDEXED_ARRAY);
-	ExpressionSize<Rank> coords(0);
-	ExpressionSize<a_rank> a_coords(0);
-	ExpressionSize<expr_cast<E>::n_arrays> loc(0);
-	ExpressionSize<1> a_loc(0);
-	int dim;
-	static const int last = Rank-1;
-	do {
-	  coords[last] = 0;
-	  rhs.set_location(coords, loc);
-	  // Convert between the coordinates of the IndexedArray
-	  // object to the coordinates of the Array object
-	  translate_coords_<0,0>(coords, a_coords);
-	  a_.set_location(a_coords, a_loc);
-	  // Innermost loop
-	  for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	    a_.data()[a_loc[0]
-		      + last_offset_
-		      * get_value_with_len_<a_fastest_varying_dim>(coords[last])]
-	      = rhs.next_value(loc);
-	  }
-	  advance_index(dim, coords);
-	} while (dim >= 0);
+        ADEPT_STATIC_ASSERT(!RightIsActive, 
+                    CANNOT_ASSIGN_ACTIVE_EXPRESSION_TO_INACTIVE_INDEXED_ARRAY);
+        ExpressionSize<Rank> coords(0);
+        ExpressionSize<a_rank> a_coords(0);
+        ExpressionSize<expr_cast<E>::n_arrays> loc(0);
+        ExpressionSize<1> a_loc(0);
+        int dim;
+        static const int last = Rank-1;
+        do {
+          coords[last] = 0;
+          rhs.set_location(coords, loc);
+          // Convert between the coordinates of the IndexedArray
+          // object to the coordinates of the Array object
+          translate_coords_<0,0>(coords, a_coords);
+          a_.set_location(a_coords, a_loc);
+          // Innermost loop
+          for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+            a_.data()[a_loc[0]
+                      + last_offset_
+                      * get_value_with_len_<a_fastest_varying_dim>(coords[last])]
+              = rhs.next_value(loc);
+          }
+          advance_index(dim, coords);
+        } while (dim >= 0);
       }
 
       // Active LHS, passive RHS
@@ -731,34 +731,34 @@ namespace adept {
       typename enable_if<LeftIsActive && !RightIsActive,void>::type
       assign_expression_(const E& rhs) {
 #ifdef ADEPT_RECORDING_PAUSABLE
-	if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	  assign_expression_<false,false>(rhs);
-	  return;
-	}
+        if (!ADEPT_ACTIVE_STACK->is_recording()) {
+          assign_expression_<false,false>(rhs);
+          return;
+        }
 #endif
-	ExpressionSize<Rank> coords(0);
-	ExpressionSize<a_rank> a_coords(0);
-	ExpressionSize<expr_cast<E>::n_arrays> loc(0);
-	ExpressionSize<1> a_loc(0);
-	int dim;
-	static const int last = Rank-1;
-	do {
-	  coords[last] = 0;
-	  rhs.set_location(coords, loc);
-	  // Convert between the coordinates of the IndexedArray
-	  // object to the coordinates of the Array object
-	  translate_coords_<0,0>(coords, a_coords);
-	  a_.set_location(a_coords, a_loc);
-	  // Innermost loop
-	  for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	    Index index = a_loc[0]
-		      + last_offset_
-	      * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
-	    a_.data()[index] = rhs.next_value(loc);
-	    ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
-	  }
-	  advance_index(dim, coords);
-	} while (dim >= 0);
+        ExpressionSize<Rank> coords(0);
+        ExpressionSize<a_rank> a_coords(0);
+        ExpressionSize<expr_cast<E>::n_arrays> loc(0);
+        ExpressionSize<1> a_loc(0);
+        int dim;
+        static const int last = Rank-1;
+        do {
+          coords[last] = 0;
+          rhs.set_location(coords, loc);
+          // Convert between the coordinates of the IndexedArray
+          // object to the coordinates of the Array object
+          translate_coords_<0,0>(coords, a_coords);
+          a_.set_location(a_coords, a_loc);
+          // Innermost loop
+          for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+            Index index = a_loc[0]
+                      + last_offset_
+              * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
+            a_.data()[index] = rhs.next_value(loc);
+            ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
+          }
+          advance_index(dim, coords);
+        } while (dim >= 0);
       }
 
       // Active LHS, active RHS
@@ -766,49 +766,49 @@ namespace adept {
       typename enable_if<LeftIsActive && RightIsActive,void>::type
       assign_expression_(const E& rhs) {
 #ifdef ADEPT_RECORDING_PAUSABLE
-	if (!ADEPT_ACTIVE_STACK->is_recording()) {
-	  assign_expression_<false,false>(rhs);
-	  return;
-	}
+        if (!ADEPT_ACTIVE_STACK->is_recording()) {
+          assign_expression_<false,false>(rhs);
+          return;
+        }
 #endif
-	ExpressionSize<Rank> coords(0);
-	ExpressionSize<a_rank> a_coords(0);
-	ExpressionSize<expr_cast<E>::n_arrays> loc(0);
-	ExpressionSize<1> a_loc(0);
-	int dim;
-	static const int last = Rank-1;
+        ExpressionSize<Rank> coords(0);
+        ExpressionSize<a_rank> a_coords(0);
+        ExpressionSize<expr_cast<E>::n_arrays> loc(0);
+        ExpressionSize<1> a_loc(0);
+        int dim;
+        static const int last = Rank-1;
 
-	ADEPT_ACTIVE_STACK->check_space(expr_cast<E>::n_active * dimensions_[0]);
-	do {
-	  coords[last] = 0;
-	  rhs.set_location(coords, loc);
-	  // Convert between the coordinates of the IndexedArray
-	  // object to the coordinates of the Array object
-	  translate_coords_<0,0>(coords, a_coords);
-	  a_.set_location(a_coords, a_loc);
-	  // Innermost loop
-	  for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
-	    Index index = a_loc[0]
-		      + last_offset_
-	      * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
-	    a_.data()[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, loc);
-	    ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
-	  }
-	  advance_index(dim, coords);
-	} while (dim >= 0);
+        ADEPT_ACTIVE_STACK->check_space(expr_cast<E>::n_active * dimensions_[0]);
+        do {
+          coords[last] = 0;
+          rhs.set_location(coords, loc);
+          // Convert between the coordinates of the IndexedArray
+          // object to the coordinates of the Array object
+          translate_coords_<0,0>(coords, a_coords);
+          a_.set_location(a_coords, a_loc);
+          // Innermost loop
+          for ( ; coords[last] < dimensions_[last]; ++coords[last]) {
+            Index index = a_loc[0]
+                      + last_offset_
+              * get_value_with_len_<a_fastest_varying_dim>(coords[last]);
+            a_.data()[index] = rhs.next_value_and_gradient(*ADEPT_ACTIVE_STACK, loc);
+            ADEPT_ACTIVE_STACK->push_lhs(a_.gradient_index()+index);
+          }
+          advance_index(dim, coords);
+        } while (dim >= 0);
       }
 
       // Move to the start of the next row
       void advance_index(int& dim, ExpressionSize<Rank>& coords) const {
-	dim = Rank-1;
-	while (--dim >= 0) {
-	  if (++coords[dim] >= dimensions_[dim]) {
-	    coords[dim] = 0;
-	  }
-	  else {
-	    break;
-	  }
-	}
+        dim = Rank-1;
+        while (--dim >= 0) {
+          if (++coords[dim] >= dimensions_[dim]) {
+            coords[dim] = 0;
+          }
+          else {
+            break;
+          }
+        }
       }
 
 
@@ -825,50 +825,50 @@ namespace adept {
       typename enable_if<!is_scalar_int<typename Ix<OutDim>::type>::value
                          && (InDim < Rank-1), void>::type
       translate_coords_(const ExpressionSize<Rank>& in,
-		       ExpressionSize<a_rank>& out) const {
-	// Compute the index of the OutDim dimension of Array
-	out[OutDim] = get_value_with_len(index_object_<OutDim>(),
-					 in[InDim],a_dims_[OutDim]);
-	// Move on to the next dimension
-	translate_coords_<InDim+1,OutDim+1>(in, out);
+                       ExpressionSize<a_rank>& out) const {
+        // Compute the index of the OutDim dimension of Array
+        out[OutDim] = get_value_with_len(index_object_<OutDim>(),
+                                         in[InDim],a_dims_[OutDim]);
+        // Move on to the next dimension
+        translate_coords_<InDim+1,OutDim+1>(in, out);
       }
 
       template <int InDim, int OutDim>
       typename enable_if<(OutDim < a_rank)
-	                 && is_scalar_int<typename Ix<OutDim>::type>::value,
-			 void>::type
+                         && is_scalar_int<typename Ix<OutDim>::type>::value,
+                         void>::type
       translate_coords_(const ExpressionSize<Rank>& in,
-		        ExpressionSize<a_rank>& out) const {
-	// This is a singleton dimension so the 0th element is the
-	// only element
-	out[OutDim] = get_value_with_len(index_object_<OutDim>(),
-					  0,a_dims_[OutDim]);
-	// Move on to the next OutDim dimension of Array
-	translate_coords_<InDim,OutDim+1>(in, out);
+                        ExpressionSize<a_rank>& out) const {
+        // This is a singleton dimension so the 0th element is the
+        // only element
+        out[OutDim] = get_value_with_len(index_object_<OutDim>(),
+                                          0,a_dims_[OutDim]);
+        // Move on to the next OutDim dimension of Array
+        translate_coords_<InDim,OutDim+1>(in, out);
       }
 
       template <int InDim, int OutDim>
       typename enable_if<!is_scalar_int<typename Ix<OutDim>::type>::value
                          && InDim == Rank-1, void>::type
       translate_coords_(const ExpressionSize<Rank>& in,
-		       ExpressionSize<a_rank>& out) const {
-	// The final non-singleton dimension is set to zero, since it
-	// will be incremented later by advance_location
-	out[OutDim] = 0;
-	// Do any further dimensions, which must be singletons
-	translate_coords_<InDim+1,OutDim+1>(in, out);
+                       ExpressionSize<a_rank>& out) const {
+        // The final non-singleton dimension is set to zero, since it
+        // will be incremented later by advance_location
+        out[OutDim] = 0;
+        // Do any further dimensions, which must be singletons
+        translate_coords_<InDim+1,OutDim+1>(in, out);
       }
 
       // Run out of dimensions: do nothing
       template <int InDim, int OutDim>
       typename enable_if<InDim == Rank && OutDim == a_rank, void>::type
       translate_coords_(const ExpressionSize<Rank>& in,
-		       ExpressionSize<a_rank>& out) const { }
+                       ExpressionSize<a_rank>& out) const { }
 
       template <int Dim>
       Index get_value_with_len_(const Index& j) const {
-	return get_value_with_len(index_object_<Dim>(), j, a_dims_[Dim]);
- 	//return get_value_with_len(index_object_<Dim>(), j, dimensions_[Dim]);
+        return get_value_with_len(index_object_<Dim>(), j, a_dims_[Dim]);
+         //return get_value_with_len(index_object_<Dim>(), j, dimensions_[Dim]);
      }
 
 
@@ -880,17 +880,17 @@ namespace adept {
       // which has removed the singleton dimensions of the former
       template <int InDim, int OutDim>
       typename enable_if<(OutDim < a_rank)
-	&& !is_scalar_int<typename Ix<OutDim>::type>::value,void>::type
+        && !is_scalar_int<typename Ix<OutDim>::type>::value,void>::type
       set_dimensions_() {
-	dimensions_[InDim] = get_size_with_len(index_object_<OutDim>(),
-					      a_dims_[OutDim]);
-	set_dimensions_<InDim+1, OutDim+1>();
+        dimensions_[InDim] = get_size_with_len(index_object_<OutDim>(),
+                                              a_dims_[OutDim]);
+        set_dimensions_<InDim+1, OutDim+1>();
       }
       template <int InDim, int OutDim>
       typename enable_if<(OutDim < a_rank)
-	&& is_scalar_int<typename Ix<OutDim>::type>::value,void>::type
+        && is_scalar_int<typename Ix<OutDim>::type>::value,void>::type
       set_dimensions_() {
-	set_dimensions_<InDim, OutDim+1>();
+        set_dimensions_<InDim, OutDim+1>();
       }
       template <int InDim, int OutDim>
       typename enable_if<OutDim == a_rank,void>::type
@@ -907,7 +907,7 @@ namespace adept {
       // definition of the sub-class I that is used such that
       // Ix<Dim>::type returns the type of index "Dim" at compile time.
       template <int Dim,class X0,class X1,class X2,class X3,class X4,
-		class X5,class X6> struct index_alias { };
+                class X5,class X6> struct index_alias { };
 
       template<class X0,class X1,class X2,class X3,class X4,class X5,class X6> 
       struct index_alias<0,X0,X1,X2,X3,X4,X5,X6> { typedef X0 type; };
@@ -931,7 +931,7 @@ namespace adept {
       struct index_alias<6,X0,X1,X2,X3,X4,X5,X6> { typedef X6 type; };
 
       template<int Dim> struct Ix { 
-	typedef typename index_alias<Dim,I0,I1,I2,I3,I4,I5,I6>::type type; 
+        typedef typename index_alias<Dim,I0,I1,I2,I3,I4,I5,I6>::type type; 
       };
 
       // Similarly, the following enables us to return not just the
@@ -958,16 +958,16 @@ namespace adept {
       // progessing through memory and is not a singleton.  This
       // corresponds to the dimension "Rank-1" of IndexedArray.
       template<int Dim, class X0,class X1,class X2,
-	       class X3,class X4,class X5,class X6> 
+               class X3,class X4,class X5,class X6> 
       struct fastest_varying {
-	static const int value
-	  = is_scalar_int<typename index_alias<Dim,X0,X1,X2,X3,X4,X5,X6>::type>::value 
-	  ? fastest_varying<Dim-1,X0,X1,X2,X3,X4,X5,X6>::value
-	  : Dim;
+        static const int value
+          = is_scalar_int<typename index_alias<Dim,X0,X1,X2,X3,X4,X5,X6>::type>::value 
+          ? fastest_varying<Dim-1,X0,X1,X2,X3,X4,X5,X6>::value
+          : Dim;
       };
       template<class X0,class X1,class X2,class X3,class X4,class X5,class X6> 
       struct fastest_varying<0,X0,X1,X2,X3,X4,X5,X6> {
-	static const int value = 0;
+        static const int value = 0;
       };
 
       static const int a_fastest_varying_dim 

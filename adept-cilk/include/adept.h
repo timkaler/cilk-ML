@@ -1,15 +1,14 @@
-/* adept.h -- Header file for basic scalar functionality of Adept automatic differentiation library
+/* adept.h
+Header file for basic scalar functionality of Adept AD library
 
-    Copyright (C) 2015-2016 European Centre for Medium-Range Weather Forecasts
+Copyright (C) 2015-2016 European Centre for Medium-Range Weather Forecasts
+Author: Robin Hogan <r.j.hogan@ecmwf.int>
 
-    Author: Robin Hogan <r.j.hogan@ecmwf.int>
-
-    This file is part of the Adept library.
-
+This file is part of the Adept library.
 */
 
-#ifndef Adept_H
-#define Adept_H 1
+#ifndef ADEPT_H
+#define ADEPT_H
 
 #include <adept/settings.h>
 #include <adept/UnaryOperation.h>
@@ -17,4 +16,4 @@
 #include <adept/Active.h>
 #include <adept/scalar_shortcuts.h>
 
-#endif
+#endif  // ADEPT_H

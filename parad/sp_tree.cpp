@@ -1311,8 +1311,8 @@ void SP_Tree::walk_tree_process_locks(SP_Node* n, float* gradient_, int64_t* loc
   //   /*
   //     for each of n statements.
 
-  //      	for statement i
-  //      		
+  //              for statement i
+  //                      
 
 
   //   */

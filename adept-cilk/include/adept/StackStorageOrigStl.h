@@ -32,8 +32,8 @@ namespace adept {
     public:
       // Constructor
       StackStorageOrigStl() :
-	n_statements_(0), n_allocated_statements_(0),
-	n_operations_(0), n_allocated_operations_(0) { }
+        n_statements_(0), n_allocated_statements_(0),
+        n_operations_(0), n_allocated_operations_(0) { }
       
       // Destructor (does nothing)
       ~StackStorageOrigStl() { };
@@ -43,24 +43,24 @@ namespace adept {
       // so there is enough space to hold these elements.
       void push_rhs(const Real& multiplier, const uIndex& gradient_index) {
 #ifdef ADEPT_REMOVE_NULL_STATEMENTS
-	// If multiplier==0 then the resulting statement would have no
-	// effect so we can speed up the subsequent adjoint/jacobian
-	// calculations (at the expense of making this critical part
-	// of the code slower)
-	if (multiplier != 0.0) {
+        // If multiplier==0 then the resulting statement would have no
+        // effect so we can speed up the subsequent adjoint/jacobian
+        // calculations (at the expense of making this critical part
+        // of the code slower)
+        if (multiplier != 0.0) {
 #endif
-	  multiplier_.push_back(multiplier);
-	  index_.push_back(gradient_index);
-	  n_operations_++;
-	
+          multiplier_.push_back(multiplier);
+          index_.push_back(gradient_index);
+          n_operations_++;
+        
 #ifdef ADEPT_TRACK_NON_FINITE_GRADIENTS
-	  if (!std::isfinite(multiplier) || std::isinf(multiplier)) {
-	    throw non_finite_gradient();
-	  }
+          if (!std::isfinite(multiplier) || std::isinf(multiplier)) {
+            throw non_finite_gradient();
+          }
 #endif
-	
+        
 #ifdef ADEPT_REMOVE_NULL_STATEMENTS
-	}
+        }
 #endif
       }
 
@@ -71,8 +71,8 @@ namespace adept {
       // "end_plus_one" element is simply the current length of the
       // operation list
       void push_lhs(const uIndex& gradient_index) {
-	statement_.push_back(Statement(gradient_index, n_operations_));
-	n_statements_++;
+        statement_.push_back(Statement(gradient_index, n_operations_));
+        n_statements_++;
       }
 
       // Push n left-hand-sides of differential expressions on to the
@@ -81,12 +81,12 @@ namespace adept {
       // separated by a fixed stride) has been assigned to inactive
       // numbers.
       void push_lhs_range(const uIndex& first, const uIndex& n, 
-			  const uIndex& stride = 1) {
-	uIndex last_plus_1 = first+n*stride;
-	for (uIndex i = first; i < last_plus_1; i += stride) {
-	  statement_.push_back(Statement(i, n_operations_));
-	}
-	n_statements_ += n;
+                          const uIndex& stride = 1) {
+        uIndex last_plus_1 = first+n*stride;
+        for (uIndex i = first; i < last_plus_1; i += stride) {
+          statement_.push_back(Statement(i, n_operations_));
+        }
+        n_statements_ += n;
       }
 
       // Check whether the operation stack contains enough space for n
@@ -97,22 +97,22 @@ namespace adept {
     protected:
       // Called by new_recording()
       void clear_stack() { 
-	// If we use STL containers then the clear() function sets their
-	// size to zero but leaves the memory allocated
-	statement_.clear();
-	multiplier_.clear();
-	index_.clear();
-	// Set the recording indices to zero
-	n_operations_ = 0;
-	n_statements_ = 0;
+        // If we use STL containers then the clear() function sets their
+        // size to zero but leaves the memory allocated
+        statement_.clear();
+        multiplier_.clear();
+        index_.clear();
+        // Set the recording indices to zero
+        n_operations_ = 0;
+        n_statements_ = 0;
       }
 
       // This function is called by the constructor to initialize
       // memory, which can be grown subsequently
       void initialize(uIndex n) {
-	statement_.reserve(n);
-	multiplier_.reserve(n);
-	index_.reserve(n);
+        statement_.reserve(n);
+        multiplier_.reserve(n);
+        index_.reserve(n);
       }
 
       // Grow the capacity of the operation or statement stacks to

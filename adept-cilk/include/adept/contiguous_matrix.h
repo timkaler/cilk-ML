@@ -24,25 +24,25 @@ namespace adept {
     // stating the storage type of the returned matrix.
     template <typename T, bool IsActive>
     MatrixStorageOrder contiguous_matrix(Array<2,T,IsActive>& in, 
-					 Array<2,T,IsActive>& out,
-					 Index& stride) {
+                                         Array<2,T,IsActive>& out,
+                                         Index& stride) {
       MatrixStorageOrder order = ROW_MAJOR;
       if (in.empty()) {
-	throw(invalid_operation("Input matrix must not be empty"));
+        throw(invalid_operation("Input matrix must not be empty"));
       }
       if (in.dimension(1) == 1) {
-	out.link(in);
-	stride = in.offset(0);
+        out.link(in);
+        stride = in.offset(0);
       }
       else if (in.dimension(0) == 1) {
-	order = COL_MAJOR;
-	out.link(in);
-	stride = in.offset(1);
+        order = COL_MAJOR;
+        out.link(in);
+        stride = in.offset(1);
       }
       else {
-	out.resize_row_major(in.dimensions());
-	out = in;
-	stride = in.offset(0);
+        out.resize_row_major(in.dimensions());
+        out = in;
+        stride = in.offset(0);
       }
       return order;
     }
@@ -50,10 +50,10 @@ namespace adept {
     // As contiguous_matrix but checks that the input matrix is square
     template <typename T, bool IsActive>
     MatrixStorageOrder contiguous_square_matrix(Array<2,T,IsActive>& in, 
-						Array<2,T,IsActive>& out,
-						Index& stride) {
+                                                Array<2,T,IsActive>& out,
+                                                Index& stride) {
       if (in.dimension(0) != in.dimension(1)) {
-	throw(invalid_operation("Square matrix required"));
+        throw(invalid_operation("Square matrix required"));
       }
       return contiguous_matrix(in, out, stride);
     }

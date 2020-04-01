@@ -5,7 +5,6 @@ all:
 
 comparisons: serial plocks all
 
-
 serial:
 	./setup.sh make VERBOSE=1 -f Makefile2_serial -j 8
 

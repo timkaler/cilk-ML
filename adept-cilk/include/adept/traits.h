@@ -78,9 +78,9 @@ namespace adept {
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #pragma GCC diagnostic warning "-Wpragmas"
 #endif
-#define ADEPT_STATIC_ASSERT(condition, msg)				\
+#define ADEPT_STATIC_ASSERT(condition, msg)                                \
     do { struct ERROR_##msg : public ::adept::internal::compile_time_check<(condition)> { }; \
-	typedef typename ERROR_##msg ::STATIC_ASSERTION_HAS_FAILED type; \
+        typedef typename ERROR_##msg ::STATIC_ASSERTION_HAS_FAILED type; \
     } while (0)
 
     // ---------------------------------------------------------------------
@@ -199,18 +199,18 @@ namespace adept {
     
     template <typename T>
     struct is_scalar_int<T, 
-	      typename enable_if<is_not_expression<T>::value>::type> {
+              typename enable_if<is_not_expression<T>::value>::type> {
       static const bool value = std::numeric_limits<T>::is_integer;
       static const int  count = value;
     };
     
     template <typename T>
     struct is_scalar_int<T, 
-	      typename enable_if<!is_not_expression<T>::value>::type>
+              typename enable_if<!is_not_expression<T>::value>::type>
     {
       static const bool value
       = std::numeric_limits<typename T::type>::is_integer
-	&& expr_cast<T>::rank == 0; 
+        && expr_cast<T>::rank == 0; 
       static const int  count = value;
     };
 
@@ -234,17 +234,17 @@ namespace adept {
     };
 
     template <int Rank, typename I0, typename I1 = null_type, 
-	      typename I2 = null_type, typename I3 = null_type,
-	      typename I4 = null_type, typename I5 = null_type,
-	      typename I6 = null_type>
+              typename I2 = null_type, typename I3 = null_type,
+              typename I4 = null_type, typename I5 = null_type,
+              typename I6 = null_type>
     struct all_scalar_ints {
       static const bool value = (Rank == (is_scalar_int<I0>::count
-					  +is_scalar_int<I1>::count
-					  +is_scalar_int<I2>::count
-					  +is_scalar_int<I3>::count
-					  +is_scalar_int<I4>::count
-					  +is_scalar_int<I5>::count
-					  +is_scalar_int<I6>::count));
+                                          +is_scalar_int<I1>::count
+                                          +is_scalar_int<I2>::count
+                                          +is_scalar_int<I3>::count
+                                          +is_scalar_int<I4>::count
+                                          +is_scalar_int<I5>::count
+                                          +is_scalar_int<I6>::count));
     };
 
 
@@ -269,7 +269,7 @@ namespace adept {
       { typedef typename S::type type; };
     public:
       typedef typename _underlying_real<is_complex<T>::value,
-					T>::type type;
+                                        T>::type type;
     };
     */
     template <typename T>
@@ -280,7 +280,7 @@ namespace adept {
     struct underlying_real<std::complex<T> > {
       typedef T type;
     };
-	
+        
     // ---------------------------------------------------------------------
     // 11. underlying_passive
     // ---------------------------------------------------------------------
@@ -300,7 +300,7 @@ namespace adept {
       { typedef typename S::type type; };
     public:
       typedef typename _underlying_passive<is_active<T>::value,
-					T>::type type;
+                                        T>::type type;
     };
     
 
@@ -318,28 +318,28 @@ namespace adept {
     private:
       template <typename A, typename B>
       struct promote_primitive {
-	static const bool A_bigger_than_B = (sizeof(A) > sizeof(B));
-	static const bool A_float_B_int = (!std::numeric_limits<A>::is_integer) 
-	  && std::numeric_limits<B>::is_integer;
-	static const bool A_int_B_float = std::numeric_limits<A>::is_integer
-	  && (!std::numeric_limits<B>::is_integer);
-	static const bool prefer_float = A_float_B_int || A_int_B_float;
-	typedef typename if_then_else<A_float_B_int, A, B>::type float_type;
-	typedef typename if_then_else<A_bigger_than_B, A, B>::type biggest_type;
-	typedef typename if_then_else<prefer_float, float_type, biggest_type>::type type;
+        static const bool A_bigger_than_B = (sizeof(A) > sizeof(B));
+        static const bool A_float_B_int = (!std::numeric_limits<A>::is_integer) 
+          && std::numeric_limits<B>::is_integer;
+        static const bool A_int_B_float = std::numeric_limits<A>::is_integer
+          && (!std::numeric_limits<B>::is_integer);
+        static const bool prefer_float = A_float_B_int || A_int_B_float;
+        typedef typename if_then_else<A_float_B_int, A, B>::type float_type;
+        typedef typename if_then_else<A_bigger_than_B, A, B>::type biggest_type;
+        typedef typename if_then_else<prefer_float, float_type, biggest_type>::type type;
       };
       
       typedef typename promote_primitive<
         typename underlying_real<typename underlying_passive<L>::type>::type,
-	typename underlying_real<typename underlying_passive<R>::type>::type>::type real;
+        typename underlying_real<typename underlying_passive<R>::type>::type>::type real;
       typedef typename if_then_else<is_complex<L>::value
-				    || is_complex<R>::value,
-				    std::complex<real>,
-				    real>::type complex_type;
+                                    || is_complex<R>::value,
+                                    std::complex<real>,
+                                    real>::type complex_type;
     public: 
       typedef typename if_then_else<is_active<L>::value || is_active<R>::value,
-				    adept::Active<complex_type>, 
-				    complex_type>::type type;
+                                    adept::Active<complex_type>, 
+                                    complex_type>::type type;
     };
 
     // If ever the template arguments are the same
@@ -402,19 +402,19 @@ namespace adept {
 
     template <typename T>
     struct initializer_list_rank<T,
-				 typename enable_if<!is_initializer_list<T>::value>::type>
+                                 typename enable_if<!is_initializer_list<T>::value>::type>
     { typedef T type;
       static const int value = 0; };
     
     template <typename T>
     struct initializer_list_rank<std::initializer_list<T>,
-				 typename enable_if<!is_initializer_list<T>::value>::type>
+                                 typename enable_if<!is_initializer_list<T>::value>::type>
     { typedef T type;
       static const int value = 1; };
 
     template <typename T>
     struct initializer_list_rank<std::initializer_list<T>,
-				 typename enable_if<is_initializer_list<T>::value>::type>
+                                 typename enable_if<is_initializer_list<T>::value>::type>
     { typedef typename initializer_list_rank<T>::type type;
       static const int value = 1 + initializer_list_rank<T>::value; };
 
