@@ -2,6 +2,7 @@
 
 #ifndef TRIPLE_VECTOR_WL_H
 #define TRIPLE_VECTOR_WL_H
+
 #include <inttypes.h>
 // worker local triple_vector.
 class triple_vector_wl {

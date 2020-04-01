@@ -79,7 +79,6 @@ class wl_stacks {
 // space for worker-local stacks
 extern wl_stacks* worker_local_stacks;
 
-
 class tfkdiff {
   public:
     SP_Tree sp_tree;

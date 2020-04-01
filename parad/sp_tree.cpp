@@ -116,7 +116,6 @@ void SP_Tree::walk_tree_process_semisort(SP_Node* n, float** worker_local_grad_t
   }
 }
 
-
 void SP_Tree::collect_ops_for_semisort(SP_Node* n, args_for_collect_ops* args, worker_local_vector<OperationReference>& wl_ops) {
   if (n->type == 3) {
     triple_vector_wl stack = n->data;
@@ -158,15 +157,12 @@ void SP_Tree::collect_ops_for_semisort(SP_Node* n, args_for_collect_ops* args, w
             }
           }
         }
-
         args->last_statement_worker[statement.index] = stack.worker_id;
         args->last_statement_index[statement.index] = ist;
-
       }
     }
     return;
   }
-
   if (n->type == 2) {
     for (int i = 0; i < n->children->size(); i++) {
       cilk_spawn collect_ops_for_semisort((*(n->children))[i], args, wl_ops);
@@ -201,9 +197,7 @@ void SP_Tree::report_times() {
   r17.reportTotal("r17: free memory at end.");
 }
 
-
 void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
-
   r0.start();
   // First identify all gradient indices that appear in statements.
   bool* appears_in_statement = new bool[n_gradients];
@@ -226,7 +220,6 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   int64_t nstatements = red_nstatements.get_value()+1;
   r1.stop();
 
-
   r2.start();
   // Now do a left first walk of the tree.
   int8_t* last_statement_worker = new int8_t[n_gradients];
@@ -243,47 +236,40 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   r3.stop();
 
   r4.start();
-
   OperationReference* ops;
-  // We're using a worker_local_vector to accumulate the operations that pass a filter.
-  //   This is a practical optimization to PARAD that reduces the number of operations that
-  //   need distinct deposit locations.
+  // We're using a worker_local_vector to accumulate the operations that pass a
+  // filter. This is a practical optimization to PARAD that reduces the number
+  // of operations that need distinct deposit locations.
   worker_local_vector<OperationReference> wl_ops;
-
   int64_t op_stack_len = 0;
   for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
     op_stack_len += worker_local_stacks[i].operation_stack_arr_len;
   }
-
-
   // Obtain statement offsets for worker-local statement stacks. This will be used in an upcoming step.
   int* statement_offsets = new int[__cilkrts_get_nworkers()];
   statement_offsets[0] = 0;
   for (int i = 1; i < __cilkrts_get_nworkers(); i++) {
     statement_offsets[i] = statement_offsets[i-1] + worker_local_stacks[i-1].statement_stack_arr_len;
   }
-
   wl_ops.reserve((op_stack_len*2)/__cilkrts_get_nworkers());
   r4.stop();
 
-
   r5.start();
-
   r5_mid.start();
   // Init the deposit location lengths and the deposit-location-valid arrays.
   cilk_for (int wid = 0; wid < __cilkrts_get_nworkers(); wid++) {
-     cilk_for (int64_t i = 0; i < worker_local_stacks[wid].statement_stack_arr_len; i++) {
-       worker_local_stacks[wid].statement_stack_deposit_location_len[i] = 0;
-     }
-     // This valid array of booleans is allocated and used because it is cheaper to access a
-     //   a boolean to check for validity than a 8-byte pointer (smaller mem access).
-     cilk_for (int64_t i = 0; i < worker_local_stacks[wid].operation_stack_arr_len; i++) {
-       worker_local_stacks[wid].operation_stack_deposit_location_valid[i] = 0;
-     }
+    cilk_for (int64_t i = 0; i < worker_local_stacks[wid].statement_stack_arr_len; i++) {
+      worker_local_stacks[wid].statement_stack_deposit_location_len[i] = 0;
+    }
+    // This valid array of booleans is allocated and used because it is cheaper
+    // to access a boolean to check for validity than a 8-byte pointer
+    // (smaller mem access).
+    cilk_for (int64_t i = 0; i < worker_local_stacks[wid].operation_stack_arr_len; i++) {
+      worker_local_stacks[wid].operation_stack_deposit_location_valid[i] = 0;
+    }
   }
   r5_mid.stop();
   r5.stop();
-
 
   r6.start();
   args_for_collect_ops args;
@@ -291,8 +277,8 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   args.last_statement_worker = last_statement_worker;
   args.last_statement_index = last_statement_index;
   args.gradient_ = _gradient;
-  // Actually perform the left-first traversal to collect operations that need distinct
-  //   deposit locations.
+  // Actually perform the left-first traversal to collect operations that need
+  // distinct deposit locations.
   collect_ops_for_semisort(get_root(), &args, wl_ops);
   r6.stop();
 
@@ -305,36 +291,36 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   // Map each operation in 'ops' with index i to the pair (statement_index, i).
   std::pair<int, int>* mapped_ops = (std::pair<int, int>*) malloc(sizeof(std::pair<int, int>) * ops_size);
   int64_t mapped_ops_size = ops_size;
-
   // Map for sort.
   cilk_for (uint64_t i = 0; i < ops_size; i++) {
-    // Here a global statement index is obtained via the statement offsets we obtained earlier
-    //   for each worker's statement stack.
-    mapped_ops[i] = std::make_pair(statement_offsets[ops[i].statement_wid] + ops[i].statement_ist,
-                                   (int)i);
+    // Here a global statement index is obtained via the statement offsets we
+    // obtained earlier for each worker's statement stack.
+    mapped_ops[i] = std::make_pair(statement_offsets[ops[i].statement_wid] + ops[i].statement_ist, (int)i);
   }
   r8.stop();
 
   r9.start();
-  // Semisort the mapped_ops so that all operations associated with the same statement are
-  //   contiguous in-memory.
+  // Semisort the mapped_ops so that all operations associated with the same
+  // statement are contiguous in-memory.
   intSort::iSort(&mapped_ops[0], mapped_ops_size, nstatements+1, utils::firstF<int, int>());
   r9.stop();
 
   r10.start();
-  // Collect the boundaries between continguous blocks of operations with same statement index.
+  // Collect the boundaries between continguous blocks of operations with same
+  // statement index.
   int* boundaries;
   worker_local_vector<int> wl_boundaries;
-  //int* wl_boundaries;
+  // int* wl_boundaries;
   cilk_for (uint64_t i = 0; i < mapped_ops_size; i++) {
     if (i == 0 || mapped_ops[i].first != mapped_ops[i-1].first) {
       wl_boundaries.push_back(__cilkrts_get_worker_number(), i);
     }
   }
   int64_t boundaries_size = wl_boundaries.collect(boundaries);
-  // Due to using worker local vectors, we need to actually sort this list of boundaries so that
-  //   they appear in order. Note that (from theory point of view) we could have done this with a
-  //   scan followed by a pack if needed, but this isn't bottleneck usually.
+  // Due to using worker local vectors, we need to actually sort this list of
+  // boundaries so that they appear in order. Note that (from theory point of
+  // view) we could have done this with a scan followed by a pack if needed,
+  // but this isn't bottleneck usually.
   intSort::iSort(&boundaries[0], boundaries_size, mapped_ops_size, utils::identityF<int>());
   r10.stop();
 
@@ -342,7 +328,6 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   // For each contiguous block in mapped_ops create a block with a start and end index.
   std::pair<int,int>* blocks = (std::pair<int,int>*) malloc(sizeof(std::pair<int,int>)*boundaries_size);
   int64_t blocks_size = boundaries_size;
-
   cilk_for (uint64_t i = 1; i < boundaries_size; i++) {
     blocks[i-1] = (std::make_pair(boundaries[i-1], boundaries[i]));
   }
@@ -360,17 +345,17 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   r13.start();
   // Each block is associated with a subarray inside the deposit array.
   cilk_for (uint64_t i = 0; i < blocks_size; i++) {
-    // The statement associated with the block is assigned to the range of indices
-    //   corresponding to the deposit subarray associated with this block.
+    // The statement associated with the block is assigned to the range of
+    // indices corresponding to the deposit subarray associated with this block.
     if (blocks[i].second > blocks[i].first) {
-        OperationReference& opref = ops[mapped_ops[blocks[i].first].second];
-        if (opref.statement_wid != -1) {
-          worker_local_stacks[opref.statement_wid].statement_stack_deposit_location[opref.statement_ist] = deposit_locations + blocks[i].first;
-          worker_local_stacks[opref.statement_wid].statement_stack_deposit_location_len[opref.statement_ist] = blocks[i].second - blocks[i].first;
-        }
+      OperationReference& opref = ops[mapped_ops[blocks[i].first].second];
+      if (opref.statement_wid != -1) {
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location[opref.statement_ist] = deposit_locations + blocks[i].first;
+        worker_local_stacks[opref.statement_wid].statement_stack_deposit_location_len[opref.statement_ist] = blocks[i].second - blocks[i].first;
+      }
     }
-
-    // Assign each operation in the block to distinct locations in the deposit subarray for the block.
+    // Assign each operation in the block to distinct locations in the deposit
+    // subarray for the block.
     cilk_for (uint64_t j = blocks[i].first; j < blocks[i].second; j++) {
       OperationReference& opref = ops[mapped_ops[j].second];
       if (opref.statement_wid != -1) {
@@ -380,21 +365,18 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
         worker_local_stacks[opref.operation_wid].operation_stack_deposit_location_valid[opref.operation_j] = false;
       }
     }
-
   }
   r13.stop();
 
-
   r14.start();
-  // Allocate worker-local gradient tables. These are used for gradients that are not associated
-  //   any statement --- i.e. precisely the gradients that will be non-zero after the reverse-mode
-  //   AD.
+  // Allocate worker-local gradient tables. These are used for gradients that
+  // are not associated any statement -- i.e. precisely the gradients that will
+  // be non-zero after the reverse-mode AD.
   float** worker_local_grad_table = (float**) malloc(sizeof(float*) * __cilkrts_get_nworkers());
   cilk_for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
     worker_local_grad_table[i] = (float*) calloc(n_gradients, sizeof(float));
   }
   r14.stop();
-
 
   r15.start();
   // Perform the right-first traversal to actually compute the gradients.
@@ -405,7 +387,7 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   int n_workers = __cilkrts_get_nworkers();
   int64_t max_gradient = tfk_reducer.max_gradient;
   // Accumulate the gradients. Should technically use sparse arrays here,
-  //   but this is presently not a common bottleneck.
+  // but this is presently not a common bottleneck.
   cilk_for (int64_t i = 0; i < max_gradient; i++) {
     _gradient[i] = 0;
     for (int wid = 0; wid < n_workers; wid++) {
@@ -420,7 +402,6 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
     free(worker_local_grad_table[i]);
   }
   free(worker_local_grad_table);
-
   delete[] deposit_locations;
   delete[] last_statement_worker;
   delete[] last_statement_index;
@@ -434,9 +415,8 @@ void SP_Tree::reverse_ad_PARAD(int64_t n_gradients, float* _gradient) {
   return;
 }
 
-
-// init can happen at the root of the program, and upon a steal.
-// Upon a steal: a continuation was stolen. Upon a sync the parent node ought to be a P node.
+// init can happen at the root of the program, and upon a steal. Upon a steal: 
+// a continuation was stolen. Upon a sync the parent node ought to be a P node.
 void SP_Tree::init() {
   SP_Node*& current_node = imp_.view();
   //current_node = get_root();
@@ -469,7 +449,6 @@ void SP_Tree::clear() {
   this->init();
   //recording = saved_recording;
 }
-
 
 int SP_Tree::walk_tree_rootset_transform(SP_Node* n, int dep_count) {
   // Data node.
@@ -515,12 +494,10 @@ int SP_Tree::walk_tree_rootset_transform(SP_Node* n, int dep_count) {
     for (int i = 0; i < n->children->size(); i++) {
       int child_dep_count = walk_tree_rootset_transform((*n->children)[i], dep_count);
       if (child_dep_count > max_child_dep_count) max_child_dep_count = child_dep_count;
-
       if ((*n->children)[i]->type == 3 || (*n->children)[i]->rootset_id == 1) {
         n->rootset_id = 1;
       }
     }
-     
     //printf("P node dep_count is %d\n", max_child_dep_count);
     return max_child_dep_count; // returned dep_count is the maximum of all child dependence counts.
   }
@@ -552,13 +529,10 @@ void SP_Tree::walk_tree_flatten_datanodes(SP_Node* n, std::vector<SP_Node*>& ret
     }
     return;
   }
-
   for (int i = 0; i < n->children->size(); i++) {
     walk_tree_flatten_datanodes((*(n->children))[i], ret);
   }
-
 }
-
 
 void SP_Tree::make_ids_deterministic(int64_t n_gradients) {
   std::vector<SP_Node*> data_nodes;
@@ -569,96 +543,91 @@ void SP_Tree::make_ids_deterministic(int64_t n_gradients) {
   for (int i = 0; i < n_gradients; i++) {
     remap[i] = -1;
   }
-
   for (int i = 0; i < data_nodes.size(); i++) {
     triple_vector_wl stack = data_nodes[i]->data;
     for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
       const adept::Statement& statement =
           worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
       if (statement.index == -1) continue;
-        if (remap[statement.index] == -1) {
-          remap[statement.index] = next_id++;
+      if (remap[statement.index] == -1) {
+        remap[statement.index] = next_id++;
+      }
+      if (ist == stack.statement_stack_start) {
+        for (adept::uIndex j = stack.operation_stack_start;
+             j < statement.end_plus_one; j++) {
+          adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+          if (remap[op_index] == -1) remap[op_index] = next_id++;
         }
-        if (ist == stack.statement_stack_start) {
-          for (adept::uIndex j = stack.operation_stack_start;
+      } else {
+        for (adept::uIndex j =
+               worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
                j < statement.end_plus_one; j++) {
-            adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-            if (remap[op_index] == -1) remap[op_index] = next_id++;
-          }
-        } else {
-          for (adept::uIndex j =
-                 worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
-                 j < statement.end_plus_one; j++) {
-            adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-            if (remap[op_index] == -1) remap[op_index] = next_id++;
-          }
+          adept::uIndex op_index = worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+          if (remap[op_index] == -1) remap[op_index] = next_id++;
         }
+      }
     }
-
   }
-
   for (int i = 0; i < data_nodes.size(); i++) {
     triple_vector_wl stack = data_nodes[i]->data;
     for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
       adept::Statement& statement =
           worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
       if (statement.index == -1) continue;
-        statement.index = remap[statement.index];
-        if (ist == stack.statement_stack_start) {
-          for (adept::uIndex j = stack.operation_stack_start;
-               j < statement.end_plus_one; j++) {
-            worker_local_stacks[stack.worker_id].operation_stack_arr[j] = remap[worker_local_stacks[stack.worker_id].operation_stack_arr[j]];
-          }
-        } else {
-          for (adept::uIndex j =
-                 worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
-                 j < statement.end_plus_one; j++) {
-            worker_local_stacks[stack.worker_id].operation_stack_arr[j] = remap[worker_local_stacks[stack.worker_id].operation_stack_arr[j]];
-          }
+      statement.index = remap[statement.index];
+      if (ist == stack.statement_stack_start) {
+        for (adept::uIndex j = stack.operation_stack_start;
+             j < statement.end_plus_one; j++) {
+          worker_local_stacks[stack.worker_id].operation_stack_arr[j] = remap[worker_local_stacks[stack.worker_id].operation_stack_arr[j]];
         }
+      } else {
+        for (adept::uIndex j =
+               worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+               j < statement.end_plus_one; j++) {
+          worker_local_stacks[stack.worker_id].operation_stack_arr[j] = remap[worker_local_stacks[stack.worker_id].operation_stack_arr[j]];
+        }
+      }
     }
   }
-
   delete[] remap;
-
 }
 
+/*
+void SP_Tree::walk_tree_count_gradients(SP_Node* n, int* counts) {
+  // If its a data node it must be a terminal node.
+  if (n->type == 3) {
+    triple_vector_wl stack = n->data;
+    if (stack.statement_stack_end != stack.statement_stack_start) {
 
-//void SP_Tree::walk_tree_count_gradients(SP_Node* n, int* counts) {
-//  // If its a data node it must be a terminal node.
-//  if (n->type == 3) {
-//    triple_vector_wl stack = n->data;
-//    if (stack.statement_stack_end != stack.statement_stack_start) {
-//
-//      for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
-//          const adept::Statement& statement =
-//              worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
-//          if (statement.index == -1) continue;
-//          if (ist == stack.statement_stack_start) {
-//            for (adept::uIndex j = stack.operation_stack_start;
-//                    j < statement.end_plus_one; j++) {
-//               adept::uIndex operation_stack_index =
-//                   worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-//               counts[operation_stack_index]++;
-//             }
-//           } else {
-//             for (adept::uIndex j =
-//                    worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
-//                    j < statement.end_plus_one; j++) {
-//               adept::uIndex operation_stack_index =
-//                   worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-//               counts[operation_stack_index]++;
-//             }
-//           }
-//       }
-//    }
-//    return;
-//  }
-//  for (int i = 0; i < n->children->size(); i++) {
-//    walk_tree_count_gradients((*(n->children))[i], ret);
-//  }
-//}
-
+      for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
+          const adept::Statement& statement =
+              worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
+          if (statement.index == -1) continue;
+          if (ist == stack.statement_stack_start) {
+            for (adept::uIndex j = stack.operation_stack_start;
+                    j < statement.end_plus_one; j++) {
+               adept::uIndex operation_stack_index =
+                   worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+               counts[operation_stack_index]++;
+             }
+           } else {
+             for (adept::uIndex j =
+                    worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+                    j < statement.end_plus_one; j++) {
+               adept::uIndex operation_stack_index =
+                   worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+               counts[operation_stack_index]++;
+             }
+           }
+       }
+    }
+    return;
+  }
+  for (int i = 0; i < n->children->size(); i++) {
+    walk_tree_count_gradients((*(n->children))[i], ret);
+  }
+}
+*/
 
 SP_Tree* SP_Tree::transform_to_rootset_form() {
   int n_rootsets = walk_tree_rootset_transform(this->get_root(), 0);
@@ -696,10 +665,8 @@ SP_Tree* SP_Tree::transform_to_rootset_form() {
     //new_tree->close_P_node();
   }
   //new_tree->close_S_node();
-
   return new_tree;
 }
-
 
 void SP_Tree::add_D_node(triple_vector_wl data) {
   if (!recording) return;
@@ -768,7 +735,6 @@ void SP_Tree::sync_P_nodes(void* sync_id) {
   }
 }
 
-
 void SP_Tree::open_S_node() {
   if (!recording) return;
   SP_Node*& current_node = imp_.view();
@@ -788,7 +754,6 @@ void SP_Tree::close_S_node() {
   current_node = parent;
 }
 
-
 std::vector<triple_vector_wl*> SP_Tree::flatten_to_array() {
   std::vector<triple_vector_wl*> ret(0);
   this->walk_tree_flatten(this->get_root(), ret);
@@ -801,7 +766,6 @@ void SP_Tree::walk_tree_flatten(SP_Node* n, std::vector<triple_vector_wl*>& ret)
     ret.push_back(&(n->data));
     return;
   }
-
   for (int i = 0; i < n->children->size(); i++) {
     walk_tree_flatten((*(n->children))[i], ret);
   }
@@ -827,69 +791,60 @@ tfk_gradient_table* SP_Tree::merge_gradient_table_list(
     //}
     //return left;
   }
+  tfk_gradient_table* my_gradient_table =  gradient_table_list[start];
+  for (int j = start+1; j < end; j++) {
+    my_gradient_table->merge_into_me(gradient_table_list[j]);
+  }
+  return my_gradient_table;
+}
 
+/*
+tfk_gradient_table* SP_Tree::merge_gradient_table_list(
+    std::vector<tfk_gradient_table*>& gradient_table_list, int start, int end) {
+
+  if (end-start > 4) {
+    int mid = start + (end-start)/2;
+    tfk_gradient_table* left = cilk_spawn merge_gradient_table_list(gradient_table_list, start,
+                                                                    mid);
+    tfk_gradient_table* right = merge_gradient_table_list(gradient_table_list, mid, end);
+    cilk_sync;
+
+    adept::uIndex* active_entries_right = right->get_active_entries();
+    int n_active_entries_right = right->get_n_active_entries();
+    for (int i = 0; i < n_active_entries_right; i++) {
+      //left->accumulate(active_entries_right[i], right->extract_value(active_entries_right[i]));
+      left->accumulate(active_entries_right[i], right->gradient_table_local[active_entries_right[i]]);
+    }
+    return left;
+  }
 
   tfk_gradient_table* my_gradient_table =  gradient_table_list[start];
 
   for (int j = start+1; j < end; j++) {
-    my_gradient_table->merge_into_me(gradient_table_list[j]);
+    adept::uIndex* active_entries = gradient_table_list[j]->get_active_entries();
+    int64_t n_active_entries = gradient_table_list[j]->get_n_active_entries();
+
+    for (int i = 0; i < n_active_entries; i++) {
+      //my_gradient_table->accumulate(active_entries[i],
+      //                              gradient_table_list[j]->extract_value(active_entries[i]));
+      my_gradient_table->accumulate(active_entries[i],
+                                    gradient_table_list[j]->gradient_table_local[active_entries[i]]);
+    }
   }
 
   return my_gradient_table;
 }
-
-
-//tfk_gradient_table* SP_Tree::merge_gradient_table_list(
-//    std::vector<tfk_gradient_table*>& gradient_table_list, int start, int end) {
-//
-//  if (end-start > 4) {
-//    int mid = start + (end-start)/2;
-//    tfk_gradient_table* left = cilk_spawn merge_gradient_table_list(gradient_table_list, start,
-//                                                                    mid);
-//    tfk_gradient_table* right = merge_gradient_table_list(gradient_table_list, mid, end);
-//    cilk_sync;
-//
-//    adept::uIndex* active_entries_right = right->get_active_entries();
-//    int n_active_entries_right = right->get_n_active_entries();
-//    for (int i = 0; i < n_active_entries_right; i++) {
-//      //left->accumulate(active_entries_right[i], right->extract_value(active_entries_right[i]));
-//      left->accumulate(active_entries_right[i], right->gradient_table_local[active_entries_right[i]]);
-//    }
-//    return left;
-//  }
-//
-//
-//  tfk_gradient_table* my_gradient_table =  gradient_table_list[start];
-//
-//  for (int j = start+1; j < end; j++) {
-//    adept::uIndex* active_entries = gradient_table_list[j]->get_active_entries();
-//    int64_t n_active_entries = gradient_table_list[j]->get_n_active_entries();
-//
-//    for (int i = 0; i < n_active_entries; i++) {
-//      //my_gradient_table->accumulate(active_entries[i],
-//      //                              gradient_table_list[j]->extract_value(active_entries[i]));
-//      my_gradient_table->accumulate(active_entries[i],
-//                                    gradient_table_list[j]->gradient_table_local[active_entries[i]]);
-//    }
-//  }
-//
-//  return my_gradient_table;
-//}
+*/
 
 // need to disable recording when walking over the tree.
 void SP_Tree::set_recording(bool recording_) {
   this->recording = recording_;
 }
 
-
-
 void SP_Tree::walk_tree_process_one_worker(float* gradient_table) {
-
   std::vector<SP_Node*> ret;
   walk_tree_flatten_datanodes(get_root(), ret);
-
   //FILE* f = fopen("process.debug", "a");
-
   adept::uIndex count_ist = -1;
   for (int i = ret.size(); i-- > 0;) {
     triple_vector_wl stack = ret[i]->data;
@@ -953,11 +908,7 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
        //delete n;
        return my_gradient_table;
     }
-
-
     //int wid = __cilkrts_get_worker_number();
-
-
 
     //if (my_gradient_table->dense_rep != NULL) {
     //  printf("Dense representation is being used for %d statements\n", stack.statement_stack_end-stack.statement_stack_start);
@@ -1024,7 +975,6 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
     //delete n;
     return my_gradient_table;
   }
-
   if (n->type == 1 || n->type == 0) {
     for (int i = n->children->size()-1; i >= 0; i--) {
       if (n->type == 0) {
@@ -1033,17 +983,13 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
       my_gradient_table = walk_tree_process((*(n->children))[i], my_gradient_table, n_gradients);
       }
     }
-
   } else if (n->type == 2) {
     std::vector<tfk_gradient_table*> gradient_table_list;
     //for (int i = n->children.size()-1; i >= 0; i--) {
     //  gradient_table_list.push_back(NULL);//new tfk_gradient_table(n_gradients, my_gradient_table));
     //}
 
-
     //#pragma cilk grainsize 1
-
-
 
     int* wids = (int*) malloc(sizeof(int)*n->children->size()+8);
    
@@ -1071,7 +1017,6 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
       wids[i] = __cilkrts_get_worker_number();
     }
 
-
     for (int i = 0; i < n->children->size(); i++) {
       if (i == 0 || tables[i] != tables[i-1]) {
         if (tables[i] != NULL) {
@@ -1080,18 +1025,15 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
       }
     }
 
-
     //if (gradient_table_list.size() == 0) return my_gradient_table;
     //printf("gradient table list len %d\n", gradient_table_list.size());
-
     
     tfk_gradient_table* merged_table = my_gradient_table;
     if (gradient_table_list.size() > 0) merged_table = merge_gradient_table_list(gradient_table_list, 0,
                                                                  gradient_table_list.size());
-    
+
     //adept::uIndex* active_entries = merged_table->get_active_entries();
     //int64_t n_active_entries = merged_table->get_n_active_entries();
-
 
     //adept::uIndex* my_active_entries = my_gradient_table->get_active_entries();
     //int64_t my_n_active_entries = my_gradient_table->get_n_active_entries();
@@ -1161,39 +1103,29 @@ tfk_gradient_table* SP_Tree::walk_tree_process(SP_Node* n, tfk_gradient_table* m
   return my_gradient_table;
 }
 
-
-
-
 void SP_Tree::walk_tree_debug(SP_Node* n, int nest_depth,FILE* f) {
-
   for (int i = 0; i < nest_depth; i++) {
     fprintf(f, "  ");
   }
-
   nest_depth += 1;
-
   if (n->type == 1) {
     fprintf(f, "(S:\n");
   } else if (n->type == 2) {
     fprintf(f, "(P:\n");
   }
-
   // If its a data node it must be a terminal node.
   if (n->type == 3) {
     fprintf(f, "D\n");
     return;
   }
-
   for (int i = 0; i < n->children->size(); i++) {
     walk_tree_debug((*(n->children))[i], nest_depth, f);
   }
-
   for (int i = 0; i < nest_depth-1; i++) {
     fprintf(f, "  ");
   }
   fprintf(f, ")\n");
 }
-
 
 void SP_Tree::walk_tree_debug(SP_Node* n) {
   FILE* f = fopen("sptree.debug", "a");
@@ -1227,57 +1159,54 @@ void SP_Tree::walk_tree_process_locks(SP_Node* n, float* gradient_, int64_t* loc
     // We are going to process one of the stacks.
     triple_vector_wl stack = n->data;
     if (stack.statement_stack_end == stack.statement_stack_start) {
-       //delete n;
-       return;
+      //delete n;
+      return;
     }
     int wid = __cilkrts_get_worker_number();
     for (adept::uIndex ist = stack.statement_stack_end; ist-- > stack.statement_stack_start;) {
-        const adept::Statement& statement =
-            worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
-        //assert(statement.index != -1 && "Why is statement index -1?\n");
-        if (statement.index == -1) continue;
+      const adept::Statement& statement =
+          worker_local_stacks[stack.worker_id].statement_stack_arr[ist];
+      //assert(statement.index != -1 && "Why is statement index -1?\n");
+      if (statement.index == -1) continue;
 
-        // acquire lock.
-        {
+      // acquire lock.
+      {
         bool succ = false;
         do {
           succ = __sync_bool_compare_and_swap(&locks[statement.index], 0, 1);
         } while (!succ || locks[statement.index] == 0);
-        }
+      }
 
-        adept::Real a = gradient_[statement.index];
-        gradient_[statement.index] = 0;
-        locks[statement.index] = 0; // release lock.
+      adept::Real a = gradient_[statement.index];
+      gradient_[statement.index] = 0;
+      locks[statement.index] = 0; // release lock.
 
-        if (a != 0.0) {
-          for (adept::uIndex j =
-                 worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
-                 j < statement.end_plus_one; j++) {
-            adept::Real multiplier_test =
-                worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
-            adept::uIndex operation_stack_index =
-                worker_local_stacks[stack.worker_id].operation_stack_arr[j];
-
-            // acquire lock.
-            {
+      if (a != 0.0) {
+        for (adept::uIndex j =
+               worker_local_stacks[stack.worker_id].statement_stack_arr[ist-1].end_plus_one;
+               j < statement.end_plus_one; j++) {
+          adept::Real multiplier_test =
+              worker_local_stacks[stack.worker_id].multiplier_stack_arr[j];
+          adept::uIndex operation_stack_index =
+              worker_local_stacks[stack.worker_id].operation_stack_arr[j];
+          // acquire lock.
+          {
             bool succ = false;
             do {
               succ = __sync_bool_compare_and_swap(&locks[operation_stack_index], 0, 1);
             } while (!succ || locks[operation_stack_index] == 0);
-            }
-            gradient_[operation_stack_index] += multiplier_test*a;
-            locks[operation_stack_index] = 0; // Release lock.
           }
-       }
-     }
+          gradient_[operation_stack_index] += multiplier_test*a;
+          locks[operation_stack_index] = 0; // Release lock.
+        }
+      }
+    }
     return;
   }
-
   if (n->type == 1 || n->type == 0) {
     for (int i = n->children->size()-1; i >= 0; i--) {
       walk_tree_process_locks((*(n->children))[i], gradient_, locks);
     }
-
   } else if (n->type == 2) {
     //if (n->children->size() < 8) {
     for (int j = 0; j < n->children->size(); j++) {
@@ -1291,63 +1220,49 @@ void SP_Tree::walk_tree_process_locks(SP_Node* n, float* gradient_, int64_t* loc
     //  walk_tree_process_semisort((*(n->children))[i], worker_local_grad_table, appears_in_statement, gradient_);
     //}
   }
-
 }
 
-
 // SP_Node Class
-  SP_Node::SP_Node(triple_vector_wl data_) {
-    data = data_;
-    children = new std::vector<SP_Node*>();
-    type = 3;
-    sync_id = NULL;
-  }
+SP_Node::SP_Node(triple_vector_wl data_) {
+  data = data_;
+  children = new std::vector<SP_Node*>();
+  type = 3;
+  sync_id = NULL;
+}
 
+// nx1 = nxm ** mx1
+// assumes nxm is static weight matrix.
+//SP_Node::SP_Node(aMatrix& left, aMatrix& right, aMatrix& ans) {
+//  /*
+//    for each of n statements.
+//             for statement i
+//  */
+//}
 
-  // nx1 = nxm ** mx1
-  // assumes nxm is static weight matrix.
-  //SP_Node::SP_Node(aMatrix& left, aMatrix& right, aMatrix& ans) {
-
-  //   /*
-  //     for each of n statements.
-
-  //              for statement i
-  //                      
-
-
-  //   */
-
-  //}
-
-  SP_Node::~SP_Node() {
-    if (children != NULL ) {
-      //#pragma cilk
-      //#pragma cilk grainsize 1
-      for (int i = 0; i < children->size(); i++) {
-        delete (*children)[i];
-      }
-      delete children;
+SP_Node::~SP_Node() {
+  if (children != NULL ) {
+    //#pragma cilk
+    //#pragma cilk grainsize 1
+    for (int i = 0; i < children->size(); i++) {
+      delete (*children)[i];
     }
-    //children = new std::vector<SP_Node*>();
+    delete children;
   }
+  //children = new std::vector<SP_Node*>();
+}
 
+SP_Node::SP_Node(int type_, SP_Node* parent_) {
+  if (type_ == 2) printf("DEBUG: This should not be called for P nodes.\n");
+  type = type_;
+  parent = parent_;
+  children = new std::vector<SP_Node*>();
+  sync_id = NULL;
+}
 
-  SP_Node::SP_Node(int type_, SP_Node* parent_) {
-    if (type_ == 2) printf("DEBUG: This should not be called for P nodes.\n");
-    type = type_;
-    parent = parent_;
-    children = new std::vector<SP_Node*>();
-    sync_id = NULL;
-  }
-
-
-  SP_Node::SP_Node(int type_, SP_Node* parent_, void* sync_id_) {
-    if (type_ != 2) printf("DEBUG: Error this should only be called for P nodes.\n");
-    type = type_;
-    parent = parent_;
-    children = new std::vector<SP_Node*>();
-    sync_id = sync_id_;
-  }
-
-
-
+SP_Node::SP_Node(int type_, SP_Node* parent_, void* sync_id_) {
+  if (type_ != 2) printf("DEBUG: Error this should only be called for P nodes.\n");
+  type = type_;
+  parent = parent_;
+  children = new std::vector<SP_Node*>();
+  sync_id = sync_id_;
+}
