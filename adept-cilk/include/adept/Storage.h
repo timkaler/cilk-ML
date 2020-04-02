@@ -79,8 +79,8 @@ namespace adept {
     // gradient_index at 1, so 0 is reserved for invalid values.
     ~Storage() {
       internal::free_aligned(data_);
-// NOTE(TFK): Remove destructor to avoid segfault at end of execution.
-//   Need to look into why this is happening.
+      // NOTE(TFK): Remove destructor to avoid segfault at end of execution.
+      // Need to look into why this is happening.
 #ifndef ADEPT_NO_AUTOMATIC_DIFFERENTIATION
 #ifdef ADEPT_RECORDING_PAUSABLE
       if (ADEPT_ACTIVE_STACK->is_recording()) {
@@ -94,7 +94,6 @@ namespace adept {
 #endif
       //internal::n_storage_objects_deleted_++; 
     }
-
 
     // Null initialization, copy and assignment methods that are
     // "protected" to prevent them being used

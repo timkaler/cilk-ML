@@ -27,9 +27,7 @@
 
 namespace adept {
   namespace internal {
-
     // Helper classes
-
 
     struct StatementBlock {
       StatementBlock(uIndex n_) : n(0), n_allocated(n_) {
@@ -71,8 +69,6 @@ namespace adept {
     std::vector<StatementBlock> statement_data_;
     std::vector<OperationBlock> operation_data_;
 
-
-
     class StackStorage {
     public:
       // Constructor
@@ -104,7 +100,6 @@ namespace adept {
             throw non_finite_gradient();
           }
 #endif
-        
 #ifdef ADEPT_REMOVE_NULL_STATEMENTS
         }
 #endif

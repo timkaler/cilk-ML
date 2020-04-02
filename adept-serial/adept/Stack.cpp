@@ -39,7 +39,7 @@ namespace adept {
     // "this" is shortly to become invalid
     if (is_thread_unsafe_) {
       if (_stack_current_thread_unsafe == this) {
-	_stack_current_thread_unsafe = 0; 
+        _stack_current_thread_unsafe = 0; 
       }
     }
     else if (_stack_current_thread == this) {
@@ -61,17 +61,17 @@ namespace adept {
   {
     // Check that we don't already have an active stack in this thread
     if ((is_thread_unsafe_ && _stack_current_thread_unsafe 
-	 && _stack_current_thread_unsafe != this)
-	|| ((!is_thread_unsafe_) && _stack_current_thread
-	    && _stack_current_thread != this)) {
+         && _stack_current_thread_unsafe != this)
+        || ((!is_thread_unsafe_) && _stack_current_thread
+            && _stack_current_thread != this)) {
       throw(stack_already_active());
     }
     else {
       if (!is_thread_unsafe_) {
-	_stack_current_thread = this;
+        _stack_current_thread = this;
       }
       else {
-	_stack_current_thread_unsafe = this;
+        _stack_current_thread_unsafe = this;
       }
     }    
   }
@@ -95,18 +95,18 @@ namespace adept {
 #ifdef _OPENMP
     if (have_openmp_) {
       if (n == 1) {
-	openmp_manually_disabled_ = true;
-	return 1;
+        openmp_manually_disabled_ = true;
+        return 1;
       }
       else if (n < 1) {
-	openmp_manually_disabled_ = false;
-	omp_set_num_threads(omp_get_num_procs());
-	return omp_get_max_threads();
+        openmp_manually_disabled_ = false;
+        omp_set_num_threads(omp_get_num_procs());
+        return omp_get_max_threads();
       }
       else {
-	openmp_manually_disabled_ = false;
-	omp_set_num_threads(n);
-	return omp_get_max_threads();
+        openmp_manually_disabled_ = false;
+        omp_set_num_threads(n);
+        return omp_get_max_threads();
       }
     }
 #endif
@@ -122,10 +122,10 @@ namespace adept {
 #ifdef _OPENMP
     if (have_openmp_) {
       if (openmp_manually_disabled_) {
-	return 1;
+        return 1;
       }
       else {
-	return omp_get_max_threads();
+        return omp_get_max_threads();
       }
     }
 #endif
@@ -142,20 +142,20 @@ namespace adept {
     if (gradients_are_initialized()) {
       // Loop backwards through the derivative statements
       for (uIndex ist = n_statements_-1; ist > 0; ist--) {
-	const Statement& statement = statement_[ist];
-	// We copy the RHS gradient (LHS in the original derivative
-	// statement but swapped in the adjoint equivalent) to "a" in
-	// case it appears on the LHS in any of the following statements
-	Real a = gradient_[statement.index];
-	gradient_[statement.index] = 0.0;
-	// By only looping if a is non-zero we gain a significant speed-up
-	if (a != 0.0) {
-	  // Loop over operations
-	  for (uIndex i = statement_[ist-1].end_plus_one;
-	       i < statement.end_plus_one; i++) {
-	    gradient_[index_[i]] += multiplier_[i]*a;
-	  }
-	}
+        const Statement& statement = statement_[ist];
+        // We copy the RHS gradient (LHS in the original derivative
+        // statement but swapped in the adjoint equivalent) to "a" in
+        // case it appears on the LHS in any of the following statements
+        Real a = gradient_[statement.index];
+        gradient_[statement.index] = 0.0;
+        // By only looping if a is non-zero we gain a significant speed-up
+        if (a != 0.0) {
+          // Loop over operations
+          for (uIndex i = statement_[ist-1].end_plus_one;
+               i < statement.end_plus_one; i++) {
+            gradient_[index_[i]] += multiplier_[i]*a;
+          }
+        }
       }
     }  
     else {
@@ -173,15 +173,15 @@ namespace adept {
     if (gradients_are_initialized()) {
       // Loop forward through the statements
       for (uIndex ist = 1; ist < n_statements_; ist++) {
-	const Statement& statement = statement_[ist];
-	// We copy the LHS to "a" in case it appears on the RHS in any
-	// of the following statements
-	Real a = 0.0;
-	for (uIndex i = statement_[ist-1].end_plus_one;
-	     i < statement.end_plus_one; i++) {
-	  a += multiplier_[i]*gradient_[index_[i]];
-	}
-	gradient_[statement.index] = a;
+        const Statement& statement = statement_[ist];
+        // We copy the LHS to "a" in case it appears on the RHS in any
+        // of the following statements
+        Real a = 0.0;
+        for (uIndex i = statement_[ist-1].end_plus_one;
+             i < statement.end_plus_one; i++) {
+          a += multiplier_[i]*gradient_[index_[i]];
+        }
+        gradient_[statement.index] = a;
       }
     }
     else {
@@ -199,26 +199,26 @@ namespace adept {
       uIndex return_val;
       // Insert in a gap, if there is one big enough
       for (GapListIterator it = gap_list_.begin();
-	   it != gap_list_.end(); it++) {
-	uIndex len = it->end + 1 - it->start;
-	if (len > n) {
-	  // Gap a bit larger than needed: reduce its size
-	  return_val = it->start;
-	  it->start += n;
-	  return return_val;
-	}
-	else if (len == n) {
-	  // Gap exactly the size needed: fill it and remove from list
-	  return_val = it->start;
-	  if (most_recent_gap_ == it) {
-	    gap_list_.erase(it);
-	    most_recent_gap_ = gap_list_.end();
-	  }
-	  else {
-	    gap_list_.erase(it);
-	  }
-	  return return_val;
-	}
+           it != gap_list_.end(); it++) {
+        uIndex len = it->end + 1 - it->start;
+        if (len > n) {
+          // Gap a bit larger than needed: reduce its size
+          return_val = it->start;
+          it->start += n;
+          return return_val;
+        }
+        else if (len == n) {
+          // Gap exactly the size needed: fill it and remove from list
+          return_val = it->start;
+          if (most_recent_gap_ == it) {
+            gap_list_.erase(it);
+            most_recent_gap_ = gap_list_.end();
+          }
+          else {
+            gap_list_.erase(it);
+          }
+          return return_val;
+        }
       }
     }
     // No suitable gap found; instead add to end of gradient vector
@@ -253,197 +253,197 @@ namespace adept {
       // to be unregistered is here
       Gap& current_gap = *most_recent_gap_;
       if (gradient_index == current_gap.start - 1) {
-	current_gap.start--;
-	status = ADDED_AT_BASE;
+        current_gap.start--;
+        status = ADDED_AT_BASE;
       }
       else if (gradient_index == current_gap.end + 1) {
-	current_gap.end++;
-	status = ADDED_AT_TOP;
+        current_gap.end++;
+        status = ADDED_AT_TOP;
       }
       // Should we check for erroneous removal from middle of gap?
     }
     if (status == NOT_FOUND) {
       // Search other gaps
       for (GapListIterator it = gap_list_.begin();
-	   it != gap_list_.end(); it++) {
-	if (gradient_index <= it->end + 1) {
-	  // Gradient to unregister is either within the gap
-	  // referenced by iterator "it", or it is between "it"
-	  // and the previous gap in the list
-	  if (gradient_index == it->start - 1) {
-	    status = ADDED_AT_BASE;
-	    it->start--;
-	    most_recent_gap_ = it;
-	  }
-	  else if (gradient_index == it->end + 1) {
-	    status = ADDED_AT_TOP;
-	    it->end++;
-	    most_recent_gap_ = it;
-	  }
-	  else {
-	    // Insert a new gap of width 1; note that list::insert
-	    // inserts *before* the specified location
-	    most_recent_gap_
-	      = gap_list_.insert(it, Gap(gradient_index));
-	    status = NEW_GAP;
-	  }
-	  break;
-	}
+           it != gap_list_.end(); it++) {
+        if (gradient_index <= it->end + 1) {
+          // Gradient to unregister is either within the gap
+          // referenced by iterator "it", or it is between "it"
+          // and the previous gap in the list
+          if (gradient_index == it->start - 1) {
+            status = ADDED_AT_BASE;
+            it->start--;
+            most_recent_gap_ = it;
+          }
+          else if (gradient_index == it->end + 1) {
+            status = ADDED_AT_TOP;
+            it->end++;
+            most_recent_gap_ = it;
+          }
+          else {
+            // Insert a new gap of width 1; note that list::insert
+            // inserts *before* the specified location
+            most_recent_gap_
+              = gap_list_.insert(it, Gap(gradient_index));
+            status = NEW_GAP;
+          }
+          break;
+        }
       }
       if (status == NOT_FOUND) {
-	gap_list_.push_back(Gap(gradient_index));
-	most_recent_gap_ = gap_list_.end();
-	most_recent_gap_--;
+        gap_list_.push_back(Gap(gradient_index));
+        most_recent_gap_ = gap_list_.end();
+        most_recent_gap_--;
       }
     }
     // Finally check if gaps have merged
     if (status == ADDED_AT_BASE
-	&& most_recent_gap_ != gap_list_.begin()) {
+        && most_recent_gap_ != gap_list_.begin()) {
       // Check whether the gap has merged with the next one
       GapListIterator it = most_recent_gap_;
       it--;
       if (it->end == most_recent_gap_->start - 1) {
-	// Merge two gaps
-	most_recent_gap_->start = it->start;
-	gap_list_.erase(it);
+        // Merge two gaps
+        most_recent_gap_->start = it->start;
+        gap_list_.erase(it);
       }
     }
     else if (status == ADDED_AT_TOP) {
       GapListIterator it = most_recent_gap_;
       it++;
       if (it != gap_list_.end()
-	  && it->start == most_recent_gap_->end + 1) {
-	// Merge two gaps
-	most_recent_gap_->end = it->end;
-	gap_list_.erase(it);
+          && it->start == most_recent_gap_->end + 1) {
+        // Merge two gaps
+        most_recent_gap_->end = it->end;
+        gap_list_.erase(it);
       }
     }
-  }	
+  }        
 
 
   // Unregister n gradients starting at gradient_index
   void
   Stack::unregister_gradients(const uIndex& gradient_index,
-			      const uIndex& n)
+                              const uIndex& n)
   {
     n_gradients_registered_ -= n;
     if (gradient_index+n == i_gradient_) {
       // Gradient to be unregistered is at the top of the stack
       i_gradient_ -= n;
       if (!gap_list_.empty()) {
-	Gap& last_gap = gap_list_.back();
-	if (i_gradient_ == last_gap.end+1) {
-	  // We have unregistered the elements between the "gap" of
-	  // unregistered element and the top of the stack, so can set
-	  // the variables indicating the presence of the gap to zero
-	  i_gradient_ = last_gap.start;
-	  GapListIterator it = gap_list_.end();
-	  it--;
-	  if (most_recent_gap_ == it) {
-	    most_recent_gap_ = gap_list_.end();
-	  }
-	  gap_list_.pop_back();
-	}
+        Gap& last_gap = gap_list_.back();
+        if (i_gradient_ == last_gap.end+1) {
+          // We have unregistered the elements between the "gap" of
+          // unregistered element and the top of the stack, so can set
+          // the variables indicating the presence of the gap to zero
+          i_gradient_ = last_gap.start;
+          GapListIterator it = gap_list_.end();
+          it--;
+          if (most_recent_gap_ == it) {
+            most_recent_gap_ = gap_list_.end();
+          }
+          gap_list_.pop_back();
+        }
       }
     }
     else { // Gradients to be unregistered not at top of stack.
       enum {
-	ADDED_AT_BASE,
-	ADDED_AT_TOP,
-	NEW_GAP,
-	NOT_FOUND
+        ADDED_AT_BASE,
+        ADDED_AT_TOP,
+        NEW_GAP,
+        NOT_FOUND
       } status = NOT_FOUND;
       // First try to find if the unregistered element is at the start
       // or end of an existing gap
       if (!gap_list_.empty() && most_recent_gap_ != gap_list_.end()) {
-	// We have a "most recent" gap - check whether the gradient
-	// to be unregistered is here
-	Gap& current_gap = *most_recent_gap_;
-	if (gradient_index == current_gap.start - n) {
-	  current_gap.start -= n;
-	  status = ADDED_AT_BASE;
-	}
-	else if (gradient_index == current_gap.end + 1) {
-	  current_gap.end += n;
-	  status = ADDED_AT_TOP;
-	}
-	/*
-	else if (gradient_index > current_gap.start - n
-		 && gradient_index < current_gap.end + 1) {
-	  std::cout << "** Attempt to find " << gradient_index << " in gaps ";
-	  print_gaps();
-	  std::cout << "\n";
-	  throw invalid_operation("Gap list corruption");
-	}
-	*/
-	// Should we check for erroneous removal from middle of gap?
+        // We have a "most recent" gap - check whether the gradient
+        // to be unregistered is here
+        Gap& current_gap = *most_recent_gap_;
+        if (gradient_index == current_gap.start - n) {
+          current_gap.start -= n;
+          status = ADDED_AT_BASE;
+        }
+        else if (gradient_index == current_gap.end + 1) {
+          current_gap.end += n;
+          status = ADDED_AT_TOP;
+        }
+        /*
+        else if (gradient_index > current_gap.start - n
+                 && gradient_index < current_gap.end + 1) {
+          std::cout << "** Attempt to find " << gradient_index << " in gaps ";
+          print_gaps();
+          std::cout << "\n";
+          throw invalid_operation("Gap list corruption");
+        }
+        */
+        // Should we check for erroneous removal from middle of gap?
       }
       if (status == NOT_FOUND) {
-	// Search other gaps
-	for (GapListIterator it = gap_list_.begin();
-	     it != gap_list_.end(); it++) {
-	  if (gradient_index <= it->end + 1) {
-	    // Gradient to unregister is either within the gap
-	    // referenced by iterator "it", or it is between "it" and
-	    // the previous gap in the list
-	    if (gradient_index == it->start - n) {
-	      status = ADDED_AT_BASE;
-	      it->start -= n;
-	      most_recent_gap_ = it;
-	    }
-	    else if (gradient_index == it->end + 1) {
-	      status = ADDED_AT_TOP;
-	      it->end += n;
-	      most_recent_gap_ = it;
-	    }
-	    /*
-	    else if (gradient_index > it->start - n) {
-	      std::cout << "*** Attempt to find " << gradient_index << " in gaps ";
-	      print_gaps();
-	      std::cout << "\n";
-	      throw invalid_operation("Gap list corruption");
-	    }
-	    */
-	    else {
-	      // Insert a new gap; note that list::insert inserts
-	      // *before* the specified location
-	      most_recent_gap_
-		= gap_list_.insert(it, Gap(gradient_index,
-					   gradient_index+n-1));
-	      status = NEW_GAP;
-	    }
-	    break;
-	  }
-	}
-	if (status == NOT_FOUND) {
-	  gap_list_.push_back(Gap(gradient_index,
-				  gradient_index+n-1));
-	  most_recent_gap_ = gap_list_.end();
-	  most_recent_gap_--;
-	}
+        // Search other gaps
+        for (GapListIterator it = gap_list_.begin();
+             it != gap_list_.end(); it++) {
+          if (gradient_index <= it->end + 1) {
+            // Gradient to unregister is either within the gap
+            // referenced by iterator "it", or it is between "it" and
+            // the previous gap in the list
+            if (gradient_index == it->start - n) {
+              status = ADDED_AT_BASE;
+              it->start -= n;
+              most_recent_gap_ = it;
+            }
+            else if (gradient_index == it->end + 1) {
+              status = ADDED_AT_TOP;
+              it->end += n;
+              most_recent_gap_ = it;
+            }
+            /*
+            else if (gradient_index > it->start - n) {
+              std::cout << "*** Attempt to find " << gradient_index << " in gaps ";
+              print_gaps();
+              std::cout << "\n";
+              throw invalid_operation("Gap list corruption");
+            }
+            */
+            else {
+              // Insert a new gap; note that list::insert inserts
+              // *before* the specified location
+              most_recent_gap_
+                = gap_list_.insert(it, Gap(gradient_index,
+                                           gradient_index+n-1));
+              status = NEW_GAP;
+            }
+            break;
+          }
+        }
+        if (status == NOT_FOUND) {
+          gap_list_.push_back(Gap(gradient_index,
+                                  gradient_index+n-1));
+          most_recent_gap_ = gap_list_.end();
+          most_recent_gap_--;
+        }
       }
       // Finally check if gaps have merged
       if (status == ADDED_AT_BASE
-	  && most_recent_gap_ != gap_list_.begin()) {
-	// Check whether the gap has merged with the next one
-	GapListIterator it = most_recent_gap_;
-	it--;
-	if (it->end == most_recent_gap_->start - 1) {
-	  // Merge two gaps
-	  most_recent_gap_->start = it->start;
-	  gap_list_.erase(it);
-	}
+          && most_recent_gap_ != gap_list_.begin()) {
+        // Check whether the gap has merged with the next one
+        GapListIterator it = most_recent_gap_;
+        it--;
+        if (it->end == most_recent_gap_->start - 1) {
+          // Merge two gaps
+          most_recent_gap_->start = it->start;
+          gap_list_.erase(it);
+        }
       }
       else if (status == ADDED_AT_TOP) {
-	GapListIterator it = most_recent_gap_;
+        GapListIterator it = most_recent_gap_;
 
-	it++;
-	if (it != gap_list_.end()
-	    && it->start == most_recent_gap_->end + 1) {
-	  // Merge two gaps
-	  most_recent_gap_->end = it->end;
-	  gap_list_.erase(it);
-	}
+        it++;
+        if (it != gap_list_.end()
+            && it->start == most_recent_gap_->end + 1) {
+          // Merge two gaps
+          most_recent_gap_->end = it->end;
+          gap_list_.erase(it);
+        }
       }
     }
   }
@@ -457,18 +457,18 @@ namespace adept {
     for (uIndex ist = 1; ist < n_statements_; ist++) {
       const Statement& statement = statement_[ist];
       os << ist
-		<< ": d[" << statement.index
-		<< "] = ";
+                << ": d[" << statement.index
+                << "] = ";
       
       if (statement_[ist-1].end_plus_one == statement_[ist].end_plus_one) {
-	os << "0\n";
+        os << "0\n";
       }
       else {    
-	for (uIndex i = statement_[ist-1].end_plus_one;
-	     i < statement.end_plus_one; i++) {
-	  os << " + " << multiplier_[i] << "*d[" << index_[i] << "]";
-	}
-	os << "\n";
+        for (uIndex i = statement_[ist-1].end_plus_one;
+             i < statement.end_plus_one; i++) {
+          os << " + " << multiplier_[i] << "*d[" << index_[i] << "]";
+        }
+        os << "\n";
       }
     }
   }
@@ -480,13 +480,13 @@ namespace adept {
   {
     if (gradients_are_initialized()) {
       for (uIndex i = 0; i < max_gradient_; i++) {
-	if (i%10 == 0) {
-	  if (i != 0) {
-	    os << "\n";
-	  }
-	  os << i << ":";
-	}
-	os << " " << gradient_[i];
+        if (i%10 == 0) {
+          if (i != 0) {
+            os << "\n";
+          }
+          os << i << ":";
+        }
+        os << " " << gradient_[i];
       }
       os << "\n";
       return true;
@@ -503,7 +503,7 @@ namespace adept {
   Stack::print_gaps(std::ostream& os) const
   {
     for (std::list<Gap>::const_iterator it = gap_list_.begin();
-	 it != gap_list_.end(); it++) {
+         it != gap_list_.end(); it++) {
       os << it->start << "-" << it->end << " ";
     }
   }
@@ -517,14 +517,14 @@ namespace adept {
   {
     if (max_gradient_ > 0) {
       if (n_allocated_gradients_ < max_gradient_) {
-	if (gradient_) {
-	  delete[] gradient_;
-	}
-	gradient_ = new Real[max_gradient_];
-	n_allocated_gradients_ = max_gradient_;
+        if (gradient_) {
+          delete[] gradient_;
+        }
+        gradient_ = new Real[max_gradient_];
+        n_allocated_gradients_ = max_gradient_;
       }
       for (uIndex i = 0; i < max_gradient_; i++) {
-	gradient_[i] = 0.0;
+        gradient_[i] = 0.0;
       }
     }
     gradients_initialized_ = true;
@@ -580,21 +580,21 @@ namespace adept {
     os << "   Computation status:\n";
     if (gradients_are_initialized()) {
       os << "      " << max_gradients() << " gradients assigned (" 
-	 << n_allocated_gradients() << " allocated)\n";
+         << n_allocated_gradients() << " allocated)\n";
     }
     else {
       os << "      0 gradients assigned (" << n_allocated_gradients()
-	 << " allocated)\n";
+         << " allocated)\n";
     }
     os << "      Jacobian size: " << n_dependents() << "x" << n_independents() << "\n";
     if (n_dependents() <= 10 && n_independents() <= 10) {
       os << "      Independent indices:";
       for (std::size_t i = 0; i < independent_index_.size(); ++i) {
-	os << " " << independent_index_[i];
+        os << " " << independent_index_[i];
       }
       os << "\n      Dependent indices:  ";
       for (std::size_t i = 0; i < dependent_index_.size(); ++i) {
-	os << " " << dependent_index_[i];
+        os << " " << dependent_index_[i];
       }
       os << "\n";
     }
@@ -602,13 +602,13 @@ namespace adept {
 #ifdef _OPENMP
     if (have_openmp_) {
       if (openmp_manually_disabled_) {
-	os << "      Parallel Jacobian calculation manually disabled\n";
+        os << "      Parallel Jacobian calculation manually disabled\n";
       }
       else {
-	os << "      Parallel Jacobian calculation can use up to "
-	   << omp_get_max_threads() << " threads\n";
-	os << "      Each thread treats " << ADEPT_MULTIPASS_SIZE 
-	   << " (in)dependent variables\n";
+        os << "      Parallel Jacobian calculation can use up to "
+           << omp_get_max_threads() << " threads\n";
+        os << "      Each thread treats " << ADEPT_MULTIPASS_SIZE 
+           << " (in)dependent variables\n";
       }
     }
     else {

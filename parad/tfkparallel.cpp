@@ -259,7 +259,7 @@ void tfkdiff::clear() {
 void tfkdiff::collect() {
   std::vector<triple_vector_wl*> ret = sp_tree.flatten_to_array();
 
-  if (ret.size()  == 0) return;
+  if (ret.size() == 0) return;
 
   std::vector<std::vector<std::pair<uint64_t, triple_vector_wl*> > >
       _wl_ret(__cilkrts_get_nworkers());

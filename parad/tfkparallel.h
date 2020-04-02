@@ -47,7 +47,6 @@ class wl_stacks {
     uint64_t gradient_registered_arr_len;
     uint64_t gradient_unregistered_arr_len;
 
-
     uint64_t statement_stack_arr_capacity;
     uint64_t operation_stack_arr_capacity;
     uint64_t multiplier_stack_arr_capacity;

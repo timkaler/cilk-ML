@@ -402,7 +402,9 @@ namespace adept {
 
   // Destructor: frees dynamically allocated memory (if any)
   Stack::~Stack() {
-    PARAD::report_times();
+    // TODO(brianxie): changed this here
+    // PARAD::report_times();
+    PARAD::wl_report_times();
     // If this is the currently active stack then set to NULL as
     // "this" is shortly to become invalid
     if (is_thread_unsafe_) {
@@ -500,140 +502,140 @@ namespace adept {
   // some gradients have been assigned already, otherwise the function
   // returns with an error.
   void Stack::compute_adjoint() {
-    timer t0,t1,t2,t3; 
+    if (!gradients_are_initialized()) {
+      throw(gradients_not_initialized());
+    }
+    timer t0,t1,t2; 
 
-    if (gradients_are_initialized()) {
-      // Loop backwards through the derivative statements
-      /*
-        wl_stacks stacks = worker_local_stacks[thread_local_worker_id];
-        // printf("there are %d statements \n", stacks.statement_stack_arr_len);
-        for (uIndex ist = stacks.statement_stack_arr_len-1; ist > 0; ist--) {
-          const Statement& statement = stacks.statement_stack_arr[ist];//(*thread_local_statement)[ist];//statement_[ist];
-          //const Statement& statement = statement_[ist];
-          // We copy the RHS gradient (LHS in the original derivative
-          // statement but swapped in the adjoint equivalent) to "a" in
-          // case it appears on the LHS in any of the following statements
+    // Loop backwards through the derivative statements
+    /*
+      wl_stacks stacks = worker_local_stacks[thread_local_worker_id];
+      // printf("there are %d statements \n", stacks.statement_stack_arr_len);
+      for (uIndex ist = stacks.statement_stack_arr_len-1; ist > 0; ist--) {
+        const Statement& statement = stacks.statement_stack_arr[ist];//(*thread_local_statement)[ist];//statement_[ist];
+        //const Statement& statement = statement_[ist];
+        // We copy the RHS gradient (LHS in the original derivative
+        // statement but swapped in the adjoint equivalent) to "a" in
+        // case it appears on the LHS in any of the following statements
+        Real a = gradient_[statement.index];
+        gradient_[statement.index] = 0.0;
+        // By only looping if a is non-zero we gain a significant speed-up
+        if (a != 0.0) {
+          // Loop over operations
+
+          //for (uIndex i = statement_[ist-1].end_plus_one;
+          for (uIndex i = stacks.statement_stack_arr[ist-1].end_plus_one;
+               i < statement.end_plus_one; i++) {
+            //gradient_[index_[i]] += multiplier_[i]*a;
+            //gradient_[(*thread_local_index)[i]] += (*thread_local_multiplier)[i]*a;//multiplier_[i]*a;
+            gradient_[stacks.operation_stack_arr[i]] += stacks.multiplier_stack_arr[i]*a;//multiplier_[i]*a;
+          }
+        }
+      }
+    */
+    t0.start();
+    tfk_reducer.get_tls_references();
+    t0.stop();
+
+    tfk_reducer.sp_tree.set_recording(false);
+    t1.start();
+    tfk_reducer.collect();
+    t1.stop();
+    // printf("num gradients initialized is %d\n", n_gradients_registered_);
+
+    // tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
+
+    // for (int i = 0; i < n_gradients_registered_; i++) {
+    //   if (gradient_[i] == 1.0) {
+    //     printf("gradient index is %d\n", i);
+    //   }
+    // } 
+
+    // my_gradient_table->gradient_table_local = gradient_;
+
+    // tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
+
+    // SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
+
+    // tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
+
+    t2.start();
+    #ifdef TFK_USE_LOCKS
+    int64_t* locks = new int64_t[n_gradients_registered_];
+    cilk_for(int64_t i = 0; i < n_gradients_registered_; i++) {
+      locks[i] = 0;
+    }
+    tfk_reducer.sp_tree.walk_tree_process_locks(tfk_reducer.sp_tree.get_root(), gradient_, locks);
+    // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
+    delete[] locks;
+    #else
+    // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
+    // PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+    PARAD::wl_reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+    #endif
+    t2.stop();
+
+    // tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
+    // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
+    // tfk_gradient_table* ret = transformed_tree->walk_tree_process(transformed_tree->get_root(), my_gradient_table, n_gradients_registered_);
+    // delete ret;
+    tfk_reducer.sp_tree.set_recording(true);
+
+    // #ifdef TFK_DEBUG_PRINTS
+    // printf("the length of the stacks is %d\n", stacks.size());
+    // #endif
+
+    /*
+      int counter = 0;
+      for (int i = stacks.size()-1; i >= 0; i--) {
+        if (stacks[i].statement_stack_end == stacks[i].statement_stack_start) continue;
+        for (uIndex ist = stacks[i].statement_stack_end; ist-- > stacks[i].statement_stack_start;) {
+          const Statement& statement = worker_local_stacks[stacks[i].worker_id].statement_stack_arr[ist];
+          if (statement.index == -1) continue;
+          int op_count = 0;
           Real a = gradient_[statement.index];
           gradient_[statement.index] = 0.0;
-          // By only looping if a is non-zero we gain a significant speed-up
           if (a != 0.0) {
-            // Loop over operations
-
-            //for (uIndex i = statement_[ist-1].end_plus_one;
-            for (uIndex i = stacks.statement_stack_arr[ist-1].end_plus_one;
-                 i < statement.end_plus_one; i++) {
-              //gradient_[index_[i]] += multiplier_[i]*a;
-              //gradient_[(*thread_local_index)[i]] += (*thread_local_multiplier)[i]*a;//multiplier_[i]*a;
-              gradient_[stacks.operation_stack_arr[i]] += stacks.multiplier_stack_arr[i]*a;//multiplier_[i]*a;
+            #ifdef TFK_DEBUG_PRINTS
+            printf("statement %d edges:", statement.index);
+            #endif
+            if (ist == stacks[i].statement_stack_start) {
+              for (uIndex j = stacks[i].operation_stack_start;
+                   j < statement.end_plus_one; j++) {
+                op_count++;
+                Real multiplier_test = worker_local_stacks[stacks[i].worker_id].multiplier_stack_arr[j];
+                uIndex operation_stack_index = worker_local_stacks[stacks[i].worker_id].operation_stack_arr[j];
+                gradient_[operation_stack_index] += multiplier_test*a;//multiplier_[i]*a;
+                #ifdef TFK_DEBUG_PRINTS
+                printf("%d,", operation_stack_index);
+                #endif
+              }
+              #ifdef TFK_DEBUG_PRINTS
+              printf("; ist %d start %d end %d\n", ist, stacks[i].statement_stack_end, stacks[i].statement_stack_start);
+              #endif
+            } else {
+              for (uIndex j = worker_local_stacks[stacks[i].worker_id].statement_stack_arr[ist-1].end_plus_one;
+                   j < statement.end_plus_one; j++) {
+                op_count++;
+                Real multiplier_test = worker_local_stacks[stacks[i].worker_id].multiplier_stack_arr[j];
+                uIndex operation_stack_index = worker_local_stacks[stacks[i].worker_id].operation_stack_arr[j];
+                gradient_[operation_stack_index] += multiplier_test*a;//multiplier_[i]*a;
+               
+                #ifdef TFK_DEBUG_PRINTS
+                printf("%d,", operation_stack_index);
+                #endif
+              }
+              #ifdef TFK_DEBUG_PRINTS
+              printf(": ist %d start %d end %d\n", ist, stacks[i].statement_stack_end, stacks[i].statement_stack_start);
+              #endif
             }
           }
         }
-      */
-      t0.start();
-      tfk_reducer.get_tls_references();
-      t0.stop();
+      } 
+    */
+    return;
 
-      tfk_reducer.sp_tree.set_recording(false);
-      t1.start();
-      tfk_reducer.collect();
-      t1.stop();
-      // printf("num gradients initialized is %d\n", n_gradients_registered_);
-
-      // tfk_gradient_table* my_gradient_table = new tfk_gradient_table(n_gradients_registered_, gradient_);
-
-      // for (int i = 0; i < n_gradients_registered_; i++) {
-      //   if (gradient_[i] == 1.0) {
-      //     printf("gradient index is %d\n", i);
-      //   }
-      // } 
-
-      // my_gradient_table->gradient_table_local = gradient_;
-
-      // tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), gradient_, gradient_, gradient_init, n_gradients_registered_, debug_set);
-
-      // SP_Tree* transformed_tree = tfk_reducer.sp_tree.transform_to_rootset_form();
-
-      // tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
-
-      t2.start();
-      #ifdef TFK_USE_LOCKS
-      int64_t* locks = new int64_t[n_gradients_registered_];
-      cilk_for(int64_t i = 0; i < n_gradients_registered_; i++) {
-        locks[i] = 0;
-      }
-      tfk_reducer.sp_tree.walk_tree_process_locks(tfk_reducer.sp_tree.get_root(), gradient_, locks);
-      // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
-      delete[] locks;
-      #else
-      // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
-      // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
-      PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
-      #endif
-      t2.stop();
-
-      // tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);
-      // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
-      // tfk_gradient_table* ret = transformed_tree->walk_tree_process(transformed_tree->get_root(), my_gradient_table, n_gradients_registered_);
-      // delete ret;
-      tfk_reducer.sp_tree.set_recording(true);
-
-      // #ifdef TFK_DEBUG_PRINTS
-      // printf("the length of the stacks is %d\n", stacks.size());
-      // #endif
-
-      /*
-        int counter = 0;
-        for (int i = stacks.size()-1; i >= 0; i--) {
-          if (stacks[i].statement_stack_end == stacks[i].statement_stack_start) continue;
-          for (uIndex ist = stacks[i].statement_stack_end; ist-- > stacks[i].statement_stack_start;) {
-            const Statement& statement = worker_local_stacks[stacks[i].worker_id].statement_stack_arr[ist];
-            if (statement.index == -1) continue;
-            int op_count = 0;
-            Real a = gradient_[statement.index];
-            gradient_[statement.index] = 0.0;
-            if (a != 0.0) {
-              #ifdef TFK_DEBUG_PRINTS
-              printf("statement %d edges:", statement.index);
-              #endif
-              if (ist == stacks[i].statement_stack_start) {
-                for (uIndex j = stacks[i].operation_stack_start;
-                     j < statement.end_plus_one; j++) {
-                  op_count++;
-                  Real multiplier_test = worker_local_stacks[stacks[i].worker_id].multiplier_stack_arr[j];
-                  uIndex operation_stack_index = worker_local_stacks[stacks[i].worker_id].operation_stack_arr[j];
-                  gradient_[operation_stack_index] += multiplier_test*a;//multiplier_[i]*a;
-                  #ifdef TFK_DEBUG_PRINTS
-                  printf("%d,", operation_stack_index);
-                  #endif
-                }
-                #ifdef TFK_DEBUG_PRINTS
-                printf("; ist %d start %d end %d\n", ist, stacks[i].statement_stack_end, stacks[i].statement_stack_start);
-                #endif
-              } else {
-                for (uIndex j = worker_local_stacks[stacks[i].worker_id].statement_stack_arr[ist-1].end_plus_one;
-                     j < statement.end_plus_one; j++) {
-                  op_count++;
-                  Real multiplier_test = worker_local_stacks[stacks[i].worker_id].multiplier_stack_arr[j];
-                  uIndex operation_stack_index = worker_local_stacks[stacks[i].worker_id].operation_stack_arr[j];
-                  gradient_[operation_stack_index] += multiplier_test*a;//multiplier_[i]*a;
-                 
-                  #ifdef TFK_DEBUG_PRINTS
-                  printf("%d,", operation_stack_index);
-                  #endif
-                }
-                #ifdef TFK_DEBUG_PRINTS
-                printf(": ist %d start %d end %d\n", ist, stacks[i].statement_stack_end, stacks[i].statement_stack_start);
-                #endif
-              }
-            }
-          }
-        } 
-      */
-      return;
-    }
-
-    if (gradients_are_initialized()) {
-      /* 
+    /* 
       // we're going to create the operation stack.
 
       // Loop backwards through the derivative statements
@@ -698,11 +700,7 @@ namespace adept {
           }
         }
       }
-      */
-    }
-    else {
-      throw(gradients_not_initialized());
-    }
+    */
   }
 
   // Perform tangent linear computation (forward mode). It is assumed

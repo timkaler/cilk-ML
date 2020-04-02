@@ -45,11 +45,13 @@ class worker_local_vector {
     void push_back(int wid, T el) {
       wl_vectors[wid].vec.push_back(el);
     }
+
     void reserve(int64_t n) {
       cilk_for(int i = 0; i < __cilkrts_get_nworkers(); i++) {
         wl_vectors[i].vec.reserve(n);
       }
     }
+
     int64_t collect(T*& ret) {
       int64_t* offsets = new int64_t[__cilkrts_get_nworkers()];
       int64_t total_size = wl_vectors[0].vec.size();
@@ -76,6 +78,7 @@ class worker_local_vector {
 static int64_t get_value_count = 0;
 static int64_t set_value_count = 0;
 
+/*
 template <typename K, typename V>
 class sparse_array {
   private:
@@ -147,6 +150,7 @@ class sparse_array {
      free(dense_array);
    }
 };
+*/
 
 class tfk_gradient_table {
   public:
@@ -187,8 +191,8 @@ class SP_Node {
     // Only initialized if it's a D node.
     triple_vector_wl data;
 
-    // Only initialized if it's an S or P node.
     SP_Node* parent;
+    // Only initialized if it's an S or P node.
     std::vector<SP_Node*>* children;
     int rootset_id;
     void* sync_id;
