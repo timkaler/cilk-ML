@@ -248,7 +248,7 @@ void learn_lstm() {
       }
     }
     double accuracy = red_accuracy.get_value();
-    loss = recursive_sum(losses, 0, BATCH_SIZE*LEN - 1);
+    loss = recursive_sum(losses, 0, BATCH_SIZE*LEN);
 
     // Compute and apply gradient update using ADAM optimizer
     loss.set_gradient(1.0);
