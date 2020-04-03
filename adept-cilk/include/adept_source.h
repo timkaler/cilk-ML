@@ -572,6 +572,7 @@ namespace adept {
     delete[] locks;
 #else
 #ifdef BX_USE_WORKER_LOCAL
+    printf("n_gradients_registered_: %d\n", n_gradients_registered_);
     PARAD::wl_reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
 #else
     // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);

@@ -2353,8 +2353,6 @@ void learn_mnist(std::vector<int>& layer_sizes) {
     s2.reportTotal("Forward+Reverse pass");
 }
 
-#include "./networks/lstm.hpp"
-
 int main(int argc, char** argv) {
   int alg = -1;
   cxxopts::Options options(argv[0], "Options");
@@ -2363,8 +2361,6 @@ int main(int argc, char** argv) {
   options.parse(argc, argv);
 
   std::vector<int> layer_sizes;
-  learn_lstm();
-  /*
   switch(alg) {
     case 0:
       layer_sizes.push_back(800);
@@ -2387,14 +2383,10 @@ int main(int argc, char** argv) {
     case 5:
       learn_gcn();
       break;
-    case 6:
-      learn_lstm();
-      break;
     default:
       printf("no algorithm specified\n");
       break;
   }
-  */
 
   //learn_connect4();
 
