@@ -4,7 +4,7 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
-#include "./rad_algs.h"
+#include "./rad_algs.hpp"
 
 #include <adept.h>
 

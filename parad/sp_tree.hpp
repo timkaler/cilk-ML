@@ -1,9 +1,9 @@
 // Copyright (c) 2019, Tim Kaler - MIT License
 
-#ifndef SP_TREE_H
-#define SP_TREE_H
+#ifndef SP_TREE_HPP
+#define SP_TREE_HPP
 
-#include "./triple_vector_wl.h"
+#include "./triple_vector_wl.hpp"
 #include "./flat_hash_map.hpp"
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
@@ -334,4 +334,4 @@ class SP_Tree {
                                                   int start, int end);
 };
 
-#endif  // SP_TREE_H
+#endif  // SP_TREE_HPP

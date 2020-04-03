@@ -40,13 +40,13 @@ BINS := run_plocks
 
 all: $(BINS)
 
-$(BUILD_DIR)/sp_tree.o: parad/sp_tree.cpp parad/sp_tree.h
+$(BUILD_DIR)/sp_tree.o: parad/sp_tree.cpp parad/sp_tree.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-$(BUILD_DIR)/rad_algs.o: parad/rad_algs.cpp parad/rad_algs.h
+$(BUILD_DIR)/rad_algs.o: parad/rad_algs.cpp parad/rad_algs.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-#$(BUILD_DIR)/tfkparallel.o: parad/tfkparallel.cpp parad/tfkparallel.h
+#$(BUILD_DIR)/tfkparallel.o: parad/tfkparallel.cpp parad/tfkparallel.hpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 #$(BUILD_DIR)/main.ll: main.cpp $(BUILD_DIR)/tool.bc

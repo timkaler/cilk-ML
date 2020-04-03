@@ -26,7 +26,7 @@
 #include <adept/exception.h>
 #include <adept/Statement.h>
 
-#include <parad/parad.h>
+#include <parad/parad.hpp>
 
 //#include <cilk-adept-headers/tfkparallel.h>
 

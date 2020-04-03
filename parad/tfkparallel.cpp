@@ -1,7 +1,7 @@
 // Copyright 2019 MIT License - Tim Kaler
 
-#include "./sp_tree.h"
-#include "./tfkparallel.h"
+#include "./sp_tree.hpp"
+#include "./tfkparallel.hpp"
 
 /*
 External variables.

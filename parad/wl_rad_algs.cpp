@@ -1,6 +1,6 @@
-#include "./wl_rad_algs.h"
+#include "./wl_rad_algs.hpp"
 
-#include "./sp_tree.h"
+#include "./sp_tree.hpp"
 
 #include <adept.h>
 #include <cilk/cilk.h>

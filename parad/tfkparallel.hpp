@@ -1,16 +1,18 @@
 // Copyright 2019 Tim Kaler MIT License
 
-#ifndef TFK_ADEPT_PARALLEL
-#define TFK_ADEPT_PARALLEL
+#ifndef TFK_ADEPT_PARALLEL_HPP
+#define TFK_ADEPT_PARALLEL_HPP
 
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 #include <cilk/reducer.h>
 #include <cilk/reducer_list.h>
+
 //#include <adept.h>
 #include <adept/Statement.h>
-#include "./sp_tree.h"
-#include "./triple_vector_wl.h"
+
+#include "./sp_tree.hpp"
+#include "./triple_vector_wl.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -93,4 +95,4 @@ class tfkdiff {
 
 extern tfkdiff tfk_reducer;
 
-#endif  // TFK_ADEPT_PARALLEL
+#endif  // TFK_ADEPT_PARALLEL_HPP

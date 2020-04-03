@@ -55,7 +55,7 @@
 /* Uncomment this if you have the cblas.h header from OpenBLAS */
 //#define HAVE_OPENBLAS_CBLAS_HEADER
 
-#include <parad/parad.h>
+#include <parad/parad.hpp>
 #include <parad/tfkparallel.cpp>
 
 // =================================================================
@@ -402,9 +402,11 @@ namespace adept {
 
   // Destructor: frees dynamically allocated memory (if any)
   Stack::~Stack() {
-    // TODO(brianxie): changed this here
-    // PARAD::report_times();
+#ifdef BX_USE_WORKER_LOCAL
     PARAD::wl_report_times();
+#else
+    PARAD::report_times();
+#endif
     // If this is the currently active stack then set to NULL as
     // "this" is shortly to become invalid
     if (is_thread_unsafe_) {
@@ -560,7 +562,7 @@ namespace adept {
     // tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
 
     t2.start();
-    #ifdef TFK_USE_LOCKS
+#ifdef TFK_USE_LOCKS
     int64_t* locks = new int64_t[n_gradients_registered_];
     cilk_for(int64_t i = 0; i < n_gradients_registered_; i++) {
       locks[i] = 0;
@@ -568,11 +570,14 @@ namespace adept {
     tfk_reducer.sp_tree.walk_tree_process_locks(tfk_reducer.sp_tree.get_root(), gradient_, locks);
     // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
     delete[] locks;
-    #else
-    // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
-    // PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+#else
+#ifdef BX_USE_WORKER_LOCAL
     PARAD::wl_reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
-    #endif
+#else
+    // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
+    PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+#endif
+#endif
     t2.stop();
 
     // tfk_gradient_table* ret = tfk_reducer.sp_tree.walk_tree_process(tfk_reducer.sp_tree.get_root(), my_gradient_table, n_gradients_registered_);

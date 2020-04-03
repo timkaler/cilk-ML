@@ -1,10 +1,10 @@
 // Copyright 2019 Tim Kaler MIT License
 
-#ifndef TRIPLE_VECTOR_WL_H
-#define TRIPLE_VECTOR_WL_H
+#ifndef TRIPLE_VECTOR_WL_HPP
+#define TRIPLE_VECTOR_WL_HPP
 
 #include <inttypes.h>
-// worker local triple_vector.
+
 class triple_vector_wl {
   public:
     int worker_id;
@@ -27,4 +27,4 @@ class triple_vector_wl {
     explicit triple_vector_wl(bool do_init);
 };
 
-#endif  // TRIPLE_VECTOR_WL_H
+#endif  // TRIPLE_VECTOR_WL_HPP

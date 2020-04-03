@@ -1,6 +1,6 @@
 #include <csi/csi.h>
 #include <adept.h>
-#include "parad/parad.h"
+#include "parad/parad.hpp"
 
 void tfk_init();
 

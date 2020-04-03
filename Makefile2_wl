@@ -1,9 +1,6 @@
-BUILD_DIR := build
+CC := $(CXX)  # g++
+LD := $(CXX)  # g++
 
-CC := $(CXX) #g++
-LD := $(CXX) #g++
-
-#ADEPT_INCLUDE := -I./adept-serial/include
 ADEPT_INCLUDE := -I./adept-cilk/include -I./
 
 CSI_RT_PATH=/efs/tools/opencilk2/llvm/lib/clang/9.0.1/lib/linux/libclang_rt.csi-x86_64.a
@@ -11,13 +8,25 @@ CSI_RT_PATH=/efs/tools/opencilk2/llvm/lib/clang/9.0.1/lib/linux/libclang_rt.csi-
 # Use the 'aftertapirloops' for divide and conquer loop representation of parallel_for.
 CSIFLAGS_OPT := -fcsi=aftertapirloops
 
-# The CSI flags need to be in the cflags of any binary that has parallel control flow that performs
-#   Adept operations.
-#CSIFLAGS += -gdwarf-3 $(CSIFLAGS_OPT) -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false -mllvm -csi-instrument-arithmetic=none
-CSIFLAGS += -gdwarf-3 $(CSIFLAGS_OPT) -mllvm -csi-instrument-basic-blocks=false -mllvm -csi-instrument-memory-accesses=false -mllvm -csi-instrument-atomics=false -mllvm -csi-instrument-memintrinsics=false -mllvm -csi-instrument-allocfn=false -mllvm -csi-instrument-alloca=false -mllvm -csi-instrument-func-entry-exit=false -mllvm -csi-instrument-function-calls=false -mllvm -csi-interpose=false -mllvm -csi-instrument-loops=false
+# The CSI flags need to be in the cflags of any binary that has parallel control
+# flow that performs Adept operations.
+CSIFLAGS += -gdwarf-3 $(CSIFLAGS_OPT) \
+						-mllvm -csi-instrument-basic-blocks=false \
+						-mllvm -csi-instrument-memory-accesses=false \
+						-mllvm -csi-instrument-atomics=false \
+						-mllvm -csi-instrument-memintrinsics=false \
+						-mllvm -csi-instrument-allocfn=false \
+						-mllvm -csi-instrument-alloca=false \
+						-mllvm -csi-instrument-func-entry-exit=false \
+						-mllvm -csi-instrument-function-calls=false \
+						-mllvm -csi-interpose=false \
+						-mllvm -csi-instrument-loops=false # -mllvm -csi-instrument-arithmetic=none
 
 # Regular CFLAGS plus a few extra defined values for adept.
-CFLAGS += -gdwarf-3 -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread $(ADEPT_INCLUDE) -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE -DADEPT_RECORDING_PAUSABLE -DTFK_ONE_THREAD # -DTFK_SPEC_OPT
+CFLAGS += -gdwarf-3 -std=c++11 -stdlib=libstdc++ \
+					$(EXTRA_CFLAGS) -m64 -march=native -pthread \
+					$(ADEPT_INCLUDE) -DADEPT_STACK_THREAD_SAFE -DADEPT_STORAGE_THREAD_SAFE \
+					-DADEPT_RECORDING_PAUSABLE -DTFK_ONE_THREAD # -DTFK_SPEC_OPT
 
 LDFLAGS = -ldl $(EXTRA_LDFLAGS) -O3 -lcilkrts -lprofiler -lpthread -lblas
 
@@ -30,13 +39,18 @@ LDFLAGS += -O3 -flto=full -fuse-ld=lld -Xlinker --export-dynamic -Xlinker --gdb-
 ifdef DEBUG
 	CFLAGS += -DDEBUG -O0 -gdwarf-3 -fcilkplus
 else
-	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -gdwarf-3 -mavx2 -m64 -march=native -fcilkplus
+	CFLAGS += -DNDEBUG -O3 -gdwarf-3 -mavx2 -m64 -march=native -fcilkplus
 endif
+
+# BX: Used for toggling worker-local RAD vs PARAD
+CFLAGS += -DBX_USE_WORKER_LOCAL
+
+# ==============================================================================
 
 .PHONY:	all clean
 
-BINS := run
+BINS := run_wl
+BUILD_DIR := build_wl
 
 all: $(BINS)
 
@@ -44,6 +58,9 @@ $(BUILD_DIR)/sp_tree.o: parad/sp_tree.cpp parad/sp_tree.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 $(BUILD_DIR)/rad_algs.o: parad/rad_algs.cpp parad/rad_algs.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/wl_rad_algs.o: parad/wl_rad_algs.cpp parad/wl_rad_algs.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 $(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/tool.o
@@ -73,7 +90,10 @@ $(BUILD_DIR)/tool.o: tool.cpp $(BUILD_DIR)/tool.bc
 $(BUILD_DIR)/io_helpers.o: io_helpers.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-run: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/rad_algs.o $(CSI_RT_PATH)
+run_wl: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o \
+				$(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o \
+				$(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o \
+				$(BUILD_DIR)/rad_algs.o $(BUILD_DIR)/wl_rad_algs.o $(CSI_RT_PATH)
 	$(LD) -v -o $@ $^ $(LDFLAGS)
 
 clean:

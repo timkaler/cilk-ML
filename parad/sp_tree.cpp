@@ -3,7 +3,7 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
-#include "./sp_tree.h"
+#include "./sp_tree.hpp"
 
 #include "./gradient_table.cpp"
 
