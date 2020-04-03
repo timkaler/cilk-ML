@@ -43,8 +43,8 @@ int N = 500;
 int LEN = 100;
 int NUM_ASCII = 128;
 int BATCH_SIZE = 10;
-int NUM_ITER = 100;
-double LR = 0.01;
+int NUM_ITER = 3000;
+double LR = 0.005;
 int HIDDEN_FEATURES = 300; // Same number of hidden features as cell features
 
 std::default_random_engine generator(17);
@@ -101,6 +101,14 @@ string inference_lstm(vector<aMatrix>& weights) {
   return out_text;
 }
 
+// Lambda functions to make the cilk_spawn properly parallelize
+aMatrix f(aMatrix& w0, aMatrix& hidden, aMatrix& w1, Matrix& input, aMatrix& w2) {
+  return activations::sigmoid(w0 ** hidden + w1 ** input + w2);
+}
+aMatrix g(aMatrix& w0, aMatrix& hidden, aMatrix& w1, Matrix& input, aMatrix& w2) {
+  return tanh(w0 ** hidden + w1 ** input + w2);
+}
+
 // This version of compute_lstm is for a single data point, not a batch.
 // This (allows?) us to do the cilk_spawn/cilk_sync parallelism properly.
 vector<aMatrix> compute_lstm(vector<aMatrix>& weights, vector<Matrix>& input) {
@@ -117,17 +125,22 @@ vector<aMatrix> compute_lstm(vector<aMatrix>& weights, vector<Matrix>& input) {
   for (int j = 0; j < HIDDEN_FEATURES; ++j) {
     cell[0](j, 0) = 0.0;
   }
-
   // Weights are in the following order:
   // W_f, input_f, b_f, W_i, input_i, b_i,
   // W_c, input_c, b_c, W_o, input_o, b_o, output matrix
   aMatrix temp_f, temp_i, temp_c, temp_o;
   for (int j = 0; j < input.size(); ++j) {
-    temp_f = cilk_spawn activations::sigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
-    temp_i = cilk_spawn activations::sigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
-    temp_c = cilk_spawn tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
-    temp_o = activations::sigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
+    temp_f = cilk_spawn f(weights[0], hidden[j], weights[1], input[j], weights[2]);
+    temp_i = cilk_spawn f(weights[3], hidden[j], weights[4], input[j], weights[5]);
+    temp_c = cilk_spawn g(weights[6], hidden[j], weights[7], input[j], weights[8]);
+    temp_o = f(weights[9], hidden[j], weights[10], input[j], weights[11]);
     cilk_sync;
+    /*
+    temp_f = activations::sigmoid(weights[0] ** hidden[j] + weights[1] ** input[j] + weights[2]);
+    temp_i = activations::sigmoid(weights[3] ** hidden[j] + weights[4] ** input[j] + weights[5]);
+    temp_c = tanh(weights[6] ** hidden[j] + weights[7] ** input[j] + weights[8]);
+    temp_o = activations::sigmoid(weights[9] ** hidden[j] + weights[10] ** input[j] + weights[11]);
+    */
     cell[j+1] = cell[j] * temp_f + temp_i * temp_c;
     hidden[j+1] = temp_o * tanh(cell[j+1]);
     output[j] = activations::softmax(weights[12] ** hidden[j+1], 1.0);
@@ -193,21 +206,21 @@ void learn_lstm() {
 
     aMatrix batch_loss = aMatrix(BATCH_SIZE, 1);
     aReal loss;
-    vector<double> accuracies(BATCH_SIZE, 0.0);
+    cilk::reducer_opadd<double> red_accuracy(0.0);
 
     cilk_for (int i = 0; i < BATCH_SIZE; ++i) {
       // Randomly sample input to create batch data
       vector<Matrix> sample = input[batch_dis(generator)];
       // Run the LSTM on the batch data
       vector<aMatrix> output_softmax = compute_lstm(*weight_hyper_list[0], sample);
-      // Compute the loss. TODO: use a reducer here
+      // Compute the loss. TODO: use a reducer
       batch_loss(i, 0) = 0.0;
       for (int j = 0; j < LEN-1; ++j) {
         batch_loss(i, 0) += 1.0 * activations::logitCrossEntropy(output_softmax[j], sample[j+1])
-                  / (1.0 * BATCH_SIZE * (LEN - 1));
+                            / (1.0 * BATCH_SIZE * (LEN-1));
       }
-      // Aggregate the accuracy. TODO: use a reducer here
-      for (int j = 0; j < LEN-1; ++j) {
+      // Aggregate the accuracy, using a reducer
+      cilk_for (int j = 0; j < LEN-1; ++j) {
         int argmax = 0;
         double argmaxvalue = output_softmax[j](0, 0).value();
         for (int k = 0; k < NUM_ASCII; ++k) {
@@ -217,11 +230,11 @@ void learn_lstm() {
           }
         }
         if (sample[j+1](argmax, 0) == 1) {
-          accuracies[i] += 1.0 / BATCH_SIZE / LEN;
+          *red_accuracy += 1.0 / BATCH_SIZE / LEN;
         }
       }
     }
-    double accuracy = accumulate(accuracies.begin(), accuracies.end(), 0.0);
+    double accuracy = red_accuracy.get_value();
     loss = sum(batch_loss);
 
     // Compute and apply gradient update using ADAM optimizer
