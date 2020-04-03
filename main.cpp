@@ -50,6 +50,22 @@ int HIDDEN_FEATURES = 300; // Same number of hidden features as cell features
 std::default_random_engine generator(17);
 std::uniform_int_distribution<int> batch_dis(0, N-1);
 
+// Computes the sum of elements of arr in parallel.
+aReal recursive_sum(aReal* arr, int start, int end) {
+  if (end - start < 128) {
+    aReal ret = arr[start];
+    for (int i = start+1; i < end; ++i) {
+      ret += arr[i];
+    }
+    return ret;
+  }
+  int size = end - start;
+  aReal left = cilk_spawn recursive_sum(arr, start, start + size/2);
+  aReal right = recursive_sum(arr, start + size/2, end);
+  cilk_sync;
+  return left + right;
+}
+
 // =============================================================================
 
 // Run the LSTM for inference. Generates and returns a string.
@@ -149,9 +165,7 @@ vector<aMatrix> compute_lstm(vector<aMatrix>& weights, vector<Matrix>& input) {
 }
 
 void learn_lstm() {
-  // Hyperparameters
-  using adept::Stack;
-  Stack stack;
+  adept::Stack stack;
 
   // Load the Paul Graham dataset to 500 100-char datapoints, using a one-hot
   // encoding of each character
@@ -189,7 +203,6 @@ void learn_lstm() {
       }
     }
   }
-
   double* weights_raw = allocate_weights(weight_hyper_list);
   double* weights_raw_old = allocate_weights(weight_hyper_list);
   double* gradients = allocate_weights_zero(weight_hyper_list);
@@ -198,26 +211,26 @@ void learn_lstm() {
   read_values(weight_hyper_list, weights_raw);
   read_values(weight_hyper_list, weights_raw_old);
 
+  aReal* losses = new aReal[BATCH_SIZE * LEN];
+  aReal loss;
+
   // Train the LSTM over many iterations
   for (int iter = 0; iter < NUM_ITER; ++iter) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
-    aMatrix batch_loss = aMatrix(BATCH_SIZE, 1);
-    aReal loss;
     cilk::reducer_opadd<double> red_accuracy(0.0);
 
     cilk_for (int i = 0; i < BATCH_SIZE; ++i) {
       // Randomly sample input to create batch data
       vector<Matrix> sample = input[batch_dis(generator)];
-      // Run the LSTM on the batch data
+      // Run LSTM on the sample
       vector<aMatrix> output_softmax = compute_lstm(*weight_hyper_list[0], sample);
-      // Compute the loss. TODO: use a reducer
-      batch_loss(i, 0) = 0.0;
-      for (int j = 0; j < LEN-1; ++j) {
-        batch_loss(i, 0) += 1.0 * activations::logitCrossEntropy(output_softmax[j], sample[j+1])
-                            / (1.0 * BATCH_SIZE * (LEN-1));
+      // Compute the loss, using a "manual" reducer later
+      cilk_for (int j = 0; j < LEN-1; ++j) {
+        losses[i * LEN + j] = 1.0 * activations::logitCrossEntropy(
+                output_softmax[j], sample[j+1]) / (1.0 * BATCH_SIZE * (LEN-1));
       }
       // Aggregate the accuracy, using a reducer
       cilk_for (int j = 0; j < LEN-1; ++j) {
@@ -235,7 +248,7 @@ void learn_lstm() {
       }
     }
     double accuracy = red_accuracy.get_value();
-    loss = sum(batch_loss);
+    loss = recursive_sum(losses, 0, BATCH_SIZE*LEN - 1);
 
     // Compute and apply gradient update using ADAM optimizer
     loss.set_gradient(1.0);
@@ -249,10 +262,13 @@ void learn_lstm() {
 
     std::cout.precision(5);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "iter: " << iter << ", loss: " << loss.value() << ", accuracy: " << accuracy 
+    std::cout << "iter: " << iter 
+              << ", loss: " << loss.value() 
+              << ", accuracy: " << accuracy 
               << ", time (sec): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0 << std::endl;
   }
   stack.pause_recording();
+  delete[] losses;
 
   // Now do some inference (generate text) =====================================
   
