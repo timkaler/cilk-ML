@@ -1523,7 +1523,6 @@ aReal compute_gcn_pubmed(Graph& G, std::vector<Matrix>& groundtruth_labels,
   loss = loss / loss_norm;
   //loss /= (1.0*num_train_items);
 
-  printf("num_train_items %d\n", num_train_items);
   //printf("total predictions %d\n", total_predictions);
 
   //tfk_reducer.sp_tree.walk_tree_debug(tfk_reducer.sp_tree.get_root());
@@ -1598,6 +1597,8 @@ aReal compute_gcn(Graph& G, std::map<int, int >& department_labels,
   *accuracy = ((100.0*total_correct)/(1.0*total_predictions));
   return loss;
 }
+
+// =============================================================================
 
 void learn_gcn() {
   timer s0,s1,s2,s3,s4;
@@ -1682,6 +1683,7 @@ void learn_gcn() {
 
   int ITER_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 0; iter < 20; iter++) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -1709,12 +1711,6 @@ void learn_gcn() {
     }
     read_gradients(weight_hyper_list, gradients);
 
-    std::cout.precision(14);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\n";// << std::flush;
-
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
 
@@ -1726,10 +1722,16 @@ void learn_gcn() {
     //apply_gradient_update(weight_hyper_list, weights_raw, weights_raw_old, gradients,
     //                      learning_rate/norm);
 
+    std::cout.precision(4);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter
+              << ", loss: " << loss.value()
+              << ", accuracy: " << accuracy
+              << ", time(sec): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0 << std::endl;
   }
-    s0.reportTotal("Forward pass");
-    s1.reportTotal("Reverse pass");
-    s2.reportTotal("Forward+Reverse pass");
+  s0.reportTotal("Forward pass");
+  s1.reportTotal("Reverse pass");
+  s2.reportTotal("Forward+Reverse pass");
 }
 
 void learn_gcn_pubmed() {
@@ -1816,6 +1818,7 @@ void learn_gcn_pubmed() {
   int ITER_THRESH = GLOBAL_ITER_THRESH;
 
   for (int iter = 0; iter < 15; iter++) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -1842,16 +1845,7 @@ void learn_gcn_pubmed() {
     s2.stop();
     }
     read_gradients(weight_hyper_list, gradients);
-
-    std::cout.precision(14);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "" << std::endl;
-
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
-
-
     //double norm = compute_gradient_norm(weight_hyper_list, gradients);
     //printf("gradient norm is %f\n", norm);
     //if (norm < 1.0) norm = 1.0;
@@ -1860,10 +1854,17 @@ void learn_gcn_pubmed() {
     //apply_gradient_update(weight_hyper_list, weights_raw, weights_raw_old, gradients,
     //                      learning_rate/norm);
 
+    std::cout.precision(4);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter
+              << ", loss: " << loss.value()
+              << ", accuracy: " << accuracy
+              << ", time (s): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0
+              << std::endl;
   }
-    s0.reportTotal("Forward pass");
-    s1.reportTotal("Reverse pass");
-    s2.reportTotal("Forward+Reverse pass");
+  s0.reportTotal("Forward pass");
+  s1.reportTotal("Reverse pass");
+  s2.reportTotal("Forward+Reverse pass");
 }
 
 void learn_mnist_lenet5_tanh() {
@@ -1952,6 +1953,7 @@ void learn_mnist_lenet5_tanh() {
 
   int TIME_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 1; iter < 30*1; iter++) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -2003,11 +2005,6 @@ void learn_mnist_lenet5_tanh() {
     }
     read_gradients(weight_hyper_list, gradients);
 
-    std::cout.precision(14);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\n";// << std::flush;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
@@ -2017,11 +2014,18 @@ void learn_mnist_lenet5_tanh() {
     //if (norm < 1.0) norm = 1.0;
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
                                momentums, velocities, 1.0, learning_rate, iter+1);
+
+    std::cout.precision(4);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter << ", loss: " << loss.value()
+              << ", accuracy: " << accuracy
+              << ", time (s): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0
+              << std::endl;
   }
 
-    s0.reportTotal("Forward pass");
-    s1.reportTotal("Reverse pass");
-    s2.reportTotal("Forward+Reverse pass");
+  s0.reportTotal("Forward pass");
+  s1.reportTotal("Reverse pass");
+  s2.reportTotal("Forward+Reverse pass");
 }
 
 void learn_mnist_lenet5() {
@@ -2110,6 +2114,7 @@ void learn_mnist_lenet5() {
 
   int TIME_THRESH = GLOBAL_ITER_THRESH;
   for (int iter = 1; iter < 30*1; iter++) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
 
@@ -2160,13 +2165,6 @@ void learn_mnist_lenet5() {
     s2.stop();
     }
     read_gradients(weight_hyper_list, gradients);
-
-    std::cout.precision(14);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\n";// << std::flush;
-
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
 
@@ -2175,6 +2173,21 @@ void learn_mnist_lenet5() {
     //if (norm < 1.0) norm = 1.0;
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
                                momentums, velocities, 1.0, learning_rate, iter+1);
+
+    std::cout.precision(4);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter
+              << ", loss: " << loss.value() 
+              << ", accuracy: " << accuracy
+              << ", time (s): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0
+              << std::endl;
+    /*
+    std::cout.precision(14);
+    std::cout.setf(ios::fixed, ios::floatfield);
+    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
+        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+        "\n";// << std::flush;
+    */
   }
 
     s0.reportTotal("Forward pass");
@@ -2277,6 +2290,7 @@ void learn_mnist(std::vector<int>& layer_sizes) {
   double learning_rate = 0.01;
   int TIME_THRESH=5;
   for (int iter = 0; iter < 60*1; iter++) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
 
     std::vector<Matrix> batch_data;
@@ -2310,33 +2324,28 @@ void learn_mnist(std::vector<int>& layer_sizes) {
     } else {
       //stack.pause_recording();
       if (iter > TIME_THRESH) {
-      s0.start();
+        s0.start();
       }
       loss += compute_mnist(*weight_hyper_list[0], batch_data, batch_labels, max_label, &accuracy, &test_loss);
       if (iter > TIME_THRESH) {
-      s0.stop();
+        s0.stop();
       }
       //stack.continue_recording();
     }
     //stack.initialize_gradients();
     if (iter > TIME_THRESH) {
-    s1.start();
+      s1.start();
     }
+
     loss.set_gradient(1.0);
     stack.reverse();
     if (iter > TIME_THRESH) {
-    s1.stop();
+      s1.stop();
     }
     if (iter > TIME_THRESH) {
-    s2.stop();
+      s2.stop();
     }
     read_gradients(weight_hyper_list, gradients);
-
-    std::cout.precision(14);
-    std::cout.setf(ios::fixed, ios::floatfield);
-    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
-        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
-        "\n" << std::endl;
 
     store_values_into_old(weight_hyper_list, weights_raw, weights_raw_old);
 
@@ -2346,6 +2355,19 @@ void learn_mnist(std::vector<int>& layer_sizes) {
     //if (norm < 1.0) norm = 1.0;
     apply_gradient_update_ADAM(weight_hyper_list, weights_raw, weights_raw_old, gradients,
                                momentums, velocities, 1.0, learning_rate, iter+1);
+
+    std::cout.precision(4);
+    std::cout.setf(ios::fixed, ios::floatfield);
+    /*
+    std::cout << "loss:" << loss.value() << ",\t\t lr: " << learning_rate <<
+        "\t\t accuracy z: " << accuracy << "% \t\t Test set loss: " << test_loss <<
+        "\n" << std::endl;
+    */
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "iter: " << iter << ", loss: " << loss.value() 
+              << ", accuracy: " << accuracy
+              << ", runtime (s): " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count()) / 1000000.0
+              << std::endl;
   }
 
     s0.reportTotal("Forward pass");
