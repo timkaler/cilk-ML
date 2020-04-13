@@ -1,0 +1,4 @@
+nstatements: 60530167
+mapped_ops_size: 1001
+average number of accumulated ops: 1
+1:1001

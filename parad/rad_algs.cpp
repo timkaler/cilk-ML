@@ -8,6 +8,8 @@
 
 #include <adept.h>
 
+#include <fstream>
+#include <iostream>
 #include <vector>
 #include <map>
 #include "../common/utils.h"
@@ -186,6 +188,47 @@ void report_times() {
   r15.reportTotal("r15: Free memory");
 }
 
+void create_histogram(std::pair<int, int>* blocks, int blocks_size,
+                      int nstatements, int mapped_ops_size) {
+  // Only create the histogram if it doesn't exist yet
+  ifstream test("histogram.txt");
+  if (!test) {
+    // Sort all the accumulated operation counts
+    std::vector<int> accum_num_ops;
+    double average = 0.0;
+    for (int i = 0; i < blocks_size; ++i) {
+      accum_num_ops.push_back(blocks[i].second - blocks[i].first);
+      average += 1.0 * (blocks[i].second - blocks[i].first) / blocks_size;
+    }
+    std::sort(accum_num_ops.begin(), accum_num_ops.end());
+  
+    // Now write it to an output file, histogram.txt
+    test.close();
+    ofstream output_file("histogram.txt");
+    output_file << "nstatements: " << nstatements << std::endl;
+    output_file << "mapped_ops_size: " << mapped_ops_size << std::endl;
+    output_file << "blocks_size: " << blocks_size << std::endl;
+    output_file << "average number of accumulated ops: " << average << std::endl;
+    int val = 1;
+    int num = 0;
+    for (auto it = accum_num_ops.begin(); it < accum_num_ops.end(); ++it) {
+      if (*it != val) {
+        if (num > 0) {
+          output_file << val << ":" << num << std::endl;
+        }
+        val = *it;
+        num = 1;
+      } else {
+        num++;
+      }
+    }
+    output_file << val << ":" << num << std::endl;
+    output_file.close();
+  } else {
+    test.close();
+  }
+}
+
 void reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
   // Identify all gradient indices that appear in statements
   r0.start();
@@ -316,6 +359,9 @@ void reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
                                                mapped_ops_size);
   }
   r9.stop();
+
+  // TESTING: Create a histogram of the number of operations accumulated per statement
+  // create_histogram(blocks, blocks_size, nstatements, mapped_ops_size);
 
   // 5b) Allocate / initialize deposit locations
   r10.start();
