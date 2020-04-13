@@ -1,10 +1,10 @@
 // Copyright 2019 Tim Kaler MIT License
 
-#include <adept_arrays.h>
-#include <vector>
-
 #ifndef CILKML_OPTIMIZATION_H
 #define CILKML_OPTIMIZATION_H
+
+#include <adept_arrays.h>
+#include <vector>
 
 using adept::Real;
 using adept::aReal;

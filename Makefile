@@ -4,7 +4,7 @@ all:
 	mkdir -p build
 	./setup.sh make VERBOSE=1 -f Makefile2 -j 8
 
-comparisons: serial plocks all
+comparisons: all wl serial plocks
 
 wl:
 	mkdir -p build_wl

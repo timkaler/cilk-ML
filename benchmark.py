@@ -1,104 +1,118 @@
-import subprocess
-import sys
-import random
+import argparse
 import os
+import subprocess
 
-def shellGetOutput(str) :
-  process = subprocess.Popen(str,shell=True,stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-  output, err = process.communicate()
+from collections import OrderedDict
 
-  if (len(err) > 0):
-      raise NameError(str+"\n"+output+err)
-  return output
+experiments = [
+    {
+        "name": "PARAD",
+        "cores": [1,2,4,8,18],
+        "binary": "run"
+    },
+    {
+        "name": "WL",
+        "cores": [1,2,4,8,18],
+        "binary": "run_wl"
+    },
+    {
+        "name": "PLOCKS",
+        "cores": [1,2,4,8,18],
+        "binary": "run_plocks"
+    },
+    {
+        "name": "SERIAL",
+        "cores": [1],
+        "binary": "run_serial"
+    }
+]
 
+algorithms = [
+    {"name": "mlp1", "desc": "MLP 1 layer (800)"},
+    {"name": "mlp2", "desc": "MLP 2 layer (400,100)"},
+    {"name": "gcn1", "desc": "GCN Pubmed"},
+    {"name": "gcn2", "desc": "GCN email-Eu-core"},
+    {"name": "cnn1", "desc": "CNN lenet-5 (maxpool + ReLU)"},
+    {"name": "cnn2", "desc": "CNN lenet-5 (average pool + tanh)"},
+    {"name": "lstm1", "desc": "LSTM without added parallelism"},
+    {"name": "lstm2", "desc": "LSTM with internal parallism"}
+]
 
+LOGS_DIR = "./logs"
 
-names = ["mlp_1_layer", "gcn_pubmed_1_layer", "mlp_2_layer", "cnn_lenet5", "cnn_lenet5_tanh", "gcn_enron"]
+################################################################################
 
+def taskset_string(cores):
+    return "taskset -c 0-" + str(cores-1)
 
-FLOAT_FORMAT_STRING = "%.2f"
-
-def run_experiment(alg, binary, cores):
-  output_file = "logs/raw_"+binary+"_alg_"+str(names[alg])+"_"+str(cores)
-  result_file = "logs/result_"+binary+"_alg_"+str(names[alg])+"_"+str(cores)
-  taskset_string = " taskset -c 0 "
-  if cores > 1:
-    taskset_string = " taskset -c 0-"+str(cores-1)+" "
-  cmd_string = taskset_string + " ./setup.sh ./"+binary+" -a " + str(alg)
-
-  output = shellGetOutput(cmd_string)
-
-  open(output_file, "w").write(output)
-
-
-def parse_experiment(alg, binary, cores):
-  output_file = "logs/raw_"+binary+"_alg_"+str(names[alg])+"_"+str(cores)
-  lines = open(output_file, "r").readlines()
-  data = [str(binary), names[alg], str(cores)]
-  for l in lines:
-    if l.strip().startswith("Forward pass") or l.strip().startswith("Reverse pass") or l.strip().startswith("Forward+Reverse pass"):
-      data.append(l.strip().split(" ")[-1])
-
-  BIN = "None"
-  if binary.startswith("run_parallel"):
-    BIN = "PARAD"
-  if binary.startswith("run_serial"):
-    BIN = "SERIAL"
-  if binary.startswith("run_plocks"):
-    BIN = "LOCKS"
-
-  keyname = BIN + "_TIME_" + str(cores) + "_" + names[alg]
-
-  return [(keyname + "_FORWARD", data[3]), (keyname + "_REVERSE", data[4]), (keyname + "_FORWARDREVERSE", data[5])]
-
-  #print "\t".join(data)
-
-
-
-algorithms = [0,1,2,3,4,5]
-binaries = ["run_parallel", "run_serial", "run_plocks"]
-cores = [[18,8,4,2,1], [1], [18,8,4,2,1]]
+def shell_get_output(command):
+    process = subprocess.Popen(command, shell=True, 
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, err = process.communicate()
+    if len(err) > 0:
+        raise Exception("command: {}\noutput: {}\nerr: {}", command, output, err)
+    return output
 
 
+# Run a single experiment and write its output to a file
+def run_single_experiment(alg_num, name, binary, cores):
+    output_file = "{}/{}_{}_cores_{}".format(
+            LOGS_DIR, name, algorithms[alg_num]['name'], cores)
+    command = "{} ./setup.sh ./{} -a {}".format(
+            taskset_string(cores), binary, alg_num)
+    output = shell_get_output(command)
+    open(output_file, "wb").write(output)
 
+def run_experiments():
+    # Ensure that all necessary file dependencies already exist
+    if os.path.exists(LOGS_DIR):
+        raise Exception("The folder " + LOGS_DIR + " already exists")
+    os.makedirs(LOGS_DIR)
+    for experiment in experiments:
+        if not os.path.exists("./{}".format(experiment['binary'])):
+            raise Exception("Cannot find ./{}".format(experiment['binary']))
+    # Run all the experiments sequentially 
+    for experiment in experiments:
+        for cores in experiment['cores']:
+            for alg_num in range(len(algorithms)):
+                run_single_experiment(alg_num, experiment['name'], experiment['binary'], cores)
 
-if 0:
-  for a in algorithms:
-    #if a != 5:
-    #  continue
-    for i in range(0,len(binaries)):
-      b = binaries[i]
-      for c in cores[i]:
-        run_experiment(a,b,c)
-else:
-  d = dict()
-  for a in algorithms:
-    for i in range(0,len(binaries)):
-      b = binaries[i]
-      for c in cores[i]:
-        items = parse_experiment(a,b,c)
-        for x in items:
-          d[x[0]] = x[1]
-  print d
+# Parses the forward, reverse, and forward+reverse runtimes
+def parse_single_result(alg_num, name, binary, cores):
+    output_file = "{}/{}_{}_cores_{}".format(
+            LOGS_DIR, name, algorithms[alg_num]['name'], cores)
+    lines = open(output_file, "r").readlines()
+    data = {}
+    for l in lines:
+        if l.strip().startswith("Forward pass"):
+            data["FORWARD"] = l.strip().split(" ")[-1]
+        elif l.strip().startswith("Reverse pass"):
+            data["REVERSE"] = l.strip().split(" ")[-1]
+        elif l.strip().startswith("Forward+Reverse pass"):
+            data["FORWARD+REVERSE"] = l.strip().split(" ")[-1]
+    return data
 
+# Read output results and generate a nice output table
+def parse_results():
+    output = OrderedDict()
+    for experiment in experiments:
+        output[experiment['name']] = OrderedDict()
+        for cores in experiment['cores']:
+            output[experiment['name']][cores] = OrderedDict()
+            for alg_num in range(len(algorithms)):
+                data = parse_single_result(alg_num, experiment['name'], experiment['binary'], cores)
+                output[experiment['name']][cores][algorithms[alg_num]['name']] = data
+    print(output)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--run', help="Run experiments", action='store_true')
+    parser.add_argument('--parse', help="Parse results", action='store_true')
+    args = parser.parse_args()
 
-
-
-
-
-
-
-
-#output = shellGetOutput("taskset -c 0-17 ./setup.sh ./run_parallel -a 0")
-
-
-
-#for l in output.splitlines():
-#  if l.strip().startswith("Forward pass"):
-#    print l
-#  if l.strip().startswith("Reverse pass"):
-#    print l
-#  if l.strip().startswith("Forward+Reverse pass"):
-#   print l
+    if args.run:
+        run_experiments()
+    if args.parse:
+        parse_results()
+    if not args.run and not args.parse:
+        raise Exception("Must specify --run, --parse, or both")

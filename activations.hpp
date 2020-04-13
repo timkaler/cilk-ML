@@ -1,10 +1,10 @@
 // Copyright 2019 Tim Kaler MIT License
 
-#include <adept.h>
-#include <adept_arrays.h>
-
 #ifndef CILKML_ACTIVATIONS_H
 #define CILKML_ACTIVATIONS_H
+
+#include <adept.h>
+#include <adept_arrays.h>
 
 using adept::Real;
 using adept::aReal;
