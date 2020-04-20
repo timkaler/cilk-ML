@@ -6,6 +6,11 @@ from collections import OrderedDict
 
 experiments = [
     {
+        "name": "HYBRID",
+        "cores": [1,2,4,8,18],
+        "binary": "run_hybrid"
+    },
+    {
         "name": "PARAD",
         "cores": [1,2,4,8,18],
         "binary": "run"

@@ -91,7 +91,7 @@ void wl_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) 
 
   // Export the worker-local gradients to the global gradient table
   t3.start();
-  cilk_for(uint64_t i = 0; i < n_gradients; ++i) {
+  cilk_for(uint64_t i = 0; i < tfk_reducer.max_gradient; ++i) {
     _gradient[i] = 0;
     for (int wid = 0; wid < n_workers; ++wid) {
       _gradient[i] += wl_grad_table[wid][i];

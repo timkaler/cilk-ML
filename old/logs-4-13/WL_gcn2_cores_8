@@ -1,0 +1,32 @@
+stack storage orig constructor
+max label is 42
+64,1024
+42,64
+randomizing the embeddings
+iter: 0, loss: 55.47, accuracy: 4.492, time(sec): 0.313
+iter: 1, loss: 55.46, accuracy: 9.766, time(sec): 0.07115
+iter: 2, loss: 55.35, accuracy: 9.766, time(sec): 0.0754
+iter: 3, loss: 55.21, accuracy: 9.766, time(sec): 0.07077
+iter: 4, loss: 55.02, accuracy: 9.766, time(sec): 0.1194
+iter: 5, loss: 54.77, accuracy: 9.766, time(sec): 0.1269
+iter: 6, loss: 54.47, accuracy: 9.766, time(sec): 0.129
+iter: 7, loss: 54.12, accuracy: 9.766, time(sec): 0.1312
+iter: 8, loss: 53.76, accuracy: 9.766, time(sec): 0.1244
+iter: 9, loss: 53.39, accuracy: 9.766, time(sec): 0.1279
+iter: 10, loss: 53.03, accuracy: 9.766, time(sec): 0.1291
+iter: 11, loss: 52.7, accuracy: 9.766, time(sec): 0.125
+iter: 12, loss: 52.43, accuracy: 9.766, time(sec): 0.1287
+iter: 13, loss: 52.27, accuracy: 9.766, time(sec): 0.125
+iter: 14, loss: 52.2, accuracy: 9.766, time(sec): 0.1283
+iter: 15, loss: 52.24, accuracy: 9.766, time(sec): 0.1312
+iter: 16, loss: 52.33, accuracy: 9.766, time(sec): 0.1225
+iter: 17, loss: 52.44, accuracy: 9.766, time(sec): 0.1571
+iter: 18, loss: 52.49, accuracy: 9.766, time(sec): 0.1259
+iter: 19, loss: 52.47, accuracy: 9.766, time(sec): 0.1212
+Forward pass : PBBS-time: 0.712
+Reverse pass : PBBS-time: 1.08
+Forward+Reverse pass : PBBS-time: 1.8
+t1: Allocate wl_grad_table : PBBS-time: 0.0413
+t2: wl_right_first_walk : PBBS-time: 1.24
+t3: Export wl_grad_table to global gradient table : PBBS-time: 0.0234
+t4: Free all memory : PBBS-time: 0.00207

@@ -43,21 +43,21 @@ else
 endif
 
 # BX: Used for toggling worker-local RAD vs PARAD
-CFLAGS += -DBX_USE_WORKER_LOCAL
+CFLAGS += -DBX_USE_HYBRID
 
 # ==============================================================================
 
 .PHONY:	all clean
 
-BINS := run_wl
-BUILD_DIR := build_wl
+BINS := run_hybrid
+BUILD_DIR := build_hybrid
 
 all: $(BINS)
 
 $(BUILD_DIR)/sp_tree.o: parad/sp_tree.cpp parad/sp_tree.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-$(BUILD_DIR)/wl_rad_algs.o: parad/wl_rad_algs.cpp parad/wl_rad_algs.hpp
+$(BUILD_DIR)/hybrid_rad_algs.o: parad/hybrid_rad_algs.cpp parad/hybrid_rad_algs.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 $(BUILD_DIR)/main.o: main.cpp $(BUILD_DIR)/sp_tree.o $(BUILD_DIR)/tool.o
@@ -87,10 +87,10 @@ $(BUILD_DIR)/tool.o: tool.cpp $(BUILD_DIR)/tool.bc
 $(BUILD_DIR)/io_helpers.o: io_helpers.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-run_wl: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o \
-				$(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o \
-				$(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o \
-				$(BUILD_DIR)/wl_rad_algs.o $(CSI_RT_PATH)
+run_hybrid: $(BUILD_DIR)/main.o $(BUILD_DIR)/io_helpers.o \
+				    $(BUILD_DIR)/optimization.o $(BUILD_DIR)/activations.o \
+				    $(BUILD_DIR)/Graph.o $(BUILD_DIR)/tool.o $(BUILD_DIR)/sp_tree.o \
+				    $(BUILD_DIR)/hybrid_rad_algs.o $(CSI_RT_PATH)
 	$(LD) -v -o $@ $^ $(LDFLAGS)
 
 clean:

@@ -1,0 +1,40 @@
+stack storage orig constructor
+iter: 0, loss: 0.038049, accuracy: 0.00125, time (sec): 9.4573
+iter: 1, loss: 0.036247, accuracy: 0.185, time (sec): 5.722
+iter: 2, loss: 0.030359, accuracy: 0.18625, time (sec): 5.757
+iter: 3, loss: 0.027486, accuracy: 0.1875, time (sec): 5.7302
+iter: 4, loss: 0.025046, accuracy: 0.1125, time (sec): 5.7084
+iter: 5, loss: 0.025249, accuracy: 0.075, time (sec): 5.6387
+iter: 6, loss: 0.024773, accuracy: 0.1025, time (sec): 5.5295
+iter: 7, loss: 0.024677, accuracy: 0.07375, time (sec): 5.4215
+iter: 8, loss: 0.023934, accuracy: 0.18875, time (sec): 5.3171
+iter: 9, loss: 0.023383, accuracy: 0.18375, time (sec): 5.2726
+iter: 10, loss: 0.023796, accuracy: 0.185, time (sec): 5.1973
+iter: 11, loss: 0.023853, accuracy: 0.1925, time (sec): 5.1794
+iter: 12, loss: 0.023089, accuracy: 0.18375, time (sec): 5.1613
+iter: 13, loss: 0.023859, accuracy: 0.1825, time (sec): 5.1701
+iter: 14, loss: 0.023584, accuracy: 0.17625, time (sec): 5.1676
+iter: 15, loss: 0.023218, accuracy: 0.1825, time (sec): 5.1626
+iter: 16, loss: 0.023235, accuracy: 0.18375, time (sec): 5.1655
+iter: 17, loss: 0.023558, accuracy: 0.19125, time (sec): 5.1571
+iter: 18, loss: 0.022797, accuracy: 0.17625, time (sec): 5.1532
+iter: 19, loss: 0.023262, accuracy: 0.19, time (sec): 5.1344
+Forward pass : PBBS-time: 17.2
+Reverse pass : PBBS-time: 55.9
+Forward+Reverse pass : PBBS-time: 73.1
+r0: Initialize appears_in_statements : PBBS-time: 0
+r1: Allocate/initialize lsw, lsi, lsn : PBBS-time: 0
+r2: Reserve worker_local_vector space, misc initialization : PBBS-time: 0
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0
+r4: (2) left_first_walk : PBBS-time: 0
+r5: wl_ops.collect() : PBBS-time: 0
+r6: (3) Create O* (map for ops) : PBBS-time: 0
+r7: (4) Semisort O* (by gradient index) : PBBS-time: 0
+r8: (4) Semisort O* (by statement index) : PBBS-time: 0
+r9: (5a) Create S_rcv (blocks) : PBBS-time: 0
+r10: (5b) Allocate / initialize deposit locations (O_snd) : PBBS-time: 0
+r11: (5b) Populate deposit locations (O_snd) : PBBS-time: 0
+r12: Allocate / initialize worker local gradient tables : PBBS-time: 0
+r13: (6) right_first_walk : PBBS-time: 0
+r14: (7) Accumulate worker-local gradients in global table : PBBS-time: 0
+r15: Free memory : PBBS-time: 0

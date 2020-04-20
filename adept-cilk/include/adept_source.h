@@ -405,7 +405,11 @@ namespace adept {
 #ifdef BX_USE_WORKER_LOCAL
     PARAD::wl_report_times();
 #else
+#ifdef BX_USE_HYBRID
+    PARAD::hybrid_report_times();
+#else
     PARAD::report_times();
+#endif
 #endif
     // If this is the currently active stack then set to NULL as
     // "this" is shortly to become invalid
@@ -568,14 +572,16 @@ namespace adept {
       locks[i] = 0;
     }
     tfk_reducer.sp_tree.walk_tree_process_locks(tfk_reducer.sp_tree.get_root(), gradient_, locks);
-    // tfk_reducer.sp_tree.walk_tree_process_one_worker(gradient_);
     delete[] locks;
 #else
 #ifdef BX_USE_WORKER_LOCAL
     PARAD::wl_reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
 #else
-    // tfk_reducer.sp_tree.reverse_ad_PARAD(n_gradients_registered_, gradient_);
+#ifdef BX_USE_HYBRID
+    PARAD::hybrid_reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+#else
     PARAD::reverse_ad(tfk_reducer.sp_tree.get_root(), n_gradients_registered_, gradient_);
+#endif
 #endif
 #endif
     t2.stop();

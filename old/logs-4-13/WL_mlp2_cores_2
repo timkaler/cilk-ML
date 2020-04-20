@@ -1,0 +1,68 @@
+stack storage orig constructor
+iter: 0, loss: 0.2303, accuracy: 9.9000, runtime (s): 2.3592
+iter: 1, loss: 0.2303, accuracy: 10.8000, runtime (s): 0.9530
+iter: 2, loss: 0.2303, accuracy: 10.5000, runtime (s): 0.9768
+iter: 3, loss: 0.2302, accuracy: 10.4000, runtime (s): 0.9493
+iter: 4, loss: 0.2301, accuracy: 12.6000, runtime (s): 0.9292
+iter: 5, loss: 0.2284, accuracy: 9.0000, runtime (s): 0.9319
+iter: 6, loss: 0.2302, accuracy: 10.0000, runtime (s): 0.8308
+iter: 7, loss: 0.2299, accuracy: 11.9000, runtime (s): 0.8483
+iter: 8, loss: 0.2288, accuracy: 10.4000, runtime (s): 0.8483
+iter: 9, loss: 0.2222, accuracy: 14.4000, runtime (s): 0.8594
+iter: 10, loss: 0.2279, accuracy: 13.3000, runtime (s): 0.8769
+iter: 11, loss: 0.2066, accuracy: 25.4000, runtime (s): 0.8626
+iter: 12, loss: 0.2150, accuracy: 18.5000, runtime (s): 0.8395
+iter: 13, loss: 0.2125, accuracy: 14.5000, runtime (s): 0.8405
+iter: 14, loss: 0.2091, accuracy: 20.1000, runtime (s): 0.8454
+iter: 15, loss: 0.2057, accuracy: 18.1000, runtime (s): 0.8516
+iter: 16, loss: 0.2050, accuracy: 21.3000, runtime (s): 0.8577
+iter: 17, loss: 0.1994, accuracy: 21.3000, runtime (s): 0.8556
+iter: 18, loss: 0.1973, accuracy: 24.6000, runtime (s): 0.8498
+iter: 19, loss: 0.1971, accuracy: 23.0000, runtime (s): 0.8523
+iter: 20, loss: 0.1917, accuracy: 23.5000, runtime (s): 0.8550
+iter: 21, loss: 0.1863, accuracy: 22.9000, runtime (s): 0.8586
+iter: 22, loss: 0.1833, accuracy: 23.2000, runtime (s): 0.8622
+iter: 23, loss: 0.1809, accuracy: 24.8000, runtime (s): 0.8628
+iter: 24, loss: 0.1769, accuracy: 29.0000, runtime (s): 0.8578
+iter: 25, loss: 0.1773, accuracy: 31.7000, runtime (s): 0.8569
+iter: 26, loss: 0.1737, accuracy: 32.0000, runtime (s): 0.8608
+iter: 27, loss: 0.1652, accuracy: 33.8000, runtime (s): 0.8656
+iter: 28, loss: 0.1585, accuracy: 38.1000, runtime (s): 0.8640
+iter: 29, loss: 0.1553, accuracy: 38.4000, runtime (s): 0.8646
+iter: 30, loss: 0.1518, accuracy: 42.2000, runtime (s): 0.8622
+iter: 31, loss: 0.1474, accuracy: 42.1000, runtime (s): 0.8623
+iter: 32, loss: 0.1355, accuracy: 48.0000, runtime (s): 0.8619
+iter: 33, loss: 0.1355, accuracy: 54.1000, runtime (s): 0.8613
+iter: 34, loss: 0.1324, accuracy: 50.5000, runtime (s): 0.8586
+iter: 35, loss: 0.1219, accuracy: 55.3000, runtime (s): 0.8593
+iter: 36, loss: 0.1217, accuracy: 57.5000, runtime (s): 0.8623
+iter: 37, loss: 0.1116, accuracy: 65.5000, runtime (s): 0.8568
+iter: 38, loss: 0.1046, accuracy: 67.5000, runtime (s): 0.8587
+iter: 39, loss: 0.1077, accuracy: 67.9000, runtime (s): 0.8591
+iter: 40, loss: 0.0955, accuracy: 68.6000, runtime (s): 0.8591
+iter: 41, loss: 0.0909, accuracy: 70.8000, runtime (s): 0.8602
+iter: 42, loss: 0.0922, accuracy: 74.5000, runtime (s): 0.8601
+iter: 43, loss: 0.0872, accuracy: 72.2000, runtime (s): 0.8586
+iter: 44, loss: 0.0949, accuracy: 75.9000, runtime (s): 0.8610
+iter: 45, loss: 0.0764, accuracy: 75.9000, runtime (s): 0.8609
+iter: 46, loss: 0.0735, accuracy: 77.4000, runtime (s): 0.8621
+iter: 47, loss: 0.0628, accuracy: 80.3000, runtime (s): 0.8603
+iter: 48, loss: 0.0711, accuracy: 79.2000, runtime (s): 0.8601
+iter: 49, loss: 0.0676, accuracy: 80.7000, runtime (s): 0.8634
+iter: 50, loss: 0.0595, accuracy: 84.3000, runtime (s): 0.8620
+iter: 51, loss: 0.0625, accuracy: 81.8000, runtime (s): 0.8597
+iter: 52, loss: 0.0647, accuracy: 80.2000, runtime (s): 0.8640
+iter: 53, loss: 0.0515, accuracy: 83.6000, runtime (s): 0.8659
+iter: 54, loss: 0.0497, accuracy: 84.0000, runtime (s): 0.8649
+iter: 55, loss: 0.0508, accuracy: 84.8000, runtime (s): 0.8611
+iter: 56, loss: 0.0504, accuracy: 86.0000, runtime (s): 0.8639
+iter: 57, loss: 0.0534, accuracy: 85.6000, runtime (s): 0.8606
+iter: 58, loss: 0.0384, accuracy: 88.7000, runtime (s): 0.8624
+iter: 59, loss: 0.0454, accuracy: 87.5000, runtime (s): 0.8604
+Forward pass : PBBS-time: 42.658
+Reverse pass : PBBS-time: 3.175
+Forward+Reverse pass : PBBS-time: 45.833
+t1: Allocate wl_grad_table : PBBS-time: 0.094
+t2: wl_right_first_walk : PBBS-time: 3.356
+t3: Export wl_grad_table to global gradient table : PBBS-time: 0.572
+t4: Free all memory : PBBS-time: 0.000

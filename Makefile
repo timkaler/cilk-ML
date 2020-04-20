@@ -4,11 +4,15 @@ all:
 	mkdir -p build
 	./setup.sh make VERBOSE=1 -f Makefile2 -j 8
 
-comparisons: all wl serial plocks
+comparisons: all wl hybrid serial plocks
 
 wl:
 	mkdir -p build_wl
 	./setup.sh make VERBOSE=1 -f Makefile2_wl -j 8
+
+hybrid:
+	mkdir -p build_hybrid
+	./setup.sh make VERBOSE=1 -f Makefile2_hybrid -j 8
 
 serial:
 	mkdir -p build_serial
@@ -24,6 +28,7 @@ semisort:
 clean:
 	./setup.sh make -f Makefile2 clean
 	./setup.sh make -f Makefile2_wl clean
+	./setup.sh make -f Makefile2_hybrid clean
 	./setup.sh make -f Makefile2_PLOCKS clean
 	./setup.sh make -f Makefile2_serial clean
-	rm -rf build build_wl build_serial build_plocks
+	rm -rf build build_wl build_hybrid build_serial build_plocks
