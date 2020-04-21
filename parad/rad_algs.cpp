@@ -39,7 +39,6 @@ void left_first_walk(SP_Node* n, args_for_collect_ops* args,
       for (adept::uIndex ist = stack.statement_stack_start;
            ist < stack.statement_stack_end; ist++) {
         const adept::Statement& statement = statement_stack_arr[ist];
-
         if (statement.index == -1) continue;
 
         for (adept::uIndex j = statement_stack_arr[ist-1].end_plus_one;

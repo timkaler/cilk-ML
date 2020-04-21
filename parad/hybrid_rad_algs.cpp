@@ -164,9 +164,8 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
     for (adept::uIndex ist = stack.statement_stack_end;
          ist-- > stack.statement_stack_start; ) {
       const adept::Statement& statement = statement_stack_arr[ist];
-      if (statement.index == -1) {
-        continue;
-      }
+      if (statement.index == -1) continue;
+
       // Extract the gradient for this statement
       // Start by reading the global gradient table
       adept::Real a = global_grad_table[statement.index];

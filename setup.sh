@@ -12,7 +12,7 @@ export CXX=clang++
 export OPENCV_ROOT=/efs/tools/OpenCV3
 
 export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH:/usr/local/lib
-export OMP_NUM_THREADS=1
+#export OMP_NUM_THREADS=1
 #export EXTRA_CFLAGS="-fcilkplus -Wall" #-Werror"
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/home/tfk/archive-linux/lib/:/usr/lib/x86_64-linux-gnu/
@@ -28,7 +28,7 @@ export N_TEMPORARY_BYTES=500000000
 export PYTHONPATH=$PYTHONPATH:/efs/python_local/lib/python2.7/site-packages
 #export LD_LIBRARY_PATH=/efs/tools/protobuf_c4/lib:$LD_LIBRARY_PATH
 
-# BX: Temporary hack to ensure that the number of Cilk workers matches CPUs
+# @BX: Temporary hack to ensure nworkers == number of cores available
 export CILK_NWORKERS=$(nproc)
 
 $@

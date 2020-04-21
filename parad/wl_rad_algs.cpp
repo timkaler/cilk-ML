@@ -49,7 +49,6 @@ void wl_right_first_walk(SP_Node* node, float** wl_grad_table, float* global_gra
     for (adept::uIndex ist = stack_data.statement_stack_end;
          ist-- > stack_data.statement_stack_start; ) {
       const adept::Statement& statement = statement_stack[ist];
-      // TODO: what does this do?
       if (statement.index == -1) continue;
 
       // Extract the gradient from reading all P gradient tables
