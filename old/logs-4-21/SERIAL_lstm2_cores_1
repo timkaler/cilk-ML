@@ -1,0 +1,23 @@
+iter: 0, loss: 0.038049, accuracy: 0.00125, time (sec): 7.5163
+iter: 1, loss: 0.036228, accuracy: 0.18875, time (sec): 3.9216
+iter: 2, loss: 0.030431, accuracy: 0.18375, time (sec): 3.9234
+iter: 3, loss: 0.027548, accuracy: 0.19, time (sec): 3.9381
+iter: 4, loss: 0.024954, accuracy: 0.115, time (sec): 3.938
+iter: 5, loss: 0.025218, accuracy: 0.07625, time (sec): 3.9192
+iter: 6, loss: 0.024796, accuracy: 0.0625, time (sec): 3.9036
+iter: 7, loss: 0.024785, accuracy: 0.06625, time (sec): 3.8897
+iter: 8, loss: 0.024191, accuracy: 0.18625, time (sec): 3.8701
+iter: 9, loss: 0.02316, accuracy: 0.185, time (sec): 3.8574
+iter: 10, loss: 0.023847, accuracy: 0.18375, time (sec): 3.8347
+iter: 11, loss: 0.023887, accuracy: 0.19375, time (sec): 3.8312
+iter: 12, loss: 0.023234, accuracy: 0.18125, time (sec): 3.8346
+iter: 13, loss: 0.023941, accuracy: 0.18625, time (sec): 3.8354
+iter: 14, loss: 0.023538, accuracy: 0.1725, time (sec): 3.8334
+iter: 15, loss: 0.023088, accuracy: 0.18375, time (sec): 3.8418
+iter: 16, loss: 0.023239, accuracy: 0.1825, time (sec): 3.8342
+iter: 17, loss: 0.023525, accuracy: 0.195, time (sec): 3.8274
+iter: 18, loss: 0.022864, accuracy: 0.18125, time (sec): 3.8239
+iter: 19, loss: 0.023349, accuracy: 0.185, time (sec): 3.8246
+Forward pass : PBBS-time: 40.5
+Reverse pass : PBBS-time: 13.2
+Forward+Reverse pass : PBBS-time: 53.7

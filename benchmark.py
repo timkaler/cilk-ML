@@ -1,5 +1,6 @@
 import argparse
 import os
+import pprint
 import subprocess
 
 from collections import OrderedDict
@@ -107,7 +108,8 @@ def parse_results():
             for alg_num in range(len(algorithms)):
                 data = parse_single_result(alg_num, experiment['name'], experiment['binary'], cores)
                 output[experiment['name']][cores][algorithms[alg_num]['name']] = data
-    print(output)
+    pp = pprint.PrettyPrinter(indent=2, compact=True)
+    pp.pprint(output)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

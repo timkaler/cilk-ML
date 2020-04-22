@@ -1,0 +1,26 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 2.278
+iter: 1, loss: 0.6432, accuracy: 18, time (s): 1.051
+iter: 2, loss: 0.6166, accuracy: 41.4, time (s): 1.055
+iter: 3, loss: 0.5995, accuracy: 43.7, time (s): 1.058
+iter: 4, loss: 0.6257, accuracy: 41.3, time (s): 1.06
+iter: 5, loss: 0.5752, accuracy: 51, time (s): 1.044
+iter: 6, loss: 0.5764, accuracy: 50.1, time (s): 1.044
+iter: 7, loss: 0.5506, accuracy: 57.6, time (s): 1.03
+iter: 8, loss: 0.5373, accuracy: 67.2, time (s): 1.032
+iter: 9, loss: 0.5138, accuracy: 67.1, time (s): 1.055
+iter: 10, loss: 0.4725, accuracy: 69.2, time (s): 1.05
+iter: 11, loss: 0.4294, accuracy: 73.9, time (s): 1.062
+iter: 12, loss: 0.4056, accuracy: 71.1, time (s): 1.06
+iter: 13, loss: 0.3791, accuracy: 74.5, time (s): 1.054
+iter: 14, loss: 0.371, accuracy: 75.2, time (s): 1.067
+Forward pass : PBBS-time: 6.75
+Reverse pass : PBBS-time: 2.69
+Forward+Reverse pass : PBBS-time: 9.45
+t1: Allocate wl_grad_table : PBBS-time: 0.0374
+t2: wl_right_first_walk : PBBS-time: 4.32
+t3: Export wl_grad_table to global gradient table : PBBS-time: 0.111
+t4: Free all memory : PBBS-time: 0.000134
