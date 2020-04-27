@@ -1,0 +1,40 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 0.8301
+iter: 1, loss: 0.6428, accuracy: 18, time (s): 0.3038
+iter: 2, loss: 0.6156, accuracy: 41.4, time (s): 0.3083
+iter: 3, loss: 0.5992, accuracy: 45.7, time (s): 0.3081
+iter: 4, loss: 0.6138, accuracy: 41.4, time (s): 0.3152
+iter: 5, loss: 0.5814, accuracy: 47.3, time (s): 0.3224
+iter: 6, loss: 0.5643, accuracy: 53.5, time (s): 0.3021
+iter: 7, loss: 0.5454, accuracy: 67.4, time (s): 0.3103
+iter: 8, loss: 0.5347, accuracy: 67.9, time (s): 0.3203
+iter: 9, loss: 0.506, accuracy: 69.1, time (s): 0.3197
+iter: 10, loss: 0.4612, accuracy: 72.7, time (s): 0.3171
+iter: 11, loss: 0.4248, accuracy: 70.9, time (s): 0.3192
+iter: 12, loss: 0.3985, accuracy: 71.3, time (s): 0.3235
+iter: 13, loss: 0.377, accuracy: 74.7, time (s): 0.3262
+iter: 14, loss: 0.3614, accuracy: 75.9, time (s): 0.3266
+Forward pass : PBBS-time: 1.28
+Reverse pass : PBBS-time: 1.55
+Forward+Reverse pass : PBBS-time: 2.85
+r0: Initialize appears_in_statements : PBBS-time: 0.0243
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.00844
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 0.000288
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0.157
+r4: Allocate statement_num_ops_map, statement_use_wl : PBBS-time: 0.0122
+r5: (2) hybrid_left_first_walk : PBBS-time: 0.53
+r6: wl_ops.remove_wl_statements() : PBBS-time: 0.163
+r7: wl_ops.collect() : PBBS-time: 0.076
+r8: (3) Create O* (map for ops) : PBBS-time: 0.0369
+r9: (4) Semisort O* (by gradient index) : PBBS-time: 0.148
+r10: (4) Semisort O* (by statement index) : PBBS-time: 0.0375
+r11: (5a) Create S_rcv (blocks : PBBS-time: 0.00342
+r12: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 0.0266
+r13: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.232
+r14: Allocate wl_grad_table : PBBS-time: 0.0586
+r15: (6) hybrid_right_first_walk : PBBS-time: 0.922
+r16: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.137
+r17: Free memory : PBBS-time: 0.0182

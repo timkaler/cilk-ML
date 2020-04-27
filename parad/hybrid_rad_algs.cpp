@@ -340,7 +340,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r4.start();
   int* statement_num_ops_map = (int*) calloc(nstatements, sizeof(int));
   bool* statement_use_wl = (bool*) calloc(nstatements, sizeof(bool));
-  int max_ops = 3 * n_workers;
+  int max_ops = n_workers;
   r4.stop();
 
   // 2) Left-first traversal collects ops that need distinct deposit locations
