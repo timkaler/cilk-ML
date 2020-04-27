@@ -1,0 +1,43 @@
+stack storage orig constructor
+iter: 0, loss: 0.038049, accuracy: 0.00125, time (sec): 6.8249
+iter: 1, loss: 0.036228, accuracy: 0.18875, time (sec): 2.8739
+iter: 2, loss: 0.030431, accuracy: 0.18375, time (sec): 2.8588
+iter: 3, loss: 0.027548, accuracy: 0.19, time (sec): 2.8832
+iter: 4, loss: 0.024954, accuracy: 0.115, time (sec): 2.8806
+iter: 5, loss: 0.025218, accuracy: 0.07625, time (sec): 2.8687
+iter: 6, loss: 0.024796, accuracy: 0.0625, time (sec): 2.8499
+iter: 7, loss: 0.024785, accuracy: 0.06625, time (sec): 2.8288
+iter: 8, loss: 0.024191, accuracy: 0.18625, time (sec): 2.8121
+iter: 9, loss: 0.02316, accuracy: 0.185, time (sec): 2.7959
+iter: 10, loss: 0.023847, accuracy: 0.18375, time (sec): 2.7881
+iter: 11, loss: 0.023887, accuracy: 0.19375, time (sec): 2.7872
+iter: 12, loss: 0.023234, accuracy: 0.18125, time (sec): 2.7846
+iter: 13, loss: 0.023941, accuracy: 0.18625, time (sec): 2.7819
+iter: 14, loss: 0.023538, accuracy: 0.1725, time (sec): 2.7806
+iter: 15, loss: 0.023088, accuracy: 0.18375, time (sec): 2.7822
+iter: 16, loss: 0.023239, accuracy: 0.1825, time (sec): 2.7788
+iter: 17, loss: 0.023525, accuracy: 0.195, time (sec): 2.7777
+iter: 18, loss: 0.022864, accuracy: 0.18125, time (sec): 2.7743
+iter: 19, loss: 0.023349, accuracy: 0.185, time (sec): 2.7782
+Forward pass : PBBS-time: 17.4
+Reverse pass : PBBS-time: 21.6
+Forward+Reverse pass : PBBS-time: 39
+r0: Initialize appears_in_statements : PBBS-time: 0.0623
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.0331
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 0.000204
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 1.34
+r4: Allocate gradient_num_ops/stmts_map, gradient_use_wl : PBBS-time: 0.105
+r5: Compute gradient_num_stmts_map : PBBS-time: 0.0631
+r6: (2) hybrid_left_first_walk : PBBS-time: 13
+r7: wl_ops.remove_wl_gradients() : PBBS-time: 0.221
+r8: wl_ops.collect() : PBBS-time: 0.0735
+r9: (3) Create O* (map for ops) : PBBS-time: 0.0471
+r10: (4) Semisort O* (by gradient index) : PBBS-time: 0.2
+r11: (4) Semisort O* (by statement index) : PBBS-time: 0.269
+r12: (5a) Create S_rcv (blocks : PBBS-time: 0.0151
+r13: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 0.012
+r14: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.147
+r15: Allocate wl_grad_table : PBBS-time: 0.000189
+r16: (6) hybrid_right_first_walk : PBBS-time: 15.7
+r17: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.0727
+r18: Free memory : PBBS-time: 0.000361

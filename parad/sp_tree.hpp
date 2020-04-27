@@ -74,14 +74,14 @@ class worker_local_vector {
       return total_size;
     }
 
-    // BX: Removes all elements which have gradient index gid, such that
-    // gradient_use_wl[gid] == true
-    void remove_wl_gradients(bool* gradient_use_wl) {
+    // BX: Removes all elements which have statement index ist, such that
+    // statement_use_wl[ist] == true
+    void remove_wl_statements(bool* statement_use_wl) {
       cilk_for (int i = 0; i < __cilkrts_get_nworkers(); ++i) {
         std::vector<T> new_vec;
         for (int j = 0; j < wl_vectors[i].vec.size(); ++j) {
           T element = wl_vectors[i].vec[j];
-          if (!gradient_use_wl[element.gradient_index]) {
+          if (!statement_use_wl[element.statement_ist]) {
             new_vec.push_back(element);
           }
         }

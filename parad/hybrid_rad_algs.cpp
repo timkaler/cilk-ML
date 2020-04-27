@@ -16,48 +16,46 @@
 
 namespace PARAD {
 
-timer r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18;
+timer r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17;
 
 void hybrid_report_times() {
   r0.reportTotal("r0: Initialize appears_in_statements");
   r1.reportTotal("r1: Allocate/initialize lsw, lsi");
   r2.reportTotal("r2: Reserve worker_local_vector space; misc initialization");
   r3.reportTotal("r3: Initialize deposit location lengths / valid arrays");
-  r4.reportTotal("r4: Allocate gradient_num_ops/stmts_map, gradient_use_wl");
-  r5.reportTotal("r5: Compute gradient_num_stmts_map");
-  r6.reportTotal("r6: (2) hybrid_left_first_walk");
-  r7.reportTotal("r7: wl_ops.remove_wl_gradients()");
-  r8.reportTotal("r8: wl_ops.collect()");
-  r9.reportTotal("r9: (3) Create O* (map for ops)");
-  r10.reportTotal("r10: (4) Semisort O* (by gradient index)");
-  r11.reportTotal("r11: (4) Semisort O* (by statement index)");
-  r12.reportTotal("r12: (5a) Create S_rcv (blocks");
-  r13.reportTotal("r13: (5a) Allocate / initialize deposit locations (O_snd)");
-  r14.reportTotal("r14: (5b) Populate deposit locations (O_snd)");
-  r15.reportTotal("r15: Allocate wl_grad_table");
-  r16.reportTotal("r16: (6) hybrid_right_first_walk");
-  r17.reportTotal("r17: (7) Accumulate worker-local gradients in global table");
-  r18.reportTotal("r18: Free memory");
+  r4.reportTotal("r4: Allocate statement_num_ops_map, statement_use_wl");
+  r5.reportTotal("r5: (2) hybrid_left_first_walk");
+  r6.reportTotal("r6: wl_ops.remove_wl_statements()");
+  r7.reportTotal("r7: wl_ops.collect()");
+  r8.reportTotal("r8: (3) Create O* (map for ops)");
+  r9.reportTotal("r9: (4) Semisort O* (by gradient index)");
+  r10.reportTotal("r10: (4) Semisort O* (by statement index)");
+  r11.reportTotal("r11: (5a) Create S_rcv (blocks");
+  r12.reportTotal("r12: (5a) Allocate / initialize deposit locations (O_snd)");
+  r13.reportTotal("r13: (5b) Populate deposit locations (O_snd)");
+  r14.reportTotal("r14: Allocate wl_grad_table");
+  r15.reportTotal("r15: (6) hybrid_right_first_walk");
+  r16.reportTotal("r16: (7) Accumulate worker-local gradients in global table");
+  r17.reportTotal("r17: Free memory");
 }
 
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
                             worker_local_vector<OperationReference>& wl_ops,
-                            int max_ratio, int* gradient_num_ops_map,
-                            int* gradient_num_stmts_map, bool* gradient_use_wl) {
+                            int max_ops, int* statement_num_ops_map,
+                            bool* statement_use_wl) {
   // ROOT or SERIAL node: recursively call hybrid_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
-      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, max_ratio,
-                             gradient_num_ops_map, gradient_num_stmts_map,
-                             gradient_use_wl);
+      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, max_ops,
+                             statement_num_ops_map, statement_use_wl);
     }
   }
   // PARALLEL node: recursively call hybrid_left_first_walk in parallel
   else if (node->type == 2) {
     for (int i = 0; i < node->children->size(); ++i) {
       cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops,
-                                        max_ratio, gradient_num_ops_map,
-                                        gradient_num_stmts_map, gradient_use_wl);
+                                        max_ops, statement_num_ops_map,
+                                        statement_use_wl);
     }
     cilk_sync;
   }
@@ -99,11 +97,10 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
             } else {
               // Optimization: only accumulate in wl_ops if we don't plan to
               // use worker-local gradient tables
-              gradient_num_ops_map[op_index]++;
-              if (!gradient_use_wl[op_index]) {
-                if (gradient_num_stmts_map[op_index] * max_ratio <
-                    gradient_num_ops_map[op_index]) {
-                  gradient_use_wl[op_index] = true;
+              statement_num_ops_map[ist]++;
+              if (!statement_use_wl[ist]) {
+                if (statement_num_ops_map[ist] > max_ops) {
+                  statement_use_wl[ist] = true;
                 } else {
                   OperationReference ref;
                   ref.statement_wid = args->last_statement_worker[op_index];
@@ -128,13 +125,13 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
 void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
                              bool* appears_in_statement,
                              float* global_grad_table,
-                             bool* gradient_use_wl) {
+                             bool* statement_use_wl) {
   // ROOT or SERIAL node: recursively call hybrid_right_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = node->children->size()-1; i >= 0; --i) {
       hybrid_right_first_walk((*(node->children))[i], wl_grad_table,
                               appears_in_statement, global_grad_table,
-                              gradient_use_wl);
+                              statement_use_wl);
     }
   }
   // PARALLEL node: recursively call hybrid_right_first_walk in parallel
@@ -142,7 +139,7 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
     for (int i = node->children->size()-1; i >= 0; --i) {
       cilk_spawn hybrid_right_first_walk((*(node->children))[i], wl_grad_table,
                                          appears_in_statement,
-                                         global_grad_table, gradient_use_wl);
+                                         global_grad_table, statement_use_wl);
     }
     cilk_sync;
   }
@@ -173,7 +170,7 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
       // Start by reading the global gradient table
       adept::Real a = global_grad_table[statement.index];
       global_grad_table[statement.index] = 0;
-      if (gradient_use_wl[statement.index]) {
+      if (statement_use_wl[ist]) {
         // Use the worker-local approach
         for (int i = 0; i < n_workers; ++i) {
           a += wl_grad_table[i][statement.index];
@@ -206,7 +203,7 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
              iop < statement.end_plus_one; ++iop) {
           adept::uIndex op_stack_index = operation_stack_arr[iop];
           adept::Real grad_multiplier = multiplier_stack_arr[iop];
-          if (gradient_use_wl[op_stack_index]) {
+          if (statement_use_wl[ist]) {
             wl_grad_table[wid][op_stack_index] += grad_multiplier * a;
           } else {
             if (appears_in_statement[op_stack_index] &&
@@ -266,36 +263,6 @@ void create_histogram(std::pair<int, int>* blocks, int blocks_size,
     output_file.close();
   } else {
     test.close();
-  }
-}
-
-// Essentially performs a left first walk, but only computes the number of
-// statements associated with each gradient index
-void statement_left_first_walk(SP_Node* node, int* gradient_num_stmts_map) {
-  if (node->type == 0 || node->type == 1) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      statement_left_first_walk((*(node->children))[i],
-                                     gradient_num_stmts_map);
-    }
-  } else if (node->type == 2) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn statement_left_first_walk((*(node->children))[i],
-                                                gradient_num_stmts_map);
-    }
-    cilk_sync;
-  } else if (node->type == 3) {
-    triple_vector_wl stack = node->data;
-    const adept::Statement*__restrict statement_stack_arr =
-            worker_local_stacks[stack.worker_id].statement_stack_arr;
-    if (stack.statement_stack_end != stack.statement_stack_start) {
-      for (adept::uIndex ist = stack.statement_stack_start;
-           ist < stack.statement_stack_end; ++ist) {
-        const adept::Statement& statement = statement_stack_arr[ist];
-        if (statement.index == -1) continue;
-        gradient_num_stmts_map[statement.index]++;
-      }
-    }
-    return;
   }
 }
 
@@ -367,48 +334,39 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   }
   r3.stop();
 
-  // Allocate space for number of times each gradient index appears in the
-  // operation/statement stack, and whether it should use worker-local tables.
+  // Allocate space for the number of operations each statement accumulates, and
+  // minimum number of operations accumulated per statement before switching to
+  // use worker-local gradient tables
   r4.start();
-  int* gradient_num_ops_map = (int*) calloc(n_gradients, sizeof(int));
-  int* gradient_num_stmts_map = (int*) calloc(n_gradients, sizeof(int));
-  bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
-  // Minimum ratio of number of operations to statements per gradient before
-  // we use worker local tables
-  int max_ratio = 5 * n_workers;
+  int* statement_num_ops_map = (int*) calloc(nstatements, sizeof(int));
+  bool* statement_use_wl = (bool*) calloc(nstatements, sizeof(bool));
+  int max_ops = 3 * n_workers;
   r4.stop();
 
-  // Do a light left-first traversal to determine the number of statements
-  // for each gradient index.
-  r5.start();
-  statement_left_first_walk(sptape_root, gradient_num_stmts_map);
-  r5.stop();
-
   // 2) Left-first traversal collects ops that need distinct deposit locations
-  r6.start();
+  r5.start();
   args_for_collect_ops args;
   args.idx_in_statement = appears_in_statement;
   args.last_statement_worker = last_statement_worker;
   args.last_statement_index = last_statement_index;
   args.gradient_ = _gradient;
-  hybrid_left_first_walk(sptape_root, &args, wl_ops, max_ratio,
-                         gradient_num_ops_map, gradient_num_stmts_map,
-                         gradient_use_wl);
-  r6.stop();
+  hybrid_left_first_walk(sptape_root, &args, wl_ops, max_ops,
+                         statement_num_ops_map, statement_use_wl);
+  r5.stop();
 
   // Remove any remaining elements in wl_ops that should use worker-local tables
-  r7.start();
-  wl_ops.remove_wl_gradients(gradient_use_wl);
-  r7.stop();
+  r6.start();
+  wl_ops.remove_wl_statements(statement_use_wl);
+  r6.stop();
 
   // Collect the wl_ops into a single contiguous array
-  r8.start();
+  r7.start();
   OperationReference* ops;
   int64_t ops_size = wl_ops.collect(ops);
-  r8.stop();
+  r7.stop();
 
   // 3) Create O*: map each operation in ops with index i to (statement_index, i)
-  r9.start();
+  r8.start();
   std::pair<int, int>* mapped_ops =
           (std::pair<int, int>*) malloc(sizeof(std::pair<int, int>) * ops_size);
   int64_t mapped_ops_size = ops_size;
@@ -418,17 +376,17 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     mapped_ops[i] = std::make_pair(statement_offsets[ops[i].statement_wid] +
                                    ops[i].statement_ist, (int) i);
   }
-  r9.stop();
+  r8.stop();
 
   // 4) Semisort the mapped_ops so that all operations associated with the same
   // statement are contiguous in memory
-  r10.start();
+  r9.start();
   intSort::iSort(&mapped_ops[0], mapped_ops_size, nstatements+1, utils::firstF<int, int>());
-  r10.stop();
+  r9.stop();
 
   // 4) Collect boundaries between contiguous blocks of operations with the same
   // statement index
-  r11.start();
+  r10.start();
   int* boundaries;
   worker_local_vector<int> wl_boundaries;
   cilk_for (uint64_t i = 0; i < mapped_ops_size; ++i) {
@@ -441,10 +399,10 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // boundaries so that they appear in order. Theoretically, we could have done
   // this with a scan followed by a pakc, but this usually isn't a bottleneck
   intSort::iSort(&boundaries[0], boundaries_size, mapped_ops_size, utils::identityF<int>());
-  r11.stop();
+  r10.stop();
 
   // 5a) For each contiguous block in mapped_ops, create a block with start and end index
-  r12.start();
+  r11.start();
   std::pair<int, int>* blocks = (std::pair<int, int>*)
           malloc(sizeof(std::pair<int, int>) * boundaries_size);
   int64_t blocks_size = boundaries_size;
@@ -455,18 +413,18 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     blocks[boundaries_size-1] = std::make_pair(boundaries[boundaries_size-1],
                                                mapped_ops_size);
   }
-  r12.stop();
+  r11.stop();
 
   // TESTING: Create a histogram of the number of operations accumulated per statement
   // create_histogram(blocks, blocks_size, nstatements, mapped_ops_size);
 
   // 5b) Allocate / initialize deposit locations
-  r13.start();
+  r12.start();
   float* deposit_locations = (float*) calloc(mapped_ops_size, sizeof(float));
-  r13.stop();
+  r12.stop();
 
   // 5b) Populate deposit locations (i.e. O_snd)
-  r14.start();
+  r13.start();
   // Each block is associated with a subarray inside the deposit array
   cilk_for (uint64_t i = 0; i < blocks_size; ++i) {
     // The statement associated with the block is assigned to the range of
@@ -490,37 +448,37 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
       }
     }
   }
-  r14.stop();
+  r13.stop();
 
   // Allocate worker-local gradient tables. These are used for:
   // - optimization: gradients that are not associated with any statement, i.e.
   //   gradients that will be nonzero after the reverse-mode AD
   // - gradients we decided to accumulate in worker-local tables earlier
-  r15.start();
+  r14.start();
   float** wl_grad_table = (float**) malloc(sizeof(float*) * n_workers);
   cilk_for (int i = 0; i < n_workers; ++i) {
     wl_grad_table[i] = (float*) calloc(n_gradients, sizeof(float));
   }
-  r15.stop();
+  r14.stop();
 
   // 6) Right-first traversal to compute the gradients
-  r16.start();
+  r15.start();
   hybrid_right_first_walk(sptape_root, wl_grad_table, appears_in_statement,
-                          _gradient, gradient_use_wl);
-  r16.stop();
+                          _gradient, statement_use_wl);
+  r15.stop();
 
   // 7) Export worker-local gradients to the global gradient table
-  r17.start();
+  r16.start();
   cilk_for (int64_t i = 0; i < tfk_reducer.max_gradient; ++i) {
     _gradient[i] = 0;
     for (int wid = 0; wid < n_workers; ++wid) {
       _gradient[i] += wl_grad_table[wid][i];
     }
   }
-  r17.stop();
+  r16.stop();
   
   // Free all the memory we allocated
-  r18.start();
+  r17.start();
   cilk_for (int i = 0; i < n_workers; ++i) {
     free(wl_grad_table[i]);
   }
@@ -530,13 +488,13 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   delete[] last_statement_index;
   delete[] statement_offsets;
   delete[] appears_in_statement;
-  delete[] gradient_num_ops_map;
-  delete[] gradient_use_wl;
+  delete[] statement_num_ops_map;
+  delete[] statement_use_wl;
   free(blocks);
   free(boundaries);
   free(ops);
   free(mapped_ops);
-  r18.stop();
+  r17.stop();
 }
 
 } // end namespace PARAD
