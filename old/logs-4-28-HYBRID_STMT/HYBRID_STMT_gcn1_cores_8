@@ -1,0 +1,40 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 1.191
+iter: 1, loss: 0.6432, accuracy: 18, time (s): 0.4382
+iter: 2, loss: 0.6166, accuracy: 41.4, time (s): 0.4293
+iter: 3, loss: 0.5995, accuracy: 43.7, time (s): 0.4325
+iter: 4, loss: 0.6257, accuracy: 41.3, time (s): 0.4352
+iter: 5, loss: 0.5752, accuracy: 51.1, time (s): 0.4322
+iter: 6, loss: 0.5764, accuracy: 50.1, time (s): 0.4388
+iter: 7, loss: 0.5506, accuracy: 57.6, time (s): 0.4271
+iter: 8, loss: 0.5374, accuracy: 67.2, time (s): 0.4297
+iter: 9, loss: 0.514, accuracy: 67.1, time (s): 0.4373
+iter: 10, loss: 0.4726, accuracy: 69.1, time (s): 0.4388
+iter: 11, loss: 0.4295, accuracy: 73.9, time (s): 0.4429
+iter: 12, loss: 0.4056, accuracy: 71, time (s): 0.4435
+iter: 13, loss: 0.3792, accuracy: 74.5, time (s): 0.4413
+iter: 14, loss: 0.371, accuracy: 75.1, time (s): 0.4429
+Forward pass : PBBS-time: 1.95
+Reverse pass : PBBS-time: 1.97
+Forward+Reverse pass : PBBS-time: 3.94
+r0: Initialize appears_in_statements : PBBS-time: 0.022
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.00763
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 0.000138
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0.224
+r4: Allocate statement_num_ops_map, statement_use_wl : PBBS-time: 0.0525
+r5: (2) hybrid_left_first_walk : PBBS-time: 1.05
+r6: wl_ops.remove_wl_statements() : PBBS-time: 0.0385
+r7: wl_ops.collect() : PBBS-time: 0.0288
+r8: (3) Create O* (map for ops) : PBBS-time: 0.0145
+r9: (4) Semisort O* (by gradient index) : PBBS-time: 0.0423
+r10: (4) Semisort O* (by statement index) : PBBS-time: 0.0322
+r11: (5a) Create S_rcv (blocks : PBBS-time: 0.00805
+r12: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 5.46e-05
+r13: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.0381
+r14: Allocate wl_grad_table : PBBS-time: 0.000161
+r15: (6) hybrid_right_first_walk : PBBS-time: 1.59
+r16: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.102
+r17: Free memory : PBBS-time: 0.000285

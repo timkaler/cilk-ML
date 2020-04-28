@@ -1,0 +1,40 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 4.483
+iter: 1, loss: 0.6432, accuracy: 18, time (s): 2.603
+iter: 2, loss: 0.6166, accuracy: 41.4, time (s): 2.609
+iter: 3, loss: 0.5995, accuracy: 43.7, time (s): 2.614
+iter: 4, loss: 0.6257, accuracy: 41.3, time (s): 2.617
+iter: 5, loss: 0.5752, accuracy: 51, time (s): 2.596
+iter: 6, loss: 0.5764, accuracy: 50.1, time (s): 2.567
+iter: 7, loss: 0.5506, accuracy: 57.6, time (s): 2.552
+iter: 8, loss: 0.5373, accuracy: 67.2, time (s): 2.564
+iter: 9, loss: 0.5138, accuracy: 67.1, time (s): 2.609
+iter: 10, loss: 0.4725, accuracy: 69.2, time (s): 2.62
+iter: 11, loss: 0.4294, accuracy: 73.9, time (s): 2.63
+iter: 12, loss: 0.4056, accuracy: 71.1, time (s): 2.623
+iter: 13, loss: 0.3791, accuracy: 74.5, time (s): 2.626
+iter: 14, loss: 0.371, accuracy: 75.2, time (s): 2.626
+Forward pass : PBBS-time: 13
+Reverse pass : PBBS-time: 10.4
+Forward+Reverse pass : PBBS-time: 23.4
+r0: Initialize appears_in_statements : PBBS-time: 0.0732
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.0266
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 6.22e-05
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0.863
+r4: Allocate statement_num_ops_map, statement_use_wl : PBBS-time: 0.0477
+r5: (2) hybrid_left_first_walk : PBBS-time: 5.16
+r6: wl_ops.remove_wl_statements() : PBBS-time: 0.154
+r7: wl_ops.collect() : PBBS-time: 0.0657
+r8: (3) Create O* (map for ops) : PBBS-time: 0.0398
+r9: (4) Semisort O* (by gradient index) : PBBS-time: 0.235
+r10: (4) Semisort O* (by statement index) : PBBS-time: 0.216
+r11: (5a) Create S_rcv (blocks : PBBS-time: 0.00678
+r12: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 0.000867
+r13: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.185
+r14: Allocate wl_grad_table : PBBS-time: 0.0001
+r15: (6) hybrid_right_first_walk : PBBS-time: 10.2
+r16: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.0911
+r17: Free memory : PBBS-time: 0.000231

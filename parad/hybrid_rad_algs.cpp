@@ -42,12 +42,12 @@ void hybrid_report_times() {
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
                             worker_local_vector<OperationReference>& wl_ops,
                             int max_ops, int* statement_num_ops_map,
-                            bool* statement_use_wl) {
+                            bool* statement_use_wl, int* statement_offsets) {
   // ROOT or SERIAL node: recursively call hybrid_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
       hybrid_left_first_walk((*(node->children))[i], args, wl_ops, max_ops,
-                             statement_num_ops_map, statement_use_wl);
+                             statement_num_ops_map, statement_use_wl, statement_offsets);
     }
   }
   // PARALLEL node: recursively call hybrid_left_first_walk in parallel
@@ -55,7 +55,7 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
     for (int i = 0; i < node->children->size(); ++i) {
       cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops,
                                         max_ops, statement_num_ops_map,
-                                        statement_use_wl);
+                                        statement_use_wl, statement_offsets);
     }
     cilk_sync;
   }
@@ -97,10 +97,11 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
             } else {
               // Optimization: only accumulate in wl_ops if we don't plan to
               // use worker-local gradient tables
-              statement_num_ops_map[ist]++;
-              if (!statement_use_wl[ist]) {
-                if (statement_num_ops_map[ist] > max_ops) {
-                  statement_use_wl[ist] = true;
+              int op_stmt_index = statement_offsets[args->last_statement_worker[op_index]] +
+                                  args->last_statement_index[op_index];
+              if (!statement_use_wl[op_stmt_index]) {
+                if (++statement_num_ops_map[op_stmt_index] > max_ops) {
+                  statement_use_wl[op_stmt_index] = true;
                 } else {
                   OperationReference ref;
                   ref.statement_wid = args->last_statement_worker[op_index];
@@ -125,13 +126,17 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
 void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
                              bool* appears_in_statement,
                              float* global_grad_table,
-                             bool* statement_use_wl) {
+                             bool* statement_use_wl,
+                             int8_t* last_statement_worker,
+                             int32_t* last_statement_index,
+                             int* statement_offsets) {
   // ROOT or SERIAL node: recursively call hybrid_right_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = node->children->size()-1; i >= 0; --i) {
       hybrid_right_first_walk((*(node->children))[i], wl_grad_table,
                               appears_in_statement, global_grad_table,
-                              statement_use_wl);
+                              statement_use_wl, last_statement_worker,
+                              last_statement_index, statement_offsets);
     }
   }
   // PARALLEL node: recursively call hybrid_right_first_walk in parallel
@@ -139,7 +144,10 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
     for (int i = node->children->size()-1; i >= 0; --i) {
       cilk_spawn hybrid_right_first_walk((*(node->children))[i], wl_grad_table,
                                          appears_in_statement,
-                                         global_grad_table, statement_use_wl);
+                                         global_grad_table, statement_use_wl,
+                                         last_statement_worker,
+                                         last_statement_index,
+                                         statement_offsets);
     }
     cilk_sync;
   }
@@ -203,17 +211,14 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
              iop < statement.end_plus_one; ++iop) {
           adept::uIndex op_stack_index = operation_stack_arr[iop];
           adept::Real grad_multiplier = multiplier_stack_arr[iop];
-          if (statement_use_wl[ist]) {
+          if (!worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop] ||
+              !appears_in_statement[op_stack_index] ||
+              statement_use_wl[statement_offsets[last_statement_worker[op_stack_index]] + last_statement_index[op_stack_index]]) {
             wl_grad_table[wid][op_stack_index] += grad_multiplier * a;
           } else {
-            if (appears_in_statement[op_stack_index] &&
-                worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop]) {
-              float*__restrict dep = worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop];
-              if (dep) {
-                *dep += grad_multiplier * a;
-              } else {
-                wl_grad_table[wid][op_stack_index] += grad_multiplier * a;
-              }
+            float*__restrict dep = worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop];
+            if (dep) {
+              *dep += grad_multiplier * a;
             } else {
               wl_grad_table[wid][op_stack_index] += grad_multiplier * a;
             }
@@ -340,7 +345,12 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r4.start();
   int* statement_num_ops_map = (int*) calloc(nstatements, sizeof(int));
   bool* statement_use_wl = (bool*) calloc(nstatements, sizeof(bool));
-  int max_ops = n_workers;
+  const char* factor = getenv("N_WORKERS_FACTOR");
+  int f = 5;
+  if (factor != NULL) { 
+    f = stoi(factor);
+  }
+  int max_ops = n_workers * f;
   r4.stop();
 
   // 2) Left-first traversal collects ops that need distinct deposit locations
@@ -351,12 +361,12 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   args.last_statement_index = last_statement_index;
   args.gradient_ = _gradient;
   hybrid_left_first_walk(sptape_root, &args, wl_ops, max_ops,
-                         statement_num_ops_map, statement_use_wl);
+                         statement_num_ops_map, statement_use_wl, statement_offsets);
   r5.stop();
 
   // Remove any remaining elements in wl_ops that should use worker-local tables
   r6.start();
-  wl_ops.remove_wl_statements(statement_use_wl);
+  wl_ops.remove_wl_statements(statement_use_wl, statement_offsets);
   r6.stop();
 
   // Collect the wl_ops into a single contiguous array
@@ -364,6 +374,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   OperationReference* ops;
   int64_t ops_size = wl_ops.collect(ops);
   r7.stop();
+  std::cout << "ops_size: " << ops_size << std::endl;
 
   // 3) Create O*: map each operation in ops with index i to (statement_index, i)
   r8.start();
@@ -464,7 +475,8 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // 6) Right-first traversal to compute the gradients
   r15.start();
   hybrid_right_first_walk(sptape_root, wl_grad_table, appears_in_statement,
-                          _gradient, statement_use_wl);
+                          _gradient, statement_use_wl, last_statement_worker,
+                          last_statement_index, statement_offsets);
   r15.stop();
 
   // 7) Export worker-local gradients to the global gradient table

@@ -76,12 +76,13 @@ class worker_local_vector {
 
     // BX: Removes all elements which have statement index ist, such that
     // statement_use_wl[ist] == true
-    void remove_wl_statements(bool* statement_use_wl) {
+    void remove_wl_statements(bool* statement_use_wl, int* statement_offsets) {
       cilk_for (int i = 0; i < __cilkrts_get_nworkers(); ++i) {
         std::vector<T> new_vec;
         for (int j = 0; j < wl_vectors[i].vec.size(); ++j) {
           T element = wl_vectors[i].vec[j];
-          if (!statement_use_wl[element.statement_ist]) {
+          if (!statement_use_wl[element.statement_ist +
+                                statement_offsets[element.statement_wid]]) {
             new_vec.push_back(element);
           }
         }
