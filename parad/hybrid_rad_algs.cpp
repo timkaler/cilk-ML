@@ -97,8 +97,8 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
             } else {
               // Optimization: only accumulate in wl_ops if we don't plan to
               // use worker-local gradient tables
-              gradient_num_ops_map[op_index]++;
               if (!gradient_use_wl[op_index]) {
+                gradient_num_ops_map[op_index]++;
                 if (gradient_num_ops_map[op_index] > max_num_ops) {
                   gradient_use_wl[op_index] = true;
                 } else {
