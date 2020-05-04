@@ -1,0 +1,41 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 0.7836
+iter: 1, loss: 0.6432, accuracy: 18, time (s): 0.2879
+iter: 2, loss: 0.6166, accuracy: 41.4, time (s): 0.2786
+iter: 3, loss: 0.5995, accuracy: 43.7, time (s): 0.2711
+iter: 4, loss: 0.6257, accuracy: 41.3, time (s): 0.2691
+iter: 5, loss: 0.5752, accuracy: 51, time (s): 0.2807
+iter: 6, loss: 0.5764, accuracy: 50.1, time (s): 0.2727
+iter: 7, loss: 0.5506, accuracy: 57.6, time (s): 0.2784
+iter: 8, loss: 0.5373, accuracy: 67.2, time (s): 0.2757
+iter: 9, loss: 0.5138, accuracy: 67.1, time (s): 0.2833
+iter: 10, loss: 0.4725, accuracy: 69.2, time (s): 0.2722
+iter: 11, loss: 0.4294, accuracy: 73.9, time (s): 0.2804
+iter: 12, loss: 0.4056, accuracy: 71.1, time (s): 0.2788
+iter: 13, loss: 0.3791, accuracy: 74.5, time (s): 0.2814
+iter: 14, loss: 0.371, accuracy: 75.2, time (s): 0.2807
+Forward pass : PBBS-time: 1.24
+Reverse pass : PBBS-time: 1.23
+Forward+Reverse pass : PBBS-time: 2.49
+r0: Initialize appears_in_statements : PBBS-time: 0.0233
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.00704
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 0.000301
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0.144
+r4: Allocate gradient_num_ops/stmts_map, gradient_use_wl : PBBS-time: 0.0486
+r5: Compute gradient_num_stmts_map : PBBS-time: 0.0425
+r6: (2) hybrid_left_first_walk : PBBS-time: 0.444
+r7: wl_ops.remove_wl_gradients() : PBBS-time: 0.0678
+r8: wl_ops.collect() : PBBS-time: 0.0424
+r9: (3) Create O* (map for ops) : PBBS-time: 0.012
+r10: (4) Semisort O* (by gradient index) : PBBS-time: 0.0349
+r11: (4) Semisort O* (by statement index) : PBBS-time: 0.0264
+r12: (5a) Create S_rcv (blocks : PBBS-time: 0.00898
+r13: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 4.84e-05
+r14: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.0271
+r15: Allocate wl_grad_table : PBBS-time: 0.000219
+r16: (6) hybrid_right_first_walk : PBBS-time: 0.989
+r17: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.139
+r18: Free memory : PBBS-time: 0.00773
