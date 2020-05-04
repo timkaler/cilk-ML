@@ -23,10 +23,10 @@ void hybrid_report_times() {
   r1.reportTotal("r1: Allocate/initialize lsw, lsi");
   r2.reportTotal("r2: Reserve worker_local_vector space; misc initialization");
   r3.reportTotal("r3: Initialize deposit location lengths / valid arrays");
-  r4.reportTotal("r4: Allocate gradient_num_ops/stmts_map, gradient_use_wl");
-  r5.reportTotal("r5: Compute gradient_num_stmts_map");
-  r6.reportTotal("r6: (2) hybrid_left_first_walk");
-  r7.reportTotal("r7: wl_ops.remove_wl_gradients()");
+  r4.reportTotal("r4: Compute gradient_n_stmts_map");
+  r5.reportTotal("r5: Compute gradient_n_ops_map");
+  r6.reportTotal("r6: Compute gradient_use_wl");
+  r7.reportTotal("r7: (2) hybrid_left_first_walk");
   r8.reportTotal("r8: wl_ops.collect()");
   r9.reportTotal("r9: (3) Create O* (map for ops)");
   r10.reportTotal("r10: (4) Semisort O* (by gradient index)");
@@ -42,29 +42,24 @@ void hybrid_report_times() {
 
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
                             worker_local_vector<OperationReference>& wl_ops,
-                            int max_ratio, int* gradient_num_ops_map,
-                            int* gradient_num_stmts_map, bool* gradient_use_wl) {
+                            bool* gradient_use_wl) {
   // ROOT or SERIAL node: recursively call hybrid_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
-      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, max_ratio,
-                             gradient_num_ops_map, gradient_num_stmts_map,
-                             gradient_use_wl);
+      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl);
     }
   }
   // PARALLEL node: recursively call hybrid_left_first_walk in parallel
   else if (node->type == 2) {
     for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops,
-                                        max_ratio, gradient_num_ops_map,
-                                        gradient_num_stmts_map, gradient_use_wl);
+      cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl);
     }
     cilk_sync;
   }
   // DATA node
   else if (node->type == 3) {
     triple_vector_wl stack = node->data;
-
+    
     adept::uIndex*__restrict operation_stack_arr =
             worker_local_stacks[stack.worker_id].operation_stack_arr;
     const adept::Statement*__restrict statement_stack_arr =
@@ -75,18 +70,18 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
             worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid;
     bool*__restrict idx_in_statement = args->idx_in_statement;
 
-    if (stack.statement_stack_end != stack.statement_stack_start) {
+    if (stack.statement_stack_start != stack.statement_stack_end) {
       int wid = __cilkrts_get_worker_number();
       for (adept::uIndex ist = stack.statement_stack_start;
            ist < stack.statement_stack_end; ++ist) {
         const adept::Statement& statement = statement_stack_arr[ist];
         if (statement.index == -1) continue;
 
-        for (adept::uIndex j = statement_stack_arr[ist-1].end_plus_one;
-             j < statement.end_plus_one; ++j) {
-          adept::uIndex op_index = operation_stack_arr[j];
+        for (adept::uIndex iop = statement_stack_arr[ist-1].end_plus_one;
+             iop < statement.end_plus_one; ++iop) {
+          adept::uIndex op_index = operation_stack_arr[iop];
           // Optimization 1: operations whose gradient index never appears in a
-          // statement accumulate gradients using worker local sparse arrays
+          // statement accumulate gradients using worker-local sparse arrays
           if (idx_in_statement[op_index]) {
             // Optimization 2: operations whose gradient contributions are
             // accumulated by a statement in the same subtape (data node) use
@@ -94,26 +89,19 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
             if (stack.worker_id == args->last_statement_worker[op_index] &&
                 stack.statement_stack_start <= args->last_statement_index[op_index] &&
                 stack.statement_stack_end > args->last_statement_index[op_index]) {
-              worker_local_stacks[stack.worker_id].operation_stack_deposit_location[j] = &args->gradient_[op_index];
-              worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[j] = true;
-            } else {
-              // Optimization: only accumulate in wl_ops if we don't plan to
-              // use worker-local gradient tables
-              gradient_num_ops_map[op_index]++;
-              if (!gradient_use_wl[op_index]) {
-                if (gradient_num_stmts_map[op_index] * max_ratio <
-                    gradient_num_ops_map[op_index]) {
-                  gradient_use_wl[op_index] = true;
-                } else {
-                  OperationReference ref;
-                  ref.statement_wid = args->last_statement_worker[op_index];
-                  ref.statement_ist = args->last_statement_index[op_index];
-                  ref.operation_wid = stack.worker_id;
-                  ref.operation_j = j;
-                  ref.gradient_index = op_index;
-                  wl_ops.push_back(wid, ref);
-                }
-              }
+              worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop] = &args->gradient_[op_index];
+              worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop] = true;
+            }
+            // Optimization "3": only accumulate in wl_ops if we don't plan to
+            // use worker-local gradient table
+            else if (!gradient_use_wl[op_index]) {
+              OperationReference ref;
+              ref.statement_wid = args->last_statement_worker[op_index];
+              ref.statement_ist = args->last_statement_index[op_index];
+              ref.operation_wid = stack.worker_id;
+              ref.operation_j = iop;
+              ref.gradient_index = op_index;
+              wl_ops.push_back(wid, ref);
             }
           }
         }
@@ -121,7 +109,6 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
         args->last_statement_index[statement.index] = ist;
       }
     }
-    return;
   }
 }
 
@@ -367,6 +354,34 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   }
   r3.stop();
 
+  // TODO: Compute gradient_n_stmts_map
+  r4.start();
+  int* gradient_n_stmts_map = (int*) calloc(n_gradients * n_workers, sizeof(int));
+  r4.stop();
+  
+  // TODO: Compute gradient_n_ops_map
+  r5.start();
+  int* gradient_n_ops_map = (int*) calloc(n_gradients * n_workers, sizeof(int));
+  r5.stop();
+
+  // TODO: Compute gradient_use_wl
+  r6.start();
+  // Minimum ratio of ops / statements per gradient to use worker-local tables
+  int max_ratio = 5 * n_workers;
+  bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
+  r6.stop();
+
+  // 2) Left-first traversal collects ops that need distinct locations
+  r7.start();
+  args_for_collect_ops args;
+  args.idx_in_statement = appears_in_statement;
+  args.last_statement_worker = last_statement_worker;
+  args.last_statement_index = last_statement_index;
+  args.gradient_ = _gradient;
+  hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl);
+  r7.stop();
+
+  /*
   // Allocate space for number of times each gradient index appears in the
   // operation/statement stack, and whether it should use worker-local tables.
   r4.start();
@@ -400,6 +415,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r7.start();
   wl_ops.remove_wl_gradients(gradient_use_wl);
   r7.stop();
+  */
 
   // Collect the wl_ops into a single contiguous array
   r8.start();
@@ -530,7 +546,8 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   delete[] last_statement_index;
   delete[] statement_offsets;
   delete[] appears_in_statement;
-  delete[] gradient_num_ops_map;
+  delete[] gradient_n_stmts_map;
+  delete[] gradient_n_ops_map;
   delete[] gradient_use_wl;
   free(blocks);
   free(boundaries);
