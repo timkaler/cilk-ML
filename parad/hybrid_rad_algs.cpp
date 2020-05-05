@@ -16,7 +16,7 @@
 
 namespace PARAD {
 
-timer r0,r1,r2,r3,r4,r5a,r5b,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18;
+timer r0,r1,r2,r3,r4,r5a,r5b,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18;
 
 void hybrid_report_times() {
   r0.reportTotal("r0: Initialize appears_in_statements");
@@ -26,7 +26,6 @@ void hybrid_report_times() {
   r4.reportTotal("r4: Initialize gradient_n_stmts/ops_map, gradient_use_wl");
   r5a.reportTotal("r5a: Compute gradient_n_stmts_map");
   r5b.reportTotal("r5b: Compute gradient_n_ops_map");
-  r5.reportTotal("r5: Compute gradient_n_stmts_map/gradient_n_ops_map");
   r6.reportTotal("r6: Compute gradient_use_wl");
   r7.reportTotal("r7: (2) hybrid_left_first_walk");
   r8.reportTotal("r8: wl_ops.collect()");
@@ -40,124 +39,6 @@ void hybrid_report_times() {
   r16.reportTotal("r16: (6) hybrid_right_first_walk");
   r17.reportTotal("r17: (7) Accumulate worker-local gradients in global table");
   r18.reportTotal("r18: Free memory");
-}
-
-void combined_left_first_walk(SP_Node* node, args_for_collect_ops* args,
-                              worker_local_vector<OperationReference>& wl_ops,
-                              int** gradient_n_stmts_map, int** gradient_n_ops_map) {
-  // ROOT or SERIAL node: recursively call combined_left_first_walk serially
-  if (node->type == 0 || node->type == 1) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      combined_left_first_walk((*(node->children))[i], args, wl_ops, gradient_n_stmts_map, gradient_n_ops_map);
-    }
-  }
-  // PARALLEL node: recursively call combined_left_first_walk in parallel
-  else if (node->type == 2) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn combined_left_first_walk((*(node->children))[i], args, wl_ops, gradient_n_stmts_map, gradient_n_ops_map);
-    }
-    cilk_sync;
-  }
-  // DATA node
-  else if (node->type == 3) {
-    triple_vector_wl stack = node->data;
-
-    adept::uIndex*__restrict operation_stack_arr =
-            worker_local_stacks[stack.worker_id].operation_stack_arr;
-    const adept::Statement*__restrict statement_stack_arr =
-            worker_local_stacks[stack.worker_id].statement_stack_arr;
-    float**__restrict operation_stack_deposit_location =
-            worker_local_stacks[stack.worker_id].operation_stack_deposit_location;
-    bool*__restrict operation_stack_deposit_locattion_valid =
-            worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid;
-    bool*__restrict idx_in_statement = args->idx_in_statement;
-
-    if (stack.statement_stack_start != stack.statement_stack_end) {
-      int wid = __cilkrts_get_worker_number();
-      for (adept::uIndex ist = stack.statement_stack_start;
-           ist < stack.statement_stack_end; ++ist) {
-        const adept::Statement& statement = statement_stack_arr[ist];
-        if (statement.index == -1) continue;
-        gradient_n_stmts_map[stack.worker_id][statement.index]++;
-
-        for (adept::uIndex iop = statement_stack_arr[ist-1].end_plus_one;
-             iop < statement.end_plus_one; ++iop) {
-          adept::uIndex op_index = operation_stack_arr[iop];
-          // Optimization 1: operations whose gradient index never appears in a
-          // statement accumulate gradients using worker-local sparse arrays
-          if (idx_in_statement[op_index]) {
-            // Optimization 2: operations whose gradient contributions are
-            // accumulated by a statement in the same subtape (data node) use
-            // global gradient table.
-            if (stack.worker_id == args->last_statement_worker[op_index] &&
-                stack.statement_stack_start <= args->last_statement_index[op_index] &&
-                stack.statement_stack_end > args->last_statement_index[op_index]) {
-              worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop] = &args->gradient_[op_index];
-              worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop] = true;
-            } else {
-              gradient_n_ops_map[stack.worker_id][op_index]++;
-              OperationReference ref;
-              ref.statement_wid = args->last_statement_worker[op_index];
-              ref.statement_ist = args->last_statement_index[op_index];
-              ref.operation_wid = stack.worker_id;
-              ref.operation_j = iop;
-              ref.gradient_index = op_index;
-              wl_ops.push_back(wid, ref);
-            }
-          }
-        }
-        args->last_statement_worker[statement.index] = stack.worker_id;
-        args->last_statement_index[statement.index] = ist;
-      }
-    }
-  }
-}
-
-void gradient_left_first_walk(SP_Node* node, args_for_collect_ops* args,
-                              int** gradient_n_stmts_map,
-                              int** gradient_n_ops_map) {
-  // ROOT or SERIAL node: recursively call gradient_left_first_walk serially
-  if (node->type == 0 || node->type == 1) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      gradient_left_first_walk((*(node->children))[i], args, gradient_n_stmts_map, gradient_n_ops_map);
-    }
-  } 
-  // PARALLEL node: recursively call gradient_left_first_walk in parallel
-  else if (node->type == 2) {
-    for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn gradient_left_first_walk((*(node->children))[i], args, gradient_n_stmts_map, gradient_n_ops_map);
-    }
-    cilk_sync;
-  }
-  // DATA node
-  else if (node->type == 3) {
-    triple_vector_wl stack = node->data;
-    
-    const adept::uIndex*__restrict operation_stack_arr =
-            worker_local_stacks[stack.worker_id].operation_stack_arr;
-    const adept::Statement*__restrict statement_stack_arr =
-            worker_local_stacks[stack.worker_id].statement_stack_arr;
-
-    if (stack.statement_stack_start != stack.statement_stack_end) {
-      for (adept::uIndex ist = stack.statement_stack_start;
-           ist < stack.statement_stack_end; ++ist) {
-        const adept::Statement& statement = statement_stack_arr[ist];
-        if (statement.index == -1) continue;
-        gradient_n_stmts_map[stack.worker_id][statement.index]++;
-        
-        for (adept::uIndex iop = statement_stack_arr[ist-1].end_plus_one;
-             iop < statement.end_plus_one; ++iop) {
-          adept::uIndex op_index = operation_stack_arr[iop];
-          if (args->idx_in_statement[op_index] &&
-              !(stack.worker_id == args->last_statement_worker[op_index] &&
-                stack.statement_stack_start <= args->last_statement_index[op_index] &&
-                stack.statement_stack_end > args->last_statement_index[op_index])) {
-            gradient_n_ops_map[stack.worker_id][op_index]++;
-          }
-        }
-      }
-    }
-  }
 }
 
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
@@ -462,86 +343,47 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   int max_ratio = 5 * n_workers / sampling;
   r4.stop();
 
-  // HYBRID_2_combined approach
-  /*
-    // 2) Left-first traversal collects ops that need distinct locations
-    r7.start();
-    combined_left_first_walk(sptape_root, &args, wl_ops, gradient_n_stmts_map,
-                             gradient_n_ops_map);
-    r7.stop();
-
-    // Compute gradient_use_wl
-    r6.start();
-    // TODO: I'm getting a warning that this isn't being parallelized correctly
-    // But it seems like it's parallelizing correctly
-    cilk_for (int i = 0; i < n_gradients; ++i) {
-      int n_stmts = 0;
-      int n_ops = 0;
-      for (int j = 0; j < n_workers; ++j) {
-        n_stmts += gradient_n_stmts_map[j][i];
-        n_ops += gradient_n_ops_map[j][i];
-      }
-      gradient_use_wl[i] = (n_ops > n_stmts * max_ratio);
+  // Compute gradient_n_stmts_map, gradient_n_ops_map
+  r5a.start();
+  cilk_for (int i = 0; i < n_workers; ++i) {
+    const adept::Statement*__restrict statement_stack_arr = worker_local_stacks[i].statement_stack_arr;
+    for (int ist = 0; ist < worker_local_stacks[i].statement_stack_arr_len; ++ist) {
+      const adept::Statement& statement = statement_stack_arr[ist];
+      if (statement.index == -1) continue;
+      gradient_n_stmts_map[i][statement.index]++;
     }
-    r6.stop();
-
-    // Remove all elements which should use worker local from wl_ops
-    r5.start();
-    wl_ops.remove_wl_gradients(gradient_use_wl);
-    r5.stop();
-  */
+  }
+  r5a.stop();
   
-  // HYBRID_2_lfw approach
-  // Compute gradient_n_stmts_map, gradient_n_ops_map
-  /*
-    r5.start();
-    gradient_left_first_walk(sptape_root, &args, gradient_n_stmts_map, gradient_n_ops_map);
-    r5.stop();
-  */
-
-  // HYBRID_2' approach
-  // Compute gradient_n_stmts_map, gradient_n_ops_map
-    r5a.start();
-    cilk_for (int i = 0; i < n_workers; ++i) {
-      const adept::Statement*__restrict statement_stack_arr = worker_local_stacks[i].statement_stack_arr;
-      for (int ist = 0; ist < worker_local_stacks[i].statement_stack_arr_len; ++ist) {
-        const adept::Statement& statement = statement_stack_arr[ist];
-        if (statement.index == -1) continue;
-        gradient_n_stmts_map[i][statement.index]++;
-      }
+  r5b.start();
+  cilk_for (int i = 0; i < n_workers; ++i) {
+    const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
+    for (int iop = 0; iop < worker_local_stacks[i].operation_stack_arr_len; iop += sampling) {
+      adept::uIndex op_index = operation_stack_arr[iop];
+      gradient_n_ops_map[i][op_index]++;
     }
-    r5a.stop();
-    
-    r5b.start();
-    cilk_for (int i = 0; i < n_workers; ++i) {
-      const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
-      for (int iop = 0; iop < worker_local_stacks[i].operation_stack_arr_len; iop += sampling) {
-        adept::uIndex op_index = operation_stack_arr[iop];
-        gradient_n_ops_map[i][op_index]++;
-      }
-    }
-    r5b.stop();
+  }
+  r5b.stop();
 
-  // Shared by HYBRID_2_lfw and HYBRID_2'
-    // Compute gradient_use_wl
-    r6.start();
-    // TODO: I'm getting a warning that this isn't being parallelized correctly
-    // But it seems like it's parallelizing correctly
-    cilk_for (int i = 0; i < n_gradients; ++i) {
-      int n_stmts = 0;
-      int n_ops = 0;
-      for (int j = 0; j < n_workers; ++j) {
-        n_stmts += gradient_n_stmts_map[j][i];
-        n_ops += gradient_n_ops_map[j][i];
-      }
-      gradient_use_wl[i] = (n_ops > n_stmts * max_ratio);
+  // Compute gradient_use_wl
+  r6.start();
+  // TODO: I'm getting a warning that this isn't being parallelized correctly
+  // But it seems like it's parallelizing correctly
+  cilk_for (int i = 0; i < n_gradients; ++i) {
+    int n_stmts = 0;
+    int n_ops = 0;
+    for (int j = 0; j < n_workers; ++j) {
+      n_stmts += gradient_n_stmts_map[j][i];
+      n_ops += gradient_n_ops_map[j][i];
     }
-    r6.stop();
+    gradient_use_wl[i] = (n_ops > n_stmts * max_ratio);
+  }
+  r6.stop();
 
-    // 2) Left-first traversal collects ops that need distinct locations
-    r7.start();
-    hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl);
-    r7.stop();
+  // 2) Left-first traversal collects ops that need distinct locations
+  r7.start();
+  hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl);
+  r7.stop();
 
   // Collect the wl_ops into a single contiguous array
   r8.start();
