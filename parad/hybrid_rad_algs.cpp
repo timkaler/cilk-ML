@@ -400,20 +400,11 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
     int n_samples = op_stack_len / sampling;
     int* indices = (int*) malloc(n_samples * sizeof(int));
-    // Implementation 1: naive sampling technique (every K elements)
     /*
     cilk_for (int j = 0; j < n_samples; ++j) {
       indices[j] = j * sampling;
     }
     */
-    // Implementation 2 - random sampling using mersenne twister
-    /*
-    cilk_for (int j = 0; j < n_samples; ++j) {
-      indices[j] = intRand(0, op_stack_len-1);
-    }
-    intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
-    */
-    // Implementation 3 - a more performant way to get random numbers
     cilk_for (int j = 0; j < n_samples; ++j) {
       indices[j] = xorshf98(0, op_stack_len-1);
     }
