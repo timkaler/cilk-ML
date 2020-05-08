@@ -385,7 +385,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   }
   bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
   const int sampling = 128;
-  const int max_ratio = 256;
+  const int max_ratio = 384;
   r4.stop();
 
   // Compute gradient_n_stmts_map
