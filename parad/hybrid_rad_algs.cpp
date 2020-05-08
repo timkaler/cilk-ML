@@ -161,7 +161,7 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
       // Extract the gradient for this statement
       // Start by reading the global gradient table
       adept::Real a = global_grad_table[statement.index];
-      global_grad_table[statement.index] = 0;
+      global_grad_table[statement.index] = 0; 
       if (gradient_use_wl[statement.index]) {
         // Use the worker-local approach
         for (int i = 0; i < n_workers; ++i) {
@@ -284,7 +284,30 @@ void statement_left_first_walk(SP_Node* node, int* gradient_n_stmts_map) {
     }
   }
 }
- 
+
+int intRand(const int min, const int max) {
+  static thread_local std::mt19937 generator;
+  std::uniform_int_distribution<int> distribution(min, max);
+  return distribution(generator);
+}
+
+uint32_t reduce(uint64_t x, uint64_t N) {
+  return ((x & 0xffffffff) * (N & 0xffffffff)) >> 32;
+}
+
+int xorshf98(const uint64_t min, const uint64_t max) {
+  static thread_local uint64_t x=123456789, y=362436069, z=521288629;
+  uint64_t t;
+  x ^= x << 16;
+  x ^= x >> 5;
+  x ^= x << 1;
+  t = x;
+  x = y;
+  y = z;
+  z = t ^ x ^ y;
+  return reduce(z, max-min+1) + min;
+}
+
 void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
   int n_workers = __cilkrts_get_nworkers();
 
@@ -361,8 +384,8 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     gradient_n_ops_map[i] = (int*) calloc(n_gradients, sizeof(int));
   }
   bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
-  int sampling = 128;
-  int max_ratio = 100 * n_workers;
+  const int sampling = 128;
+  const int max_ratio = 256;
   r4.stop();
 
   // Compute gradient_n_stmts_map
@@ -371,7 +394,6 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r5a.stop();
 
   // Compute gradient_n_ops_map
-  std::mt19937 mt;
   r5b.start();
   cilk_for (int i = 0; i < n_workers; ++i) {
     const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
@@ -385,12 +407,17 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     }
     */
     // Implementation 2 - random sampling using mersenne twister
-    std::uniform_int_distribution<int> dis(0, op_stack_len-1);
+    /*
     cilk_for (int j = 0; j < n_samples; ++j) {
-      indices[j] = dis(mt);
+      indices[j] = intRand(0, op_stack_len-1);
     }
     intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
-    // TODO: Implementation 3 - a more performant way to get random numbers
+    */
+    // Implementation 3 - a more performant way to get random numbers
+    cilk_for (int j = 0; j < n_samples; ++j) {
+      indices[j] = xorshf98(0, op_stack_len-1);
+    }
+    intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
 
     // Sort the random sampled indices and walk through operation stack
     cilk_for (int j = 0; j < n_samples; ++j) {
