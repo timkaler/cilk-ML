@@ -43,8 +43,8 @@ namespace intSort {
 
   template <class E, class F, class bint>
   void radixBlock(E* A, E* B, bIndexT *Tmp, 
-		  bint counts[BUCKETS], bint offsets[BUCKETS],
-		  bint Boffset, long n, long m, F extract) {
+                  bint counts[BUCKETS], bint offsets[BUCKETS],
+                  bint Boffset, long n, long m, F extract) {
 
     for (long i = 0; i < m; i++)  counts[i] = 0;
     for (long j = 0; j < n; j++) {
@@ -64,7 +64,7 @@ namespace intSort {
 
   template <class E, class F, class bint>
   void radixStepSerial(E* A, E* B, bIndexT *Tmp, bint buckets[BUCKETS],
-		       long n, long m, F extract) {
+                       long n, long m, F extract) {
     radixBlock(A, B, Tmp, buckets, buckets, (bint)0, n, m, extract);
     for (long i=0; i < n; i++) A[i] = B[i];
     return;
@@ -82,7 +82,7 @@ namespace intSort {
   //  it must return a non-negative integer less than m
   template <class E, class F, class bint>
     void radixStep(E* A, E* B, bIndexT *Tmp, bint (*BK)[BUCKETS],
-		   long numBK, long n, long m, bool top, F extract) {
+                   long numBK, long n, long m, bool top, F extract) {
 
 
     // need 3 bucket sets per block
@@ -125,49 +125,49 @@ namespace intSort {
     struct eBits {
       F _f;  long _mask;  long _offset;
       eBits(long bits, long offset, F f): _mask((1<<bits)-1), 
-					  _offset(offset), _f(f) {}
+                                          _offset(offset), _f(f) {}
       long operator() (E p) {return _mask&(_f(p)>>_offset);}
     };
 
   // Radix sort with low order bits first
   template <class E, class F, class bint>
     void radixLoopBottomUp(E *A, E *B, bIndexT *Tmp, bint (*BK)[BUCKETS],
-			   long numBK, long n, long bits, bool top, F f) {
+                           long numBK, long n, long bits, bool top, F f) {
       long rounds = 1+(bits-1)/MAX_RADIX;
       long rbits = 1+(bits-1)/rounds;
       long bitOffset = 0;
       while (bitOffset < bits) {
-	if (bitOffset+rbits > bits) rbits = bits-bitOffset;
-	radixStep(A, B, Tmp, BK, numBK, n, 1 << rbits, top,
-		  eBits<E,F>(rbits,bitOffset,f));
-	bitOffset += rbits;
+        if (bitOffset+rbits > bits) rbits = bits-bitOffset;
+        radixStep(A, B, Tmp, BK, numBK, n, 1 << rbits, top,
+                  eBits<E,F>(rbits,bitOffset,f));
+        bitOffset += rbits;
       }
   }
 
   // Radix sort with high order bits first
   template <class E, class F, class bint>
     void radixLoopTopDown(E *A, E *B, bIndexT *Tmp, bint (*BK)[BUCKETS],
-			  long numBK, long n, long bits, F f) {
+                          long numBK, long n, long bits, F f) {
     if (n == 0) return;
     if (bits <= MAX_RADIX) {
       radixStep(A, B, Tmp, BK, numBK, n, ((long) 1) << bits, true, 
-		eBits<E,F>(bits,0,f));
+                eBits<E,F>(bits,0,f));
     } else if (numBK >= BUCKETS+1) {
       radixStep(A, B, Tmp, BK, numBK, n, (long) BUCKETS, true,
-		eBits<E,F>(MAX_RADIX,bits-MAX_RADIX,f));
+                eBits<E,F>(MAX_RADIX,bits-MAX_RADIX,f));
       bint* offsets = BK[0];
       long remain = numBK - BUCKETS - 1;
       float y = remain / (float) n;
       parallel_for (int i = 0; i < BUCKETS; i++) {
-	long segOffset = offsets[i];
-	long segNextOffset = (i == BUCKETS-1) ? n : offsets[i+1];
-	long segLen = segNextOffset - segOffset;
-	long blocksOffset = ((long) floor(segOffset * y)) + i + 1;
-	long blocksNextOffset = ((long) floor(segNextOffset * y)) + i + 2;
-	long blockLen = blocksNextOffset - blocksOffset;
-	radixLoopTopDown(A + segOffset, B + segOffset, Tmp + segOffset, 
-			 BK + blocksOffset, blockLen, segLen,
-			 bits-MAX_RADIX, f);
+        long segOffset = offsets[i];
+        long segNextOffset = (i == BUCKETS-1) ? n : offsets[i+1];
+        long segLen = segNextOffset - segOffset;
+        long blocksOffset = ((long) floor(segOffset * y)) + i + 1;
+        long blocksNextOffset = ((long) floor(segNextOffset * y)) + i + 2;
+        long blockLen = blocksNextOffset - blocksOffset;
+        radixLoopTopDown(A + segOffset, B + segOffset, Tmp + segOffset, 
+                         BK + blocksOffset, blockLen, segLen,
+                         bits-MAX_RADIX, f);
       }
     } else {
       radixLoopBottomUp(A, B, Tmp, BK, numBK, n, bits, false, f);
@@ -189,7 +189,7 @@ namespace intSort {
   //   of keys=i.   For i = m-1, n-offsets[i] is the number.
   template <class bint, class E, class F, class oint>
   void iSortX(E *A, oint* bucketOffsets, long n, long m, bool bottomUp, 
-	      char* tmpSpace, F f) {
+              char* tmpSpace, F f) {
     typedef bint bucketsT[BUCKETS];
 
     long bits = utils::log2Up(m);
@@ -203,10 +203,10 @@ namespace intSort {
     bucketsT *BK = (bucketsT*) (tmpSpace+Bsize+tmpSize);
     if (bits <= MAX_RADIX) {
       radixStep(A, B, Tmp, BK, numBK, n, (long) 1 << bits, true, 
-		eBits<E,F>(bits,0,f));
+                eBits<E,F>(bits,0,f));
       if (bucketOffsets != NULL) {
-	parallel_for (long i = 0; i < m; i++) 
-	  bucketOffsets[i] = BK[0][i];
+        parallel_for (long i = 0; i < m; i++) 
+          bucketOffsets[i] = BK[0][i];
       }
       return;
     } else if (bottomUp)
@@ -216,19 +216,19 @@ namespace intSort {
     if (bucketOffsets != NULL) {
       {parallel_for (long i=0; i < m; i++) bucketOffsets[i] = n;}
       {parallel_for (long i=0; i < n-1; i++) {
-	  long v = f(A[i]);
-	  long vn = f(A[i+1]);
-	  if (v != vn) bucketOffsets[vn] = i+1;
-	}}
+          long v = f(A[i]);
+          long vn = f(A[i+1]);
+          if (v != vn) bucketOffsets[vn] = i+1;
+        }}
       bucketOffsets[f(A[0])] = 0;
       sequence::scanIBack(bucketOffsets, bucketOffsets, m,
-			  utils::minF<oint>(), (oint) n);
+                          utils::minF<oint>(), (oint) n);
     }
   }
 
   template <class E, class F, class oint>
   void iSort(E *A, oint* bucketOffsets, long n, long m, bool bottomUp, 
-	     char* tmpSpace, F f) {
+             char* tmpSpace, F f) {
     // if n fits in 32 bits then use unsigned ints for bucket counts
     // otherwise use unsigned longs
     // Doesn't make much difference in performance
@@ -281,14 +281,14 @@ static void integerSort(uintT *A, long n, char* s) {
 template <class T>
 void integerSort(pair<uintT,T> *A, long n) {
   long maxV = sequence::mapReduce<uintT>(A,n,utils::maxF<uintT>(),
-					utils::firstF<uintT,T>());
+                                        utils::firstF<uintT,T>());
   intSort::iSort(A, n, maxV+1, utils::firstF<uintT,T>());
 }
 
 template <class T>
 void integerSort(pair<uintT,T> *A, long n, char* s) {
   long maxV = sequence::mapReduce<uintT>(A,n,utils::maxF<uintT>(),
-					utils::firstF<uintT,T>());
+                                        utils::firstF<uintT,T>());
   intSort::iSort(A, n, maxV+1, s, utils::firstF<uintT,T>());
 }
 
