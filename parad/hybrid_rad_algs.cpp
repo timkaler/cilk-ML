@@ -195,17 +195,14 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
              iop < statement.end_plus_one; ++iop) {
           adept::uIndex op_index = operation_stack_arr[iop];
           adept::Real grad_multiplier = multiplier_stack_arr[iop];
-          if (gradient_use_wl[op_index]) {
+          if (!appears_in_statement[op_index] ||
+              !worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop] ||
+              gradient_use_wl[op_index]) {
             wl_grad_table[wid][op_index] += grad_multiplier * a;
           } else {
-            if (appears_in_statement[op_index] &&
-                worker_local_stacks[stack.worker_id].operation_stack_deposit_location_valid[iop]) {
-              float*__restrict dep = worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop];
-              if (dep) {
-                *dep += grad_multiplier * a;
-              } else {
-                wl_grad_table[wid][op_index] += grad_multiplier * a;
-              }
+            float*__restrict dep = worker_local_stacks[stack.worker_id].operation_stack_deposit_location[iop];
+            if (dep) {
+              *dep += grad_multiplier * a;
             } else {
               wl_grad_table[wid][op_index] += grad_multiplier * a;
             }
@@ -400,17 +397,10 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
     int n_samples = op_stack_len / sampling;
     int* indices = (int*) malloc(n_samples * sizeof(int));
-    /*
-    cilk_for (int j = 0; j < n_samples; ++j) {
-      indices[j] = j * sampling;
-    }
-    */
     cilk_for (int j = 0; j < n_samples; ++j) {
       indices[j] = xorshf98(0, op_stack_len-1);
     }
     intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
-
-    // Sort the random sampled indices and walk through operation stack
     cilk_for (int j = 0; j < n_samples; ++j) {
       adept::uIndex op_index = operation_stack_arr[indices[j]];
       gradient_n_ops_map[__cilkrts_get_worker_number()][op_index]++;
