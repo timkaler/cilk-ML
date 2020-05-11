@@ -378,10 +378,21 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
 
   // Initialize gradient_n_stmts_map, gradient_n_ops_map, gradient_use_wl
   r4.start();
+  /*
   int* gradient_n_stmts_map = (int*) calloc(n_gradients, sizeof(int));
   int** gradient_n_ops_map = (int**) malloc(n_workers * sizeof(int*));
   cilk_for (int i = 0; i < n_workers; ++i) {
     gradient_n_ops_map[i] = (int*) calloc(n_gradients, sizeof(int));
+  }
+  bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
+  */
+  int* gradient_n_stmts_map = (int*) calloc(n_gradients, sizeof(int));
+  int** gradient_n_ops_map = (int**) malloc(n_workers * sizeof(int*));
+  cilk_for (int i = 0; i < n_workers; ++i) {
+    gradient_n_ops_map[i] = new int[n_gradients];
+    cilk_for (int j = 0; j < n_gradients; ++j) {
+      gradient_n_ops_map[i][j] = 0;
+    }
   }
   bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
   const int sampling = 128;
@@ -397,14 +408,12 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r5b.start();
   cilk_for (int i = 0; i < n_workers; ++i) {
     const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
-    int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
-    int n_samples = op_stack_len / sampling;
+    const int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
+    const int n_samples = op_stack_len / sampling;
     int* indices = (int*) malloc(n_samples * sizeof(int));
-    /*
-    cilk_for (int j = 0; j < n_samples; ++j) {
-      indices[j] = j * sampling;
-    }
-    */
+    // cilk_for (int j = 0; j < n_samples; ++j) {
+    //   indices[j] = j * sampling;
+    // }
     cilk_for (int j = 0; j < n_samples; ++j) {
       indices[j] = xorshf98(0, op_stack_len-1);
     }
@@ -419,6 +428,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r5b.stop();
 
   // Compute gradient_use_wl
+  // TODO: Implement this with proper high probability bounds
   r6.start();
   cilk_for (int i = 0; i < n_gradients; ++i) {
     int n_ops = 0;
@@ -426,7 +436,6 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
       n_ops += gradient_n_ops_map[j][i];
     }
     gradient_use_wl[i] = (n_ops > gradient_n_stmts_map[i] * max_ratio / sampling);
-    // TODO: Implement this with proper high probability bounds
   }
   r6.stop();
 
