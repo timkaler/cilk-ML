@@ -379,12 +379,19 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
 
   // Initialize gradient_n_stmts_map, gradient_n_ops_map, gradient_use_wl
   r4.start();
-  int* gradient_n_stmts_map = (int*) calloc(n_gradients, sizeof(int));
+  int* gradient_n_stmts_map = new int[n_gradients];
+  bool* gradient_use_wl = new bool[n_gradients];
+  cilk_for (int i = 0; i < n_gradients; ++i) {
+    gradient_n_stmts_map[i] = 0;
+    gradient_use_wl[i] = false;
+  }
   int** gradient_n_ops_map = (int**) malloc(n_workers * sizeof(int*));
   cilk_for (int i = 0; i < n_workers; ++i) {
-    gradient_n_ops_map[i] = (int*) calloc(n_gradients, sizeof(int));
+    gradient_n_ops_map[i] = (int*) malloc(n_gradients * sizeof(int));
+    cilk_for (int j = 0; j < n_gradients; ++j) {
+      gradient_n_ops_map[i][j] = 0;
+    }
   }
-  bool* gradient_use_wl = (bool*) calloc(n_gradients, sizeof(bool));
   const int sampling = 128;
   const int max_ratio = 384;
   r4.stop();
@@ -497,7 +504,10 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
 
   // 5b) Allocate / initialize deposit locations
   r13.start();
-  float* deposit_locations = (float*) calloc(mapped_ops_size, sizeof(float));
+  float* deposit_locations = (float*) malloc(mapped_ops_size * sizeof(float));
+  cilk_for (int64_t i = 0; i < mapped_ops_size; ++i) {
+    deposit_locations[i] = 0.0;
+  }
   r13.stop();
 
   // 5b) Populate deposit locations (i.e. O_snd)

@@ -36,7 +36,7 @@ int N = 500;
 int LEN = 100;
 int NUM_ASCII = 128;
 int BATCH_SIZE = 8;
-int NUM_ITER = 20;
+int NUM_ITER = 50;
 double LR = 0.005;
 int HIDDEN_FEATURES = 300; // Same number of hidden features as cell features
 

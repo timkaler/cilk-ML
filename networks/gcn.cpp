@@ -340,7 +340,7 @@ void learn_gcn() {
   double learning_rate = 0.001;
 
   int ITER_THRESH = GLOBAL_ITER_THRESH;
-  for (int iter = 0; iter < 20; iter++) {
+  for (int iter = 0; iter < 50; iter++) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();
@@ -475,7 +475,7 @@ void learn_gcn_pubmed() {
 
   int ITER_THRESH = GLOBAL_ITER_THRESH;
 
-  for (int iter = 0; iter < 15; iter++) {
+  for (int iter = 0; iter < 50; iter++) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
     stack.new_recording();

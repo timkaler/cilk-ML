@@ -221,7 +221,7 @@ void learn_mnist(std::vector<int>& layer_sizes) {
 
   double learning_rate = 0.01;
   int TIME_THRESH = GLOBAL_ITER_THRESH;
-  for (int iter = 0; iter < 60*1; iter++) {
+  for (int iter = 0; iter < 50; iter++) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     set_values(weight_hyper_list, weights_raw);
 

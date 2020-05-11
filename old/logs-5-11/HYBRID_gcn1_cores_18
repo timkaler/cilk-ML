@@ -1,0 +1,77 @@
+stack storage orig constructor
+32,500
+3,32
+randomizing the embeddings
+iter: 0, loss: 0.6365, accuracy: 18, time (s): 0.7937
+iter: 1, loss: 0.6432, accuracy: 18, time (s): 0.2886
+iter: 2, loss: 0.6166, accuracy: 41.4, time (s): 0.2803
+iter: 3, loss: 0.5995, accuracy: 43.7, time (s): 0.2787
+iter: 4, loss: 0.6257, accuracy: 41.3, time (s): 0.2819
+iter: 5, loss: 0.5752, accuracy: 51, time (s): 0.2873
+iter: 6, loss: 0.5764, accuracy: 50.1, time (s): 0.2888
+iter: 7, loss: 0.5506, accuracy: 57.6, time (s): 0.2904
+iter: 8, loss: 0.5373, accuracy: 67.2, time (s): 0.294
+iter: 9, loss: 0.5138, accuracy: 67.1, time (s): 0.2973
+iter: 10, loss: 0.4725, accuracy: 69.2, time (s): 0.302
+iter: 11, loss: 0.4294, accuracy: 73.9, time (s): 0.3266
+iter: 12, loss: 0.4056, accuracy: 71.1, time (s): 0.302
+iter: 13, loss: 0.3791, accuracy: 74.5, time (s): 0.3032
+iter: 14, loss: 0.371, accuracy: 75.2, time (s): 0.3103
+iter: 15, loss: 0.348, accuracy: 77.9, time (s): 0.3119
+iter: 16, loss: 0.3472, accuracy: 75.8, time (s): 0.3193
+iter: 17, loss: 0.3312, accuracy: 81.6, time (s): 0.3205
+iter: 18, loss: 0.3303, accuracy: 79.5, time (s): 0.3159
+iter: 19, loss: 0.3287, accuracy: 78.2, time (s): 0.3102
+iter: 20, loss: 0.3207, accuracy: 79.4, time (s): 0.3151
+iter: 21, loss: 0.3139, accuracy: 79.8, time (s): 0.3182
+iter: 22, loss: 0.3121, accuracy: 78.7, time (s): 0.3153
+iter: 23, loss: 0.2976, accuracy: 82.6, time (s): 0.3124
+iter: 24, loss: 0.3001, accuracy: 82.1, time (s): 0.3162
+iter: 25, loss: 0.2908, accuracy: 82.5, time (s): 0.3155
+iter: 26, loss: 0.2882, accuracy: 81.1, time (s): 0.332
+iter: 27, loss: 0.2883, accuracy: 81.3, time (s): 0.3281
+iter: 28, loss: 0.2775, accuracy: 82.9, time (s): 0.3273
+iter: 29, loss: 0.2779, accuracy: 81.2, time (s): 0.3191
+iter: 30, loss: 0.274, accuracy: 84.8, time (s): 0.3234
+iter: 31, loss: 0.2705, accuracy: 84.2, time (s): 0.3365
+iter: 32, loss: 0.2713, accuracy: 81, time (s): 0.3215
+iter: 33, loss: 0.264, accuracy: 83.8, time (s): 0.3343
+iter: 34, loss: 0.2638, accuracy: 84.3, time (s): 0.3434
+iter: 35, loss: 0.2605, accuracy: 82.6, time (s): 0.3349
+iter: 36, loss: 0.2579, accuracy: 83.3, time (s): 0.3313
+iter: 37, loss: 0.2588, accuracy: 83.9, time (s): 0.3428
+iter: 38, loss: 0.2551, accuracy: 83.3, time (s): 0.333
+iter: 39, loss: 0.2539, accuracy: 83.7, time (s): 0.3406
+iter: 40, loss: 0.253, accuracy: 85.3, time (s): 0.337
+iter: 41, loss: 0.2498, accuracy: 84.4, time (s): 0.3368
+iter: 42, loss: 0.2495, accuracy: 82.9, time (s): 0.3469
+iter: 43, loss: 0.2482, accuracy: 84.9, time (s): 0.3393
+iter: 44, loss: 0.2464, accuracy: 83.1, time (s): 0.334
+iter: 45, loss: 0.2459, accuracy: 82.7, time (s): 0.3417
+iter: 46, loss: 0.2444, accuracy: 84.8, time (s): 0.3419
+iter: 47, loss: 0.2432, accuracy: 83.6, time (s): 0.3509
+iter: 48, loss: 0.242, accuracy: 83, time (s): 0.3512
+iter: 49, loss: 0.2412, accuracy: 84.8, time (s): 0.3501
+Forward pass : PBBS-time: 6.4
+Reverse pass : PBBS-time: 7.65
+Forward+Reverse pass : PBBS-time: 14.2
+r0: Initialize appears_in_statements : PBBS-time: 0.0856
+r1: Allocate/initialize lsw, lsi : PBBS-time: 0.0599
+r2: Reserve worker_local_vector space; misc initialization : PBBS-time: 0.00099
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 0.493
+r4: Initialize gradient_n_stmts/ops_map, gradient_use_wl : PBBS-time: 0.519
+r5a: Compute gradient_n_stmts_map : PBBS-time: 0.13
+r5b: Compute gradient_n_ops_map : PBBS-time: 0.436
+r6: Compute gradient_use_wl : PBBS-time: 0.138
+r7: (2) hybrid_left_first_walk : PBBS-time: 1.47
+r8: wl_ops.collect() : PBBS-time: 0.129
+r9: (3) Create O* (map for ops) : PBBS-time: 0.0424
+r10: (4) Semisort O* (by gradient index) : PBBS-time: 0.122
+r11: (4) Semisort O* (by statement index) : PBBS-time: 0.103
+r12: (5a) Create S_rcv (blocks : PBBS-time: 0.0291
+r13: (5a) Allocate / initialize deposit locations (O_snd) : PBBS-time: 0.0283
+r14: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.0974
+r15: Allocate wl_grad_table : PBBS-time: 0.000847
+r16: (6) hybrid_right_first_walk : PBBS-time: 3.19
+r17: (7) Accumulate worker-local gradients in global table : PBBS-time: 1.22
+r18: Free memory : PBBS-time: 0.173

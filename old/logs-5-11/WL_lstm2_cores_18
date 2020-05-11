@@ -1,0 +1,58 @@
+stack storage orig constructor
+iter: 0, loss: 0.038049, accuracy: 0.00125, time (sec): 2.255
+iter: 1, loss: 0.036228, accuracy: 0.18875, time (sec): 0.6618
+iter: 2, loss: 0.030431, accuracy: 0.18375, time (sec): 0.65163
+iter: 3, loss: 0.027548, accuracy: 0.19, time (sec): 0.43212
+iter: 4, loss: 0.024954, accuracy: 0.115, time (sec): 0.42657
+iter: 5, loss: 0.025218, accuracy: 0.07625, time (sec): 0.45895
+iter: 6, loss: 0.024796, accuracy: 0.0625, time (sec): 0.45091
+iter: 7, loss: 0.024785, accuracy: 0.06625, time (sec): 0.43255
+iter: 8, loss: 0.024191, accuracy: 0.18625, time (sec): 0.43005
+iter: 9, loss: 0.02316, accuracy: 0.185, time (sec): 0.43241
+iter: 10, loss: 0.023847, accuracy: 0.18375, time (sec): 0.43052
+iter: 11, loss: 0.023887, accuracy: 0.19375, time (sec): 0.43053
+iter: 12, loss: 0.023234, accuracy: 0.18125, time (sec): 0.43637
+iter: 13, loss: 0.023941, accuracy: 0.18625, time (sec): 0.43059
+iter: 14, loss: 0.023538, accuracy: 0.1725, time (sec): 0.4297
+iter: 15, loss: 0.023088, accuracy: 0.18375, time (sec): 0.41526
+iter: 16, loss: 0.023239, accuracy: 0.1825, time (sec): 0.42199
+iter: 17, loss: 0.023525, accuracy: 0.195, time (sec): 0.4241
+iter: 18, loss: 0.022864, accuracy: 0.18125, time (sec): 0.41911
+iter: 19, loss: 0.023349, accuracy: 0.185, time (sec): 0.42336
+iter: 20, loss: 0.023084, accuracy: 0.19625, time (sec): 0.41824
+iter: 21, loss: 0.022971, accuracy: 0.19125, time (sec): 0.43215
+iter: 22, loss: 0.022971, accuracy: 0.1825, time (sec): 0.43731
+iter: 23, loss: 0.022945, accuracy: 0.19125, time (sec): 0.4566
+iter: 24, loss: 0.023091, accuracy: 0.1825, time (sec): 0.44439
+iter: 25, loss: 0.02259, accuracy: 0.19625, time (sec): 0.46926
+iter: 26, loss: 0.02301, accuracy: 0.185, time (sec): 0.45209
+iter: 27, loss: 0.0233, accuracy: 0.18375, time (sec): 0.4533
+iter: 28, loss: 0.023426, accuracy: 0.18625, time (sec): 0.44697
+iter: 29, loss: 0.023007, accuracy: 0.18375, time (sec): 0.45556
+iter: 30, loss: 0.023085, accuracy: 0.1975, time (sec): 0.446
+iter: 31, loss: 0.022578, accuracy: 0.18875, time (sec): 0.4485
+iter: 32, loss: 0.022811, accuracy: 0.185, time (sec): 0.44901
+iter: 33, loss: 0.022747, accuracy: 0.18375, time (sec): 0.45121
+iter: 34, loss: 0.022561, accuracy: 0.1925, time (sec): 0.44641
+iter: 35, loss: 0.022975, accuracy: 0.185, time (sec): 0.44907
+iter: 36, loss: 0.022947, accuracy: 0.18625, time (sec): 0.4505
+iter: 37, loss: 0.022615, accuracy: 0.19875, time (sec): 0.44789
+iter: 38, loss: 0.022702, accuracy: 0.1925, time (sec): 0.44038
+iter: 39, loss: 0.022167, accuracy: 0.18, time (sec): 0.44301
+iter: 40, loss: 0.022658, accuracy: 0.21125, time (sec): 0.44388
+iter: 41, loss: 0.022256, accuracy: 0.21, time (sec): 0.44302
+iter: 42, loss: 0.02247, accuracy: 0.2, time (sec): 0.43804
+iter: 43, loss: 0.02244, accuracy: 0.18375, time (sec): 0.45017
+iter: 44, loss: 0.022599, accuracy: 0.185, time (sec): 0.44193
+iter: 45, loss: 0.022331, accuracy: 0.1925, time (sec): 0.44373
+iter: 46, loss: 0.022, accuracy: 0.215, time (sec): 0.44158
+iter: 47, loss: 0.022227, accuracy: 0.22125, time (sec): 0.44458
+iter: 48, loss: 0.021781, accuracy: 0.21375, time (sec): 0.43883
+iter: 49, loss: 0.021467, accuracy: 0.225, time (sec): 0.44403
+Forward pass : PBBS-time: 8.49
+Reverse pass : PBBS-time: 10.4
+Forward+Reverse pass : PBBS-time: 18.9
+t1: Allocate wl_grad_table : PBBS-time: 1.03
+t2: wl_right_first_walk : PBBS-time: 10.2
+t3: Export wl_grad_table to global gradient table : PBBS-time: 0.36
+t4: Free all memory : PBBS-time: 0.0415

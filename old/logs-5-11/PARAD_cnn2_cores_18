@@ -1,0 +1,71 @@
+stack storage orig constructor
+dim1 is 1024, dim2 is 1, max label 9, min label 0
+iter: 0, loss: 325.1, accuracy: 9.1, time (s): 1.904
+iter: 1, loss: 325, accuracy: 9.5, time (s): 1.042
+iter: 2, loss: 325, accuracy: 8.5, time (s): 0.7519
+iter: 3, loss: 324.8, accuracy: 10.1, time (s): 0.9917
+iter: 4, loss: 324.7, accuracy: 13.1, time (s): 1.002
+iter: 5, loss: 324.5, accuracy: 14.6, time (s): 0.9962
+iter: 6, loss: 324, accuracy: 16, time (s): 1.005
+iter: 7, loss: 323.6, accuracy: 19.1, time (s): 0.7826
+iter: 8, loss: 322.7, accuracy: 18.9, time (s): 1.011
+iter: 9, loss: 321.9, accuracy: 19.9, time (s): 0.7585
+iter: 10, loss: 320.8, accuracy: 20.2, time (s): 0.7621
+iter: 11, loss: 320, accuracy: 16.6, time (s): 0.78
+iter: 12, loss: 319.1, accuracy: 15.8, time (s): 0.7681
+iter: 13, loss: 318, accuracy: 17.4, time (s): 0.7703
+iter: 14, loss: 316.5, accuracy: 17.9, time (s): 0.7578
+iter: 15, loss: 315.1, accuracy: 18.4, time (s): 1.003
+iter: 16, loss: 314.6, accuracy: 16.7, time (s): 0.7519
+iter: 17, loss: 309.8, accuracy: 18.2, time (s): 0.9922
+iter: 18, loss: 310.2, accuracy: 18.8, time (s): 0.7764
+iter: 19, loss: 312.1, accuracy: 17.7, time (s): 0.7572
+iter: 20, loss: 308.7, accuracy: 20.3, time (s): 0.7934
+iter: 21, loss: 306, accuracy: 21, time (s): 0.7535
+iter: 22, loss: 308.9, accuracy: 19.1, time (s): 0.7833
+iter: 23, loss: 309.1, accuracy: 19.1, time (s): 0.7657
+iter: 24, loss: 305.8, accuracy: 18.6, time (s): 0.7822
+iter: 25, loss: 304.4, accuracy: 20.2, time (s): 0.78
+iter: 26, loss: 305.2, accuracy: 20, time (s): 0.7787
+iter: 27, loss: 306.9, accuracy: 18, time (s): 0.7816
+iter: 28, loss: 305.8, accuracy: 17.8, time (s): 0.7698
+iter: 29, loss: 303.8, accuracy: 18.8, time (s): 0.7883
+iter: 30, loss: 305.4, accuracy: 17.8, time (s): 0.7811
+iter: 31, loss: 305.1, accuracy: 18.1, time (s): 0.807
+iter: 32, loss: 301.3, accuracy: 20.4, time (s): 0.766
+iter: 33, loss: 299.1, accuracy: 21.2, time (s): 0.7955
+iter: 34, loss: 301, accuracy: 19.8, time (s): 0.7853
+iter: 35, loss: 300.7, accuracy: 19.7, time (s): 0.7692
+iter: 36, loss: 295.4, accuracy: 20.5, time (s): 0.7718
+iter: 37, loss: 294, accuracy: 21.3, time (s): 0.7735
+iter: 38, loss: 293.1, accuracy: 22.3, time (s): 0.8145
+iter: 39, loss: 293, accuracy: 20.6, time (s): 0.7593
+iter: 40, loss: 288.4, accuracy: 22, time (s): 0.8042
+iter: 41, loss: 292.5, accuracy: 20.9, time (s): 0.7888
+iter: 42, loss: 291.8, accuracy: 22.2, time (s): 0.7851
+iter: 43, loss: 293.5, accuracy: 20.2, time (s): 0.7734
+iter: 44, loss: 289.3, accuracy: 21.2, time (s): 0.7744
+iter: 45, loss: 289.3, accuracy: 19.9, time (s): 0.7759
+iter: 46, loss: 288.6, accuracy: 21, time (s): 0.7903
+iter: 47, loss: 287.8, accuracy: 20.2, time (s): 0.8142
+iter: 48, loss: 283.7, accuracy: 20.2, time (s): 0.7803
+iter: 49, loss: 284.2, accuracy: 20.9, time (s): 0.7965
+Forward pass : PBBS-time: 15
+Reverse pass : PBBS-time: 19.8
+Forward+Reverse pass : PBBS-time: 35.1
+r0: Initialize appears_in_statements : PBBS-time: 0.552
+r1: Allocate/initialize lsw, lsi, lsn : PBBS-time: 0.0971
+r2: Reserve worker_local_vector space, misc initialization : PBBS-time: 0.00115
+r3: Initialize deposit location lengths / valid arrays : PBBS-time: 1.23
+r4: (2) left_first_walk : PBBS-time: 9.91
+r5: wl_ops.collect() : PBBS-time: 0.00933
+r6: (3) Create O* (map for ops) : PBBS-time: 0.000109
+r7: (4) Semisort O* (by gradient index) : PBBS-time: 0.00123
+r8: (4) Semisort O* (by statement index) : PBBS-time: 0.00336
+r9: (5a) Create S_rcv (blocks) : PBBS-time: 0.000165
+r10: (5b) Allocate / initialize deposit locations (O_snd) : PBBS-time: 2.46e-05
+r11: (5b) Populate deposit locations (O_snd) : PBBS-time: 0.0257
+r12: Allocate / initialize worker local gradient tables : PBBS-time: 0.000836
+r13: (6) right_first_walk : PBBS-time: 10.5
+r14: (7) Accumulate worker-local gradients in global table : PBBS-time: 0.124
+r15: Free memory : PBBS-time: 0.0141
