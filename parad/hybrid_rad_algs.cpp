@@ -421,12 +421,14 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // Compute gradient_use_wl
   r6.start();
   cilk_for (int i = 0; i < n_gradients; ++i) {
-    int n_ops = 0;
-    for (int j = 0; j < n_workers; ++j) {
-      n_ops += gradient_n_ops_map[j][i];
+    if (appears_in_statement[i]) {
+      int n_ops = 0;
+      for (int j = 0; j < n_workers; ++j) {
+        n_ops += gradient_n_ops_map[j][i];
+      }
+      gradient_use_wl[i] = (n_ops > gradient_n_stmts_map[i] * max_ratio / sampling);
+      // TODO: Implement this with proper high probability bounds
     }
-    gradient_use_wl[i] = (n_ops > gradient_n_stmts_map[i] * max_ratio / sampling);
-    // TODO: Implement this with proper high probability bounds
   }
   r6.stop();
 
