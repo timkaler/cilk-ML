@@ -316,14 +316,16 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // Optimization 1: operations whose gradient index never appears in a 
   // statement accumulate their gradients using worker local sparse arrays
   r0.start();
+  int64_t nstatements = 1;
+  for (int i = 0; i < n_workers; ++i) {
+    nstatements += worker_local_stacks[i].statement_stack_arr_len;
+  }
   bool* appears_in_statement = new bool[n_gradients];
   cilk_for (int i = 0; i < n_gradients; ++i) {
     appears_in_statement[i] = false;
   }
-  cilk::reducer_opadd<int> red_nstatements(0);
   cilk_for (int i = 0; i < n_workers; ++i) {
     wl_stacks worker_stack = worker_local_stacks[i];
-    *red_nstatements += worker_stack.statement_stack_arr_len;
     cilk_for (int j = 0; j < worker_stack.statement_stack_arr_len; ++j) {
       if (worker_stack.statement_stack_arr[j].index >= 0 &&
           !appears_in_statement[worker_stack.statement_stack_arr[j].index]) {
@@ -331,7 +333,6 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
       }
     }
   }
-  int64_t nstatements = red_nstatements.get_value() + 1;
   r0.stop();
 
   // Allocate/initialize lsw, lsi
@@ -372,7 +373,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
       worker_local_stacks[wid].statement_stack_deposit_location_len[i] = 0;
     }
     cilk_for (int64_t i = 0; i < worker_local_stacks[wid].operation_stack_arr_len; ++i) {
-      worker_local_stacks[wid].operation_stack_deposit_location_valid[i] = 0;
+      worker_local_stacks[wid].operation_stack_deposit_location_valid[i] = false;
     }
   }
   r3.stop();
@@ -481,7 +482,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   int64_t boundaries_size = wl_boundaries.collect(boundaries);
   // Due to using worker local vectors, we need to actually sort this list of
   // boundaries so that they appear in order. Theoretically, we could have done
-  // this with a scan followed by a pakc, but this usually isn't a bottleneck
+  // this with a scan followed by a pack, but this usually isn't a bottleneck
   intSort::iSort(&boundaries[0], boundaries_size, mapped_ops_size, utils::identityF<int>());
   r11.stop();
 
@@ -526,7 +527,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     // Assign each operation in the block to distinct locations in the deposit
     // subarray for the block
     cilk_for (uint64_t j = blocks[i].first; j < blocks[i].second; ++j) {
-      OperationReference&opref = ops[mapped_ops[j].second];
+      OperationReference& opref = ops[mapped_ops[j].second];
       if (opref.statement_wid != -1) {
         worker_local_stacks[opref.operation_wid].operation_stack_deposit_location[opref.operation_j] = deposit_locations + j;
         worker_local_stacks[opref.operation_wid].operation_stack_deposit_location_valid[opref.operation_j] = true;
