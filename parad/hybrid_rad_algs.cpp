@@ -17,29 +17,33 @@
 
 namespace PARAD {
 
-timer r0,r1,r2,r3,r4,r5a,r5b,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18;
+timer r0,r1,r2,r3,r4,r5,r6a,r6b,r6c,r6d,r6e,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18,r19;
 
 void hybrid_report_times() {
   r0.reportTotal("r0: Initialize appears_in_statements");
-  r1.reportTotal("r1: Allocate/initialize lsw, lsi");
+  r1.reportTotal("r1: Initialize lsw, lsi");
   r2.reportTotal("r2: Reserve worker_local_vector space; misc initialization");
   r3.reportTotal("r3: Initialize deposit location lengths / valid arrays");
-  r4.reportTotal("r4: Initialize gradient_n_stmts/ops_map, gradient_use_wl");
-  r5a.reportTotal("r5a: Compute gradient_n_stmts_map");
-  r5b.reportTotal("r5b: Compute gradient_n_ops_map");
-  r6.reportTotal("r6: Compute gradient_use_wl");
-  r7.reportTotal("r7: (2) hybrid_left_first_walk");
-  r8.reportTotal("r8: wl_ops.collect()");
-  r9.reportTotal("r9: (3) Create O* (map for ops)");
-  r10.reportTotal("r10: (4) Semisort O* (by gradient index)");
-  r11.reportTotal("r11: (4) Semisort O* (by statement index)");
-  r12.reportTotal("r12: (5a) Create S_rcv (blocks");
-  r13.reportTotal("r13: (5a) Allocate / initialize deposit locations (O_snd)");
-  r14.reportTotal("r14: (5b) Populate deposit locations (O_snd)");
-  r15.reportTotal("r15: Allocate wl_grad_table");
-  r16.reportTotal("r16: (6) hybrid_right_first_walk");
-  r17.reportTotal("r17: (7) Accumulate worker-local gradients in global table");
-  r18.reportTotal("r18: Free memory");
+  r4.reportTotal("r4: Initialize gradient_req_ops_map, gradient_use_wl");
+  r5.reportTotal("r5: statement_left_first_walk (compute gradient_req_ops_map)");
+  r6a.reportTotal("r6a: Allocate space for sampled op gradient indices");
+  r6b.reportTotal("r6b: Sample ops from worker-local operation stacks");
+  r6c.reportTotal("r6c: Sort op_indices");
+  r6d.reportTotal("r6d: Find boundaries in op_indices");
+  r6e.reportTotal("r6e: Update gradient_req_ops_map");
+  r7.reportTotal("r7: Compute gradient_use_wl");
+  r8.reportTotal("r8: (2) hybrid_left_first_walk");
+  r9.reportTotal("r9: wl_ops.collect()");
+  r10.reportTotal("r10: (3) Create O* (map for ops)");
+  r11.reportTotal("r11: (4) Semisort O* (by gradient index)");
+  r12.reportTotal("r12: (4) Semisort O* (by statement index)");
+  r13.reportTotal("r13: (5a) Create S_rcv (blocks");
+  r14.reportTotal("r14: (5a) Allocate / initialize deposit locations (O_snd)");
+  r15.reportTotal("r15: (5b) Populate deposit locations (O_snd)");
+  r16.reportTotal("r16: Allocate wl_grad_table");
+  r17.reportTotal("r17: (6) hybrid_right_first_walk");
+  r18.reportTotal("r18: (7) Accumulate worker-local gradients in global table");
+  r19.reportTotal("r19: Free memory");
 }
 
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
@@ -258,17 +262,17 @@ void create_histogram(std::pair<int, int>* blocks, int blocks_size,
   }
 }
 
-void statement_left_first_walk(SP_Node* node, int* gradient_n_stmts_map) {
+void statement_left_first_walk(SP_Node* node, int* gradient_req_ops_map, int req_ratio) {
   // ROOT or SERIAL node: recursively call statement_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
-      statement_left_first_walk((*(node->children))[i], gradient_n_stmts_map);
+      statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, req_ratio);
     }
   }
   // PARALLEL node: recursively call statement_left_first_walk in parallel
   else if (node->type == 2) {
     for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn statement_left_first_walk((*(node->children))[i], gradient_n_stmts_map);
+      cilk_spawn statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, req_ratio);
     }
     cilk_sync;
   }
@@ -281,15 +285,9 @@ void statement_left_first_walk(SP_Node* node, int* gradient_n_stmts_map) {
          ist < stack.statement_stack_end; ++ist) {
       const adept::Statement& statement = statement_stack_arr[ist];
       if (statement.index == -1) continue;
-      gradient_n_stmts_map[statement.index]++;
+      gradient_req_ops_map[statement.index] += req_ratio;
     }
   }
-}
-
-int intRand(const int min, const int max) {
-  static thread_local std::mt19937 generator;
-  std::uniform_int_distribution<int> distribution(min, max);
-  return distribution(generator);
 }
 
 uint32_t reduce(uint64_t x, uint64_t N) {
@@ -378,80 +376,108 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   }
   r3.stop();
 
-  // Initialize gradient_n_stmts_map, gradient_n_ops_map, gradient_use_wl
+  // Initialize gradient_req_ops_map, gradient_use_wl
   r4.start();
-  int* gradient_n_stmts_map = new int[n_gradients];
+  int* gradient_req_ops_map = new int[n_gradients];
   bool* gradient_use_wl = new bool[n_gradients];
   cilk_for (int i = 0; i < n_gradients; ++i) {
-    gradient_n_stmts_map[i] = 0;
+    gradient_req_ops_map[i] = 0;
     gradient_use_wl[i] = false;
-  }
-  int** gradient_n_ops_map = (int**) malloc(n_workers * sizeof(int*));
-  cilk_for (int i = 0; i < n_workers; ++i) {
-    gradient_n_ops_map[i] = (int*) malloc(n_gradients * sizeof(int));
-    cilk_for (int j = 0; j < n_gradients; ++j) {
-      gradient_n_ops_map[i][j] = 0;
-    }
   }
   const int sampling = 128;
   const int max_ratio = 384;
   r4.stop();
 
-  // Compute gradient_n_stmts_map
-  r5a.start();
-  statement_left_first_walk(sptape_root, gradient_n_stmts_map);
-  r5a.stop();
+  // Compute gradient_req_ops_map
+  r5.start();
+  statement_left_first_walk(sptape_root, gradient_req_ops_map, sampling);
+  r5.stop();
 
-  // Compute gradient_n_ops_map
-  r5b.start();
+  // First allocate space to store random gradient indices associated with ops
+  r6a.start();
+  int* op_stack_offsets = new int[n_workers+1];
+  op_stack_offsets[0] = 0;
+  for (int i = 0; i < n_workers; ++i) {
+    int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
+    int n_samples = op_stack_len / sampling;
+    op_stack_offsets[i+1] = op_stack_offsets[i] + n_samples;
+  }
+  int* op_indices = new int[op_stack_offsets[n_workers]];
+  r6a.stop();
+
+  // Sample operations from each worker's operation stack to populate op_indices
+  r6b.start();
   cilk_for (int i = 0; i < n_workers; ++i) {
     const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
     int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
     int n_samples = op_stack_len / sampling;
+    // TODO: Verify that this sort actually improves runtime
     int* indices = (int*) malloc(n_samples * sizeof(int));
     cilk_for (int j = 0; j < n_samples; ++j) {
       indices[j] = xorshf98(0, op_stack_len-1);
     }
     intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
     cilk_for (int j = 0; j < n_samples; ++j) {
-      adept::uIndex op_index = operation_stack_arr[indices[j]];
-      gradient_n_ops_map[__cilkrts_get_worker_number()][op_index]++;
+      op_indices[op_stack_offsets[i] + j] = operation_stack_arr[indices[j]];
     }
   }
-  r5b.stop();
+  r6b.stop();
+
+  // Sort op_indices so that all ops with the same gradient index are contiguous
+  r6c.start();
+  intSort::iSort(op_indices, op_stack_offsets[n_workers], n_gradients, utils::identityF<int>());
+  r6c.stop();
+
+  // Compute boundaries in op_indices
+  // TODO: This may need optimization?
+  r6d.start();
+  int* index_boundaries;
+  worker_local_vector<int> wl_index_boundaries;
+  cilk_for (int i = 0; i < op_stack_offsets[n_workers]; ++i) {
+    if (i == 0 || op_indices[i] != op_indices[i-1]) {
+      wl_index_boundaries.push_back(__cilkrts_get_worker_number(), i);
+    }
+  }
+  int64_t index_boundaries_size = wl_index_boundaries.collect(index_boundaries);
+  intSort::iSort(index_boundaries, index_boundaries_size, n_gradients, utils::identityF<int>());
+  r6d.stop();
+
+  // Aggregate results by decrementing gradient_req_ops_map appropriately
+  r6e.start();
+  cilk_for (int i = 0; i < index_boundaries_size-1; ++i) {
+    int grad_index = op_indices[index_boundaries[i]];
+    gradient_req_ops_map[grad_index] -= sampling * (index_boundaries[i+1] - index_boundaries[i]);
+  }
+  gradient_req_ops_map[op_indices[index_boundaries[index_boundaries_size-1]]] -=
+          op_stack_offsets[n_workers] - index_boundaries[index_boundaries_size-1];
+  r6e.stop();
 
   // Compute gradient_use_wl
-  r6.start();
+  // TODO: Make sure that this provides high probability bounds
+  r7.start();
   cilk_for (int i = 0; i < n_gradients; ++i) {
-    if (appears_in_statement[i]) {
-      int n_ops = 0;
-      for (int j = 0; j < n_workers; ++j) {
-        n_ops += gradient_n_ops_map[j][i];
-      }
-      gradient_use_wl[i] = (n_ops > gradient_n_stmts_map[i] * max_ratio / sampling);
-      // TODO: Implement this with proper high probability bounds
-    }
+    gradient_use_wl[i] = appears_in_statement[i] && (gradient_req_ops_map[i] < 0);
   }
-  r6.stop();
+  r7.stop();
 
   // 2) Left-first traversal collects ops that need distinct locations
-  r7.start();
+  r8.start();
   args_for_collect_ops args;
   args.idx_in_statement = appears_in_statement;
   args.last_statement_worker = last_statement_worker;
   args.last_statement_index = last_statement_index;
   args.gradient_ = _gradient;
   hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl);
-  r7.stop();
-
-  // Collect the wl_ops into a single contiguous array
-  r8.start();
-  OperationReference* ops;
-  int64_t ops_size = wl_ops.collect(ops);
   r8.stop();
 
-  // 3) Create O*: map each operation in ops with index i to (statement_index, i)
+  // Collect the wl_ops into a single contiguous array
   r9.start();
+  OperationReference* ops;
+  int64_t ops_size = wl_ops.collect(ops);
+  r9.stop();
+
+  // 3) Create O*: map each operation in ops with index i to (statement_index, i)
+  r10.start();
   std::pair<int, int>* mapped_ops =
           (std::pair<int, int>*) malloc(sizeof(std::pair<int, int>) * ops_size);
   int64_t mapped_ops_size = ops_size;
@@ -461,17 +487,17 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     mapped_ops[i] = std::make_pair(statement_offsets[ops[i].statement_wid] +
                                    ops[i].statement_ist, (int) i);
   }
-  r9.stop();
+  r10.stop();
 
   // 4) Semisort the mapped_ops so that all operations associated with the same
   // statement are contiguous in memory
-  r10.start();
+  r11.start();
   intSort::iSort(&mapped_ops[0], mapped_ops_size, nstatements+1, utils::firstF<int, int>());
-  r10.stop();
+  r11.stop();
 
   // 4) Collect boundaries between contiguous blocks of operations with the same
   // statement index
-  r11.start();
+  r12.start();
   int* boundaries;
   worker_local_vector<int> wl_boundaries;
   cilk_for (uint64_t i = 0; i < mapped_ops_size; ++i) {
@@ -484,10 +510,10 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // boundaries so that they appear in order. Theoretically, we could have done
   // this with a scan followed by a pack, but this usually isn't a bottleneck
   intSort::iSort(&boundaries[0], boundaries_size, mapped_ops_size, utils::identityF<int>());
-  r11.stop();
+  r12.stop();
 
   // 5a) For each contiguous block in mapped_ops, create a block with start and end index
-  r12.start();
+  r13.start();
   std::pair<int, int>* blocks = (std::pair<int, int>*)
           malloc(sizeof(std::pair<int, int>) * boundaries_size);
   int64_t blocks_size = boundaries_size;
@@ -498,21 +524,21 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     blocks[boundaries_size-1] = std::make_pair(boundaries[boundaries_size-1],
                                                mapped_ops_size);
   }
-  r12.stop();
+  r13.stop();
 
   // TESTING: Create a histogram of the number of operations accumulated per statement
   // create_histogram(blocks, blocks_size, nstatements, mapped_ops_size);
 
   // 5b) Allocate / initialize deposit locations
-  r13.start();
+  r14.start();
   float* deposit_locations = (float*) malloc(mapped_ops_size * sizeof(float));
   cilk_for (int64_t i = 0; i < mapped_ops_size; ++i) {
     deposit_locations[i] = 0.0;
   }
-  r13.stop();
+  r14.stop();
 
   // 5b) Populate deposit locations (i.e. O_snd)
-  r14.start();
+  r15.start();
   // Each block is associated with a subarray inside the deposit array
   cilk_for (uint64_t i = 0; i < blocks_size; ++i) {
     // The statement associated with the block is assigned to the range of
@@ -536,37 +562,37 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
       }
     }
   }
-  r14.stop();
+  r15.stop();
 
   // Allocate worker-local gradient tables. These are used for:
   // - optimization: gradients that are not associated with any statement, i.e.
   //   gradients that will be nonzero after the reverse-mode AD
   // - gradients we decided to accumulate in worker-local tables earlier
-  r15.start();
+  r16.start();
   float** wl_grad_table = (float**) malloc(sizeof(float*) * n_workers);
   cilk_for (int i = 0; i < n_workers; ++i) {
     wl_grad_table[i] = (float*) calloc(n_gradients, sizeof(float));
   }
-  r15.stop();
-
-  // 6) Right-first traversal to compute the gradients
-  r16.start();
-  hybrid_right_first_walk(sptape_root, wl_grad_table, appears_in_statement,
-                          _gradient, gradient_use_wl);
   r16.stop();
 
-  // 7) Export worker-local gradients to the global gradient table
+  // 6) Right-first traversal to compute the gradients
   r17.start();
+  hybrid_right_first_walk(sptape_root, wl_grad_table, appears_in_statement,
+                          _gradient, gradient_use_wl);
+  r17.stop();
+
+  // 7) Export worker-local gradients to the global gradient table
+  r18.start();
   cilk_for (int64_t i = 0; i < tfk_reducer.max_gradient; ++i) {
     _gradient[i] = 0;
     for (int wid = 0; wid < n_workers; ++wid) {
       _gradient[i] += wl_grad_table[wid][i];
     }
   }
-  r17.stop();
+  r18.stop();
   
   // Free all the memory we allocated
-  r18.start();
+  r19.start();
   cilk_for (int i = 0; i < n_workers; ++i) {
     free(wl_grad_table[i]);
   }
@@ -576,17 +602,13 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   delete[] last_statement_index;
   delete[] statement_offsets;
   delete[] appears_in_statement;
-  cilk_for (int i = 0; i < n_workers; ++i) {
-    free(gradient_n_ops_map[i]);
-  }
-  free(gradient_n_stmts_map);
-  free(gradient_n_ops_map);
+  free(gradient_req_ops_map);
   delete[] gradient_use_wl;
   free(blocks);
   free(boundaries);
   free(ops);
   free(mapped_ops);
-  r18.stop();
+  r19.stop();
 }
 
 } // end namespace PARAD
