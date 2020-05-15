@@ -262,17 +262,17 @@ void create_histogram(std::pair<int, int>* blocks, int blocks_size,
   }
 }
 
-void statement_left_first_walk(SP_Node* node, int* gradient_req_ops_map, int req_ratio) {
+void statement_left_first_walk(SP_Node* node, int* gradient_req_ops_map, int ops_per_stmt) {
   // ROOT or SERIAL node: recursively call statement_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
-      statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, req_ratio);
+      statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, ops_per_stmt);
     }
   }
   // PARALLEL node: recursively call statement_left_first_walk in parallel
   else if (node->type == 2) {
     for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, req_ratio);
+      cilk_spawn statement_left_first_walk((*(node->children))[i], gradient_req_ops_map, ops_per_stmt);
     }
     cilk_sync;
   }
@@ -285,7 +285,7 @@ void statement_left_first_walk(SP_Node* node, int* gradient_req_ops_map, int req
          ist < stack.statement_stack_end; ++ist) {
       const adept::Statement& statement = statement_stack_arr[ist];
       if (statement.index == -1) continue;
-      gradient_req_ops_map[statement.index] += req_ratio;
+      gradient_req_ops_map[statement.index] += ops_per_stmt;
     }
   }
 }
@@ -382,15 +382,14 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   bool* gradient_use_wl = new bool[n_gradients];
   cilk_for (int i = 0; i < n_gradients; ++i) {
     gradient_req_ops_map[i] = 0;
-    gradient_use_wl[i] = false;
   }
   const int sampling = 128;
-  const int max_ratio = 384;
+  const int ops_per_stmt = 3;
   r4.stop();
 
   // Compute gradient_req_ops_map
   r5.start();
-  statement_left_first_walk(sptape_root, gradient_req_ops_map, sampling);
+  statement_left_first_walk(sptape_root, gradient_req_ops_map, ops_per_stmt);
   r5.stop();
 
   // First allocate space to store random gradient indices associated with ops
@@ -411,14 +410,9 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     const adept::uIndex*__restrict operation_stack_arr = worker_local_stacks[i].operation_stack_arr;
     int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
     int n_samples = op_stack_len / sampling;
-    // TODO: Verify that this sort actually improves runtime
-    int* indices = (int*) malloc(n_samples * sizeof(int));
     cilk_for (int j = 0; j < n_samples; ++j) {
-      indices[j] = xorshf98(0, op_stack_len-1);
-    }
-    intSort::iSort(indices, n_samples, op_stack_len, utils::identityF<int>());
-    cilk_for (int j = 0; j < n_samples; ++j) {
-      op_indices[op_stack_offsets[i] + j] = operation_stack_arr[indices[j]];
+      int rand_index = xorshf98(0, op_stack_len-1);
+      op_indices[op_stack_offsets[i] + j] = operation_stack_arr[rand_index];
     }
   }
   r6b.stop();
@@ -446,10 +440,10 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r6e.start();
   cilk_for (int i = 0; i < index_boundaries_size-1; ++i) {
     int grad_index = op_indices[index_boundaries[i]];
-    gradient_req_ops_map[grad_index] -= sampling * (index_boundaries[i+1] - index_boundaries[i]);
+    gradient_req_ops_map[grad_index] -= (index_boundaries[i+1] - index_boundaries[i]);
   }
   gradient_req_ops_map[op_indices[index_boundaries[index_boundaries_size-1]]] -=
-          op_stack_offsets[n_workers] - index_boundaries[index_boundaries_size-1];
+          (op_stack_offsets[n_workers] - index_boundaries[index_boundaries_size-1]);
   r6e.stop();
 
   // Compute gradient_use_wl
