@@ -288,6 +288,7 @@ namespace adept {
       worker_local_stacks[thread_local_worker_id].add_unregister_gradient(gradient_index);
 
       #ifndef TFK_ALLOW_UNREGISTER
+      __sync_fetch_and_sub(&max_gradient_, 1);
       return;
       #endif
       #ifdef CILKSAN

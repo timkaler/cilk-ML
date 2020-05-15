@@ -182,19 +182,10 @@ void hybrid_right_first_walk(SP_Node* node, float** wl_grad_table,
         float*__restrict extract_arr = statement_stack_deposit_location[ist];
         int extract_arr_len = statement_stack_deposit_location_len[ist];
         // Extract gradient contributions from deposit array
-        int nonzero_count = 0;
-        if (extract_arr_len > 5000) {
-          cilk::reducer_opadd<float> red_a(a);
-          cilk_for (int i = 0; i < extract_arr_len; ++i) {
-            *red_a += extract_arr[i];
-            extract_arr[i] = 0;
-          }
-          a += red_a.get_value();
-        } else {
-          for (int i = 0; i < extract_arr_len; ++i) {
-            a += extract_arr[i];
-            extract_arr[i] = 0;
-          }
+        for (int i = 0; i < extract_arr_len; ++i) {
+          a += extract_arr[i];
+          // Note: Not actually necessary with optimization 1, but makes little practical difference
+          extract_arr[i] = 0;
         }
       }
       // Iterate over the operations and update the gradients
