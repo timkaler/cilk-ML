@@ -24,7 +24,7 @@ void hybrid_report_times() {
   r1.reportTotal("r1: Initialize lsw, lsi");
   r2.reportTotal("r2: Reserve worker_local_vector space; misc initialization");
   r3.reportTotal("r3: Initialize deposit location lengths / valid arrays");
-  r4.reportTotal("r4: Initialize gradient_req_ops_map, gradient_use_wl");
+  r4.reportTotal("r4: Initialize gradient_req_ops_map, gradient_use_wl, lfw_use_wl");
   r5.reportTotal("r5: statement_left_first_walk (compute gradient_req_ops_map)");
   r6a.reportTotal("r6a: Allocate space for sampled op gradient indices");
   r6b.reportTotal("r6b: Sample ops from worker-local operation stacks");
@@ -48,17 +48,17 @@ void hybrid_report_times() {
 
 void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
                             worker_local_vector<OperationReference>& wl_ops,
-                            bool* gradient_use_wl) {
+                            bool* gradient_use_wl, bool* lfw_use_wl) {
   // ROOT or SERIAL node: recursively call hybrid_left_first_walk serially
   if (node->type == 0 || node->type == 1) {
     for (int i = 0; i < node->children->size(); ++i) {
-      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl);
+      hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl, lfw_use_wl);
     }
   }
   // PARALLEL node: recursively call hybrid_left_first_walk in parallel
   else if (node->type == 2) {
     for (int i = 0; i < node->children->size(); ++i) {
-      cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl);
+      cilk_spawn hybrid_left_first_walk((*(node->children))[i], args, wl_ops, gradient_use_wl, lfw_use_wl);
     }
     cilk_sync;
   }
@@ -108,6 +108,12 @@ void hybrid_left_first_walk(SP_Node* node, args_for_collect_ops* args,
               ref.operation_j = iop;
               ref.gradient_index = op_index;
               wl_ops.push_back(wid, ref);
+            }
+            // lfw_use_wl keeps track of all gradient indices which use
+            // worker-local gradient tables and are not optimized out. This is
+            // an important optimization for right_first_walk
+            else {
+              lfw_use_wl[op_index] = true;
             }
           }
         }
@@ -367,12 +373,14 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   }
   r3.stop();
 
-  // Initialize gradient_req_ops_map, gradient_use_wl
+  // Initialize gradient_req_ops_map, gradient_use_wl, lfw_use_wl
   r4.start();
   int* gradient_req_ops_map = new int[n_gradients];
   bool* gradient_use_wl = new bool[n_gradients];
+  bool* lfw_use_wl = new bool[n_gradients];
   cilk_for (int i = 0; i < n_gradients; ++i) {
     gradient_req_ops_map[i] = 0;
+    lfw_use_wl[i] = false;
   }
   const int sampling = 128;
   const int ops_per_stmt = 3;
@@ -452,8 +460,19 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   args.last_statement_worker = last_statement_worker;
   args.last_statement_index = last_statement_index;
   args.gradient_ = _gradient;
-  hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl);
+  hybrid_left_first_walk(sptape_root, &args, wl_ops, gradient_use_wl, lfw_use_wl);
+  // lfw_use_wl keeps track of all gradient indices which use worker-local
+  // gradient tables and are not optimized out in left_first_walk. This is an
+  // optimization for right_first_walk
   r8.stop();
+
+  /*
+  int count = 0;
+  for (int i = 0; i < n_gradients; ++i) {
+    if (gradient_use_wl[i]) count++;
+  }
+  std::cout << "count: " << count << std::endl;
+  */
 
   // Collect the wl_ops into a single contiguous array
   r9.start();
@@ -563,7 +582,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // 6) Right-first traversal to compute the gradients
   r17.start();
   hybrid_right_first_walk(sptape_root, wl_grad_table, appears_in_statement,
-                          _gradient, gradient_use_wl);
+                          _gradient, lfw_use_wl);
   r17.stop();
 
   // 7) Export worker-local gradients to the global gradient table
@@ -588,6 +607,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   delete[] statement_offsets;
   delete[] appears_in_statement;
   free(gradient_req_ops_map);
+  delete[] lfw_use_wl;
   delete[] gradient_use_wl;
   free(blocks);
   free(boundaries);
