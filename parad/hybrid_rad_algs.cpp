@@ -287,21 +287,19 @@ void statement_left_first_walk(SP_Node* node, int* gradient_req_ops_map, int ops
   }
 }
 
-uint32_t reduce(uint64_t x, uint64_t N) {
-  return ((x & 0xffffffff) * (N & 0xffffffff)) >> 32;
+uint32_t reduce(uint64_t x, uint32_t N) {
+  return ((x & 0xffffffff) * ((uint64_t) N)) >> 32;
 }
 
-int xorshf98(const uint64_t min, const uint64_t max) {
-  static thread_local uint64_t x=123456789, y=362436069, z=521288629;
-  uint64_t t;
-  x ^= x << 16;
-  x ^= x >> 5;
-  x ^= x << 1;
-  t = x;
-  x = y;
-  y = z;
-  z = t ^ x ^ y;
-  return reduce(z, max-min+1) + min;
+// TODO: Improve the runtime by looking for some technique that doesn't use
+// multiplication. Currently this is slightly worse than the old xorshf
+uint32_t hash(uint32_t x, uint32_t min, uint32_t max) {
+  const static int y = 1103515242;
+  uint64_t t = (uint64_t) x * y;
+  t ^= t << 16;
+  t ^= t >> 5;
+  t ^= t << 1;
+  return reduce(t, max-min+1) + min;
 }
 
 void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradient) {
@@ -410,7 +408,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
     int op_stack_len = worker_local_stacks[i].operation_stack_arr_len;
     int n_samples = op_stack_len / sampling;
     cilk_for (int j = 0; j < n_samples; ++j) {
-      int rand_index = xorshf98(0, op_stack_len-1);
+      int rand_index = hash(j, 0, op_stack_len-1);
       op_indices[op_stack_offsets[i] + j] = operation_stack_arr[rand_index];
     }
   }
@@ -422,7 +420,7 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   r6c.stop();
 
   // Compute boundaries in op_indices
-  // TODO: This may need optimization?
+  // This could be optimized further, but isn't usually a bottleneck
   r6d.start();
   int* index_boundaries;
   worker_local_vector<int> wl_index_boundaries;
@@ -465,14 +463,6 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
   // gradient tables and are not optimized out in left_first_walk. This is an
   // optimization for right_first_walk
   r8.stop();
-
-  /*
-  int count = 0;
-  for (int i = 0; i < n_gradients; ++i) {
-    if (gradient_use_wl[i]) count++;
-  }
-  std::cout << "count: " << count << std::endl;
-  */
 
   // Collect the wl_ops into a single contiguous array
   r9.start();
@@ -529,9 +519,6 @@ void hybrid_reverse_ad(SP_Node* sptape_root, int64_t n_gradients, float* _gradie
                                                mapped_ops_size);
   }
   r13.stop();
-
-  // TESTING: Create a histogram of the number of operations accumulated per statement
-  // create_histogram(blocks, blocks_size, nstatements, mapped_ops_size);
 
   // 5b) Allocate / initialize deposit locations
   r14.start();
